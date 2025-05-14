@@ -1,0 +1,8 @@
+FROM node:slim
+
+WORKDIR /app
+
+COPY backend/ /app
+RUN npm install fastify
+
+CMD ["node", "index.js"]
