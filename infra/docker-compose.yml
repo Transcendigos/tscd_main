@@ -4,7 +4,7 @@ services:
   backend:
     build:
       context: ..
-      dockerfile: infra/Dockerfile.backend
+      dockerfile: infra/Dockerfile_backend
     container_name: backend
     expose:
       - "3000"
@@ -13,7 +13,7 @@ services:
   nginx:
     build:
       context: ..
-      dockerfile: infra/Dockerfile.nginx
+      dockerfile: infra/Dockerfile_nginx
     container_name: nginx
     ports:
       - "8080:80"
