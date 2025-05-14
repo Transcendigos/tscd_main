@@ -5,4 +5,14 @@
 //It is automatically transpiled into a .js by typescript when building the container (in Dockerfile.nginx, npx tsc)
 
 
-console.log("ft_transcendance placeholder loaded.");
+// main.ts
+window.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("clickMeBtn");
+  const output = document.getElementById("output");
+
+  btn?.addEventListener("click", () => {
+    if (output) {
+      output.textContent = "TypeScript is working!";
+    }
+  });
+});
