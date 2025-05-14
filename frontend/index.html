@@ -6,17 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="/main.css" rel="stylesheet">
 </head>
-<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
 
-  <div class="text-center space-y-4">
+  <!-- Menu UI -->
+  <div id="menu" class="text-center space-y-4">
     <h1 class="text-4xl font-bold">Tailwind + TypeScript test</h1>
     <p class="text-lg text-gray-300">Tailwind is working!</p>
     <button id="clickMeBtn" class="bg-blue-500 hover:bg-blue-700 px-6 py-2 rounded transition">
-      Click Me
+      Play Pong
     </button>
-    <p id="output" class="text-green-400 text-lg mt-4"></p>
   </div>
 
-  <script src="/main.js"></script>
+  <!-- Game UI -->
+  <div id="gameContainer" class="hidden flex flex-col items-center">
+    <canvas id="pongCanvas" width="800" height="600" class="border border-white"></canvas>
+    <button id="backBtn" class="mt-4 bg-red-500 hover:bg-red-700 px-4 py-2 rounded">
+      Back to Menu
+    </button>
+  </div>
+
+  <script type="module" src="/main.js"></script>
 </body>
 </html>
