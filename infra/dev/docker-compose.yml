@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ../../frontend
+      dockerfile: ../infra/dev/Dockerfile.dev
+    container_name: my-vite-tailwind-ts-dev-container
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../../frontend/src:/app/src
+      - ../../frontend/index.html:/app/index.html
+      - ../../frontend/dev/tailwind.config.js:/app/tailwind.config.js
+      - ../../frontend/dev/postcss.config.js:/app/postcss.config.js
+      - ../../frontend/dev/tsconfig.json:/app/tsconfig.json
+      - ../../frontend/dev/vite.config.ts:/app/vite.config.ts
+    working_dir: /app
+    command: npm run dev
+    environment:
+      - NODE_ENV=development

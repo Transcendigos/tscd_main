@@ -18,11 +18,11 @@ window.addEventListener("DOMContentLoaded", () => {
   clickBtn.addEventListener("click", () => {
     menu.classList.add("hidden");
     gameContainer.classList.remove("hidden");
-    setCanvas(canvas); // give your game the canvas
-    startPongGame();   // and launch it
+    setCanvas(canvas);
+    startPongGame();
   });
 
   backBtn.addEventListener("click", () => {
-    location.reload(); // simplest way to stop the game and reset everything
+    location.reload();
   });
 });

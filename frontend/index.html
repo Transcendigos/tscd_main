@@ -1,30 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <title>ft_transcendence</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="/main.css" rel="stylesheet">
+  <!-- <link href="/main.css" rel="stylesheet"> -->
+  <link rel="stylesheet" href="/src/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #1b3f72;
+      background-image: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.05),
+        rgba(0, 0, 0, 0.05) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
 
-  <!-- Menu UI -->
-  <div id="menu" class="text-center space-y-4">
-    <h1 class="text-4xl font-bold">Tailwind + TypeScript test</h1>
-    <p class="text-lg text-gray-300">Tailwind is working!</p>
-    <button id="clickMeBtn" class="bg-blue-500 hover:bg-blue-700 px-6 py-2 rounded transition">
-      Play Pong
-    </button>
-  </div>
+<body class="text-[#4cb4e7] min-h-screen flex flex-col bg-[#1b3f72]">
 
-  <!-- Game UI -->
-  <div id="gameContainer" class="hidden flex flex-col items-center">
+  <header class="py-10 text-center">
+      <h1 class="text-5xl font-extrabold font-inter">
+        PONG
+      </h1>
+  </header>
+
+
+  <div id="gameContainer" class="hidden flex flex-col items-center mt-12">
     <canvas id="pongCanvas" width="800" height="600" class="border border-white"></canvas>
-    <button id="backBtn" class="mt-4 bg-red-500 hover:bg-red-700 px-4 py-2 rounded">
-      Back to Menu
-    </button>
-  </div>
+      <button id="backBtn" class="mt-4 bg-red-500 hover:bg-red-700 px-4 py-2 rounded">
+        Back to Menu
+      </button>
+    </div>
 
-  <script type="module" src="/main.js"></script>
+  <main class="flex-grow flex flex-col justify-center items-center px-4" id="menu">
+
+    <div class="w-full max-w-xs space-y-4">
+      <button id="clickMeBtn" class="font-inter font-bold hover-important w-full py-5 transition-all">
+        SOLO PLAY
+      </button>
+        <div class="h-[1px] bg-[#4cb4e7] transition-transform duration-200 origin-center group-hover:scale-x-110"></div>
+      
+      <button id="darkButn" class=" font-bold hover-important w-full py-5 transition-all">
+        MULTIPLAYER
+      </button>
+    </div>
+  </main>
+
+    <footer class="py-4 text-center text-sm text-slate-500">
+    <p>A simple footer</p>
+  </footer>
+
+
+  <script type="module" src="src/main.js"></script>
+  <script type="module" src="src/main.ts"></script>
 </body>
-</html> 
+</html>

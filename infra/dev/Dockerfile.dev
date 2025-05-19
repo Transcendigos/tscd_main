@@ -1,0 +1,25 @@
+
+FROM node:24.0-alpine
+
+WORKDIR /app
+
+
+COPY dev/package.json ./
+COPY dev/package-lock.json ./
+
+
+RUN npm install
+
+
+COPY dev/vite.config.ts ./
+COPY dev/tailwind.config.js ./
+COPY dev/postcss.config.js ./
+COPY dev/tsconfig.json ./
+
+COPY src/ /app/src/
+
+COPY index.html ./ 
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev"]
