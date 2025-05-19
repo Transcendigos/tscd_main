@@ -12,3 +12,56 @@
 @theme {
     --font-inter: "Inter", sans-serif;
 }
+
+
+.win98-window {
+  background-color: #235ba8; /* win98-silver */
+  border-top: 2px solid #ffffff;    /* win98-white */
+  border-left: 2px solid #ffffff;   /* win98-white */
+  border-right: 2px solid #000000;  /* win98-black */
+  border-bottom: 2px solid #000000; /* win98-black */
+  padding: 2px; /* Padding to show inner border for content area */
+}
+
+.title-bar {
+  background-color: #000080; /* win98-blue */
+  color: #ffffff;           /* win98-white */
+  /* Additional padding/height is in Tailwind classes */
+}
+
+
+.win98-button {
+  background-color: #c0c0c0; /* win98-silver */
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  box-shadow: inset 1px 1px 0px #808080; /* Inner shadow to complete bevel */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.win98-button:active {
+  border-top: 1px solid #000000;
+  border-left: 1px solid #000000;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  box-shadow: none; /* Remove shadow or reverse it */
+  /* background-color: darken(#c0c0c0, 5%); */ /* Slightly darker on press */
+}
+
+.content-inner { /* This is where the inset border effect is crucial */
+  border-top: 2px solid #808080;    /* win98-dark-grey for inset */
+  border-left: 2px solid #808080;   /* win98-dark-grey for inset */
+  border-right: 2px solid #ffffff;  /* win98-white for inset */
+  border-bottom: 2px solid #ffffff; /* win98-white for inset */
+}
+
+.status-panel {
+  border: 1px solid #808080;
+  border-right-color: #ffffff;
+  border-bottom-color: #ffffff;
+  padding-left: 2px;
+  padding-right: 2px;
+  flex-shrink: 0; /* Prevent panels from shrinking too much */
+}

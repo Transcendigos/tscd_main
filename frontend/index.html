@@ -26,7 +26,7 @@
 
   <header class="py-10 text-center">
       <h1 class="text-5xl font-extrabold font-inter">
-        PONG
+        TRANSCENDENCE
       </h1>
   </header>
 
@@ -40,16 +40,75 @@
 
   <main class="flex-grow flex flex-col justify-center items-center px-4" id="menu">
 
-    <div class="w-full max-w-xs space-y-4">
-      <button id="clickMeBtn" class="font-inter font-bold hover-important w-full py-5 transition-all">
-        SOLO PLAY
+  <div class="border-2 border-[#4cb4e7] mx-auto my-10 w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col">
+
+  <div class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-default">
+    <div class="flex items-center space-x-1.5">
+      <svg class="w-4 h-4" fill="none" stroke="#4cb4e7" stroke-width="1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="14" height="14" rx="1"/>
+        <line x1="1" y1="5" x2="15" y2="5" />
+      </svg>
+      <span class="font-bold">ft_pong</span>
+    </div>
+    <div class="flex items-center space-x-1">
+      <button aria-label="Minimize" class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important">
+        <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg"><rect width="8" height="2"/></svg>
       </button>
-        <div class="h-[1px] bg-[#4cb4e7] transition-transform duration-200 origin-center group-hover:scale-x-110"></div>
-      
-      <button id="darkButn" class=" font-bold hover-important w-full py-5 transition-all">
-        MULTIPLAYER
+      <button aria-label="Maximize" class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important">
+        <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="8" height="8"/></svg>
+      </button>
+      <button aria-label="Close" class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+        X
       </button>
     </div>
+  </div>
+
+  <div class="px-1.5 py-0.5 flex items-center space-x-2 border-b border-[#4cb4e7] text-[#4cb4e7]">
+    <span class="px-1.5 hover-important hover:underline cursor-default"><u>P</u>rofile</span>
+    <span class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-in</span>
+    <span class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-up</span>
+  </div>
+
+  <div class="flex-grow p-0.5">
+  <div class="border border-[#4cb4e7] h-full text-[#4cb4e7] flex flex-col justify-center items-center  ">
+
+
+
+      <button id="clickMeBtn" class="font-inter font-extrabold hover-important w-full py-7 pt-15 transition-all">
+        PLAY PONG
+      </button>
+
+      <div class="h-[0.9px] bg-[#4cb4e7] origin-center w-1/2"></div>
+      
+      <button id="darkBtn" class=" font-inter font-extrabold hover-important w-full py-7 transition-all">
+        MULTIPLAYER 
+      </button>
+    
+      <div class="h-[1px] bg-[#4cb4e7] origin-center w-1/2"></div>
+
+      <button id="tournamentBtn" class="font-Inter font-extrabold hover-important w-full py-7 pb-15 transition-all">
+        TOURNAMENT
+      </button>
+
+
+      <div class="h text-transparent">.</div>
+    </div>
+  </div>
+
+  <div class="px-1.5 py-0.5 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7]">
+    <div class="border font-extrabold border-[#4cb4e7] px-2">Chat</div>
+    <div class="flex space-x-2">
+      <div class="border font-extrabold border-[#4cb4e7] px-2">INFO</div>
+      <div class="border font-extrabold border-[#4cb4e7] px-2">STATS</div>
+    </div>
+  </div>
+</div>
+
+
+    
+
+
+    
   </main>
 
     <footer class="py-4 text-center text-sm text-slate-500">
