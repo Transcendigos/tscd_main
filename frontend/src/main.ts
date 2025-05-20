@@ -185,6 +185,24 @@ window.addEventListener("DOMContentLoaded", () => {
       location.reload(); 
     });
   }
+
+  // Toggle Sign-Up Window
+  const signupTab = document.getElementById("signupTab");
+  const signupWindow = document.getElementById("signupWindow");
+  const closeSignupBtn = document.getElementById("closeSignupBtn");
+
+  signupTab?.addEventListener("click", () => {
+    signupWindow?.classList.remove("hidden");
+  });
+
+  closeSignupBtn?.addEventListener("click", () => {
+    signupWindow?.classList.add("hidden");
+  });
+
+  // Handle Form Submission
+  const signupForm = document.getElementById("signupForm") as HTMLFormElement;
+
+
 });
 
 
