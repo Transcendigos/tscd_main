@@ -94,12 +94,37 @@ window.addEventListener("DOMContentLoaded", () => {
       location.reload(); 
     });
   }
+
+    // Toggle Sign-Up Window
+  const signupTab = document.getElementById("signupTab");
+  const signupWindow = document.getElementById("signupWindow");
+  const closeSignupBtn = document.getElementById("closeSignupBtn");
+
+  signupTab?.addEventListener("click", () => {
+    signupWindow?.classList.remove("hidden");
+  });
+
+  closeSignupBtn?.addEventListener("click", () => {
+    signupWindow?.classList.add("hidden");
+  });
+
+  // Handle Form Submission
+  const signupForm = document.getElementById("signupForm") as HTMLFormElement;
+
+    // Toggle Sign-In Window
+  const signinTab = document.getElementById("signinTab");
+  const signinWindow = document.getElementById("signinWindow");
+  const closeSigninBtn = document.getElementById("closeSigninBtn");
+
+  signinTab?.addEventListener("click", () => {
+    signinWindow?.classList.remove("hidden");
+  });
+
+  closeSigninBtn?.addEventListener("click", () => {
+    signinWindow?.classList.add("hidden");
+  });
+
+  // Handle Form Submission
+  const signinForm = document.getElementById("signinForm") as HTMLFormElement;
 });
-
-
-
-
-
-
-
 
