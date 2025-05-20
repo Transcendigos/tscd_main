@@ -44,46 +44,46 @@
       </button>
     </div>
 
-    <main class="flex-grow px-4
+<main class="flex-grow px-4
              opacity-0 scale-95 invisible pointer-events-none  transform transition-all duration-300 ease-in-out
              fixed inset-0 flex justify-center items-center z-50" id="menu"
       style="position: relative;">
 
-      <div id="dragWindow"
-       class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col py-auto"
-       style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">
+  <div id="dragWindow"
+       class="border-2 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+              bg-slate-900 relative"
+       style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); min-width: 200px; min-height: 300px;">
 
-        <div id="dragHandle"
-          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
-          <div class="flex items-center space-x-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="#4cb4e7" stroke-width="1"
-              viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="1" width="14" height="14" rx="1" />
-              <line x1="1" y1="5" x2="15" y2="5" />
-            </svg>
-            <span class="font-bold">ft_pong</span>
-          </div>
-          <div class="flex items-center space-x-1">
-            <button aria-label="Minimize"
-              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important">
-              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
-                xmlns="http://www.w3.org/2000/svg"><rect width="8"
-                  height="2" /></svg>
-            </button>
-            <button aria-label="Maximize"
-              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important">
-              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
-                stroke="#4cb4e7" stroke-width="1"
-                xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5"
-                  width="8" height="8" /></svg>
-            </button>
-            <button aria-label="Close" id="closeMenuBtn"
-              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-              X
-            </button>
-          </div>
-        </div>
-
+    <div id="dragHandle"
+         class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
+      <div class="flex items-center space-x-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="#4cb4e7" stroke-width="1"
+          viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="14" height="14" rx="1" />
+          <line x1="1" y1="5" x2="15" y2="5" />
+        </svg>
+        <span class="font-bold select-none">ft_pong</span>
+      </div>
+      <div class="flex items-center space-x-1">
+        <button aria-label="Minimize"
+          class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important">
+          <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+            xmlns="http://www.w3.org/2000/svg"><rect width="8"
+              height="2" /></svg>
+        </button>
+        <button aria-label="Maximize"
+          class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important">
+          <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+            stroke="#4cb4e7" stroke-width="1"
+            xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5"
+              width="8" height="8" /></svg>
+        </button>
+        <button aria-label="Close" id="closeMenuBtn"
+          class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+          X
+        </button>
+      </div>
+    </div>
         <div
           class="px-1.5 py-0.5 flex items-center space-x-2 border-b border-[#4cb4e7] text-[#4cb4e7]">
           <span
@@ -103,34 +103,32 @@
               PLAY PONG
             </button>
 
-            <div class="h-[0.9px] bg-[#4cb4e7] origin-center w-1/2"></div>
-
-            <button id="darkBtn"
-              class=" font-inter font-extrabold hover-important w-full py-7 transition-all">
-              MULTIPLAYER
-            </button>
-
-            <div class="h-[1px] bg-[#4cb4e7] origin-center w-1/2"></div>
-
-            <button id="tournamentBtn"
-              class="font-Inter font-extrabold hover-important w-full py-7 pb-15 transition-all">
-              TOURNAMENT
-            </button>
-
-            <div class="h text-transparent">.</div>
-          </div>
-        </div>
-
-        <div
-          class="px-1.5 py-0.5 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7]">
-          <div class="border font-extrabold border-[#4cb4e7] px-2">Chat</div>
-          <div class="flex space-x-2">
-            <div class="border font-extrabold border-[#4cb4e7] px-2">INFO</div>
-            <div class="border font-extrabold border-[#4cb4e7] px-2">STATS</div>
-          </div>
-        </div>
+        <div class="h-[0.9px] bg-[#4cb4e7] origin-center w-1/2"></div>
+        <button id="darkBtn"
+          class="font-inter font-extrabold hover-important w-full py-7 transition-all">
+          MULTIPLAYER
+        </button>
+        <div class="h-[1px] bg-[#4cb4e7] origin-center w-1/2"></div>
+        <button id="tournamentBtn"
+          class="font-Inter font-extrabold hover-important w-full py-7 pb-15 transition-all">
+          TOURNAMENT
+        </button>
       </div>
-    </main>
+    </div>
+
+    <div class="px-1.5 py-1 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7] select-none">
+      <div class="border font-extrabold border-[#4cb4e7] px-2">Chat</div>
+      <div class="flex space-x-2 mr-2">
+        <div class="border font-extrabold border-[#4cb4e7] px-2">INFO</div>
+        <div class="border font-extrabold border-[#4cb4e7] px-2">STATS</div>
+      </div>
+    </div>
+
+    <div id="resizeHandleBR" class="absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize"></div>
+
+  </div>
+</main>
+
 
     <footer class="flex items-center text-center justify-center py-auto mb-5">
       <div id="menuShortcut"
