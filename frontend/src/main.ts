@@ -211,26 +211,28 @@ window.addEventListener("DOMContentLoaded", () => {
       body[key] = value.toString(); // convert to string just to be safe
     });
 
-    ///
-    // const res = await fetch("http://localhost:3000/api/signup", {
-    //   method: "POST",
-    //   headers: {"Content-Type": "application/json" },
-    //   body: JSON.stringify(body),
-    // })
+    try {
+        console.log("Sending signup request:", body);
 
-    // if(res.ok) {
-    //   alert("Signed up succesfully!");
-      signupWindow?.classList.add("hidden");
-      signupForm.reset();
-    // }
-    // else {
-    //   alert("Signed up failed. Please try again");
-    //   signupWindow?.classList.add("hidden");
-    //   signupForm.reset();
-    // }
-  })
+        const res = await fetch("http://localhost:3000/api/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
 
+        const result = await res.json();
+        console.log("Server responded:", result);
+
+        if (res.ok) {
+          // alert("Signed up successfully!");
+          signupWindow?.classList.add("hidden");
+          signupForm.reset();
+        } else {
+          alert("Signup failed.");
+        }
+      } catch (err) {
+        console.error("Request failed:", err);
+        alert("Could not contact the server.");
+      }
+  });
 });
-
-
-
