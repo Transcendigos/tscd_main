@@ -202,6 +202,33 @@ window.addEventListener("DOMContentLoaded", () => {
   // Handle Form Submission
   const signupForm = document.getElementById("signupForm") as HTMLFormElement;
 
+  signupForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(signupForm);
+    const body: Record<string, string> = {};
+
+    formData.forEach((value, key) => {
+      body[key] = value.toString(); // convert to string just to be safe
+    });
+
+    ///
+    // const res = await fetch("http://localhost:3000/api/signup", {
+    //   method: "POST",
+    //   headers: {"Content-Type": "application/json" },
+    //   body: JSON.stringify(body),
+    // })
+
+    // if(res.ok) {
+    //   alert("Signed up succesfully!");
+      signupWindow?.classList.add("hidden");
+      signupForm.reset();
+    // }
+    // else {
+    //   alert("Signed up failed. Please try again");
+    //   signupWindow?.classList.add("hidden");
+    //   signupForm.reset();
+    // }
+  })
 
 });
 
