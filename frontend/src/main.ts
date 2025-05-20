@@ -5,8 +5,6 @@
 //It is automatically transpiled into a .js by typescript when building the container (in Dockerfile.nginx, npx tsc)
 
 
-// main.ts
-// src/main.ts
 import { startPongGame, setCanvas } from "./pong.js";
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -22,12 +20,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const showClasses = ['opacity-100', 'scale-100', 'visible', 'pointer-events-auto'];
   const hideClasses = ['opacity-0', 'scale-10', 'invisible', 'pointer-events-none'];
 
-  const initialDraggableWindowStyle = {
-    left: '50%',
-    top: '50%',
-    transform: 'translate(-50%, -50%)'
-  };
-
   if (menuShortcut && menuContainer) {
     menuShortcut.addEventListener('click', () => {
       menuContainer.classList.remove(...hideClasses);
@@ -42,19 +34,11 @@ window.addEventListener("DOMContentLoaded", () => {
     closeMenuBtn.addEventListener('click', () => {
       menuContainer.classList.remove(...showClasses);
       menuContainer.classList.add(...hideClasses);
-
-      const windowToReset = document.getElementById('dragWindow');
-      if (windowToReset) {
-        windowToReset.style.left = initialDraggableWindowStyle.left;
-        windowToReset.style.top = initialDraggableWindowStyle.top;
-        windowToReset.style.transform = initialDraggableWindowStyle.transform;
-      }
     });
   } else {
      if (menuContainer && !closeMenuBtn) console.warn("Close menu button not found inside the menu window.");
   }
 
-  // Drag Logic
   const draggableWindow = document.getElementById('dragWindow')!; 
   const dragHandle = document.getElementById('dragHandle')!; 
 
@@ -62,7 +46,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!draggableWindow) console.error('Draggable window (id="dragWindow") not found.');
     if (!dragHandle) console.error('Drag handle (id="dragHandle") not found.');
     if (!menuContainer) console.error('Menu container (id="menu") for drag calculations not found.');
-    return;
+    return; 
   }
 
   let isDragging = false;
@@ -79,7 +63,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (event instanceof MouseEvent) {
       currentMouseX = event.clientX;
       currentMouseY = event.clientY;
-    } else {
+    } else { 
       currentMouseX = event.touches[0].clientX;
       currentMouseY = event.touches[0].clientY;
     }
@@ -101,7 +85,7 @@ window.addEventListener("DOMContentLoaded", () => {
     draggableWindow.style.transform = 'translate(0, 0)'; 
     draggableWindow.style.left = `${initialLeftRelativeToParent}px`;
     draggableWindow.style.top = `${initialTopRelativeToParent}px`;
-
+    
     startWindowX = initialLeftRelativeToParent;
     startWindowY = initialTopRelativeToParent;
 
@@ -128,6 +112,51 @@ window.addEventListener("DOMContentLoaded", () => {
     isDragging = false;
     dragHandle.style.cursor = 'grab';
     draggableWindow.style.willChange = 'auto';
+    
+    let finalWindowRect = draggableWindow.getBoundingClientRect();
+    const parentRect = menuContainer.getBoundingClientRect();
+
+    let finalPixelLeft = finalWindowRect.left - parentRect.left;
+    let finalPixelTop = finalWindowRect.top - parentRect.top;
+
+    const windowWidth = finalWindowRect.width;
+    const windowHeight = finalWindowRect.height;
+
+    const parentWidth = parentRect.width;
+    const parentHeight = parentRect.height;
+
+    // Boundary checks
+    if (finalPixelLeft < 0) {
+      finalPixelLeft = 0;
+    }
+    if (finalPixelTop < 0) {
+      finalPixelTop = 0;
+    }
+    if (finalPixelLeft + windowWidth > parentWidth) {
+      finalPixelLeft = parentWidth - windowWidth;
+    }
+    if (finalPixelTop + windowHeight > parentHeight) {
+      finalPixelTop = parentHeight - windowHeight;
+    }
+
+    if (windowWidth > parentWidth) {
+        finalPixelLeft = 0;
+    }
+    if (windowHeight > parentHeight) {
+        finalPixelTop = 0;
+    }
+
+
+    if (parentWidth > 0 && parentHeight > 0) {
+        const newPercentageLeft = (finalPixelLeft / parentWidth) * 100;
+        const newPercentageTop = (finalPixelTop / parentHeight) * 100;
+
+        draggableWindow.style.left = `${newPercentageLeft}%`;
+        draggableWindow.style.top = `${newPercentageTop}%`;
+    } else {
+        draggableWindow.style.left = `${finalPixelLeft}px`;
+        draggableWindow.style.top = `${finalPixelTop}px`;
+    }
 
     document.removeEventListener('mousemove', dragMove);
     document.removeEventListener('touchmove', dragMove);
@@ -138,13 +167,12 @@ window.addEventListener("DOMContentLoaded", () => {
   dragHandle.addEventListener('mousedown', dragStart);
   dragHandle.addEventListener('touchstart', dragStart, { passive: false });
 
-  // -------------------------- Play Pong
-  if (clickBtn && menuContainer && gameContainer && canvas) {
+  if (clickBtn && menuContainer && gameContainer && canvas) { 
     clickBtn.addEventListener("click", () => {
       menuContainer.classList.remove(...showClasses);
       menuContainer.classList.add(...hideClasses);
       
-      gameContainer.classList.remove("hidden");
+      gameContainer.classList.remove("hidden"); 
       setCanvas(canvas);
       startPongGame();
     });
@@ -158,3 +186,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
+
