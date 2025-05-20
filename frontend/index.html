@@ -89,9 +89,9 @@
           <span
             class="px-1.5 hover-important hover:underline cursor-default"><u>P</u>rofile</span>
           <span
-            class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-in</span>
+            id="signinTab" class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-in</span>
           <span
-            class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-up</span>
+            id="signupTab" class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-up</span>
         </div>
 
         <div class="flex-grow p-0.5">
@@ -149,5 +149,44 @@
     </footer>
     <script type="module" src="src/main.js"></script>
     <script type="module" src="src/main.ts"></script>
+
+      <!-- Sign-Up Window -->
+    <div id="signupWindow"
+      class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden z-50">
+
+      <div class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7]">
+        <span class="font-bold">Sign-Up</span>
+        <button id="closeSignupBtn" class="border px-2 text-[#4cb4e7] hover-important">X</button>
+      </div>
+
+      <form id="signupForm" class="p-4 flex flex-col space-y-3">
+        <input type="text" name="username" placeholder="Username" required class="bg-slate-800 text-white p-2 rounded" />
+        <input type="email" name="email" placeholder="Email" required class="bg-slate-800 text-white p-2 rounded" />
+        <input type="password" name="password" placeholder="Password" required class="bg-slate-800 text-white p-2 rounded" />
+        <button type="submit"
+          class="bg-[#4cb4e7] text-black font-bold py-2 rounded hover:bg-[#f8aab6] transition-all">
+          Sign Up
+        </button>
+      </form>
+    </div>
+
+      <!-- Sign-In Window -->
+    <div id="signinWindow"
+      class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden z-50">
+
+      <div class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7]">
+        <span class="font-bold">Sign-Up</span>
+        <button id="closeSigninBtn" class="border px-2 text-[#4cb4e7] hover-important">X</button>
+      </div>
+
+      <form id="signinForm" class="p-4 flex flex-col space-y-3">
+        <input type="text" name="username" placeholder="Username" required class="bg-slate-800 text-white p-2 rounded" />
+        <input type="password" name="password" placeholder="Password" required class="bg-slate-800 text-white p-2 rounded" />
+        <button type="submit"
+          class="bg-[#4cb4e7] text-black font-bold py-2 rounded hover:bg-[#f8aab6] transition-all">
+          Sign Up
+        </button>
+      </form>
+    </div>
   </body>
 </html>
