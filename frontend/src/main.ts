@@ -1,6 +1,6 @@
 import { startPongGame, setCanvas } from "./pong.js";
 import { DesktopWindow } from "./DesktopWindow.js";
-import { startWebcamFeed } from "./webcam.js";
+// import { startWebcamFeed } from "./webcam.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   const defaultShowClasses = [
@@ -50,6 +50,8 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("Failed to initialize the signup window:", error);
   }
 
+    // --- Profile Window ---
+
   try {
     const myNewWindow = new DesktopWindow({
       windowId: "profileWindow",
@@ -64,47 +66,50 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("Failed to initialize 'profileWindow':", error);
   }
 
+    // --- Pong Window ---
 
-  const startTestWebcamButton = document.getElementById('startTestWebcamBtn'); // Assuming this ID exists
-    if (startTestWebcamButton) {
-        startTestWebcamButton.addEventListener('click', async () => {
-            console.log("Start Test Webcam button clicked.");
-            // Make sure the 'testWindow' is open and its video elements are in the DOM
-            const stream = await startWebcamFeed('testWebcamVideo', 'testWebcamError');
-            if (stream) {
-                // You might want to associate this stream with the testWindow instance
-                // so you can stop it when the testWindow is closed.
-                // e.g., testWindowInstance.setActiveStream(stream);
-            }
-        });
-      }
+  try {
+    const myNewWindow = new DesktopWindow({
+      windowId: "pongWindow",
+      dragHandleId: "pongDragHandle",
+      resizeHandleId: "pongResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "pongWindow",
+      openTriggerId: "clickMeBtn",
+      closeButtonId: "closepongBtn",
+    });
+  } catch (error) {
+    console.error("Failed to initialize 'PREFIXWindow':", error);
+  }
+
+  // WEBCAM FUNCTION TO BE TESTED LATER
+  // const startTestWebcamButton = document.getElementById('startTestWebcamBtn'); // Assuming this ID exists
+  //   if (startTestWebcamButton) {
+  //       startTestWebcamButton.addEventListener('click', async () => {
+  //           console.log("Start Test Webcam button clicked.");
+  //           // Make sure the 'testWindow' is open and its video elements are in the DOM
+  //           const stream = await startWebcamFeed('testWebcamVideo', 'testWebcamError');
+  //           if (stream) {
+  //               // You might want to associate this stream with the testWindow instance
+  //               // so you can stop it when the testWindow is closed.
+  //               // e.g., testWindowInstance.setActiveStream(stream);
+  //           }
+  //       });
+  //     }
 
   // --- Pong Game Specific Logic ---
   const gameContainer = document.getElementById("gameContainer")!;
   const clickBtn = document.getElementById("clickMeBtn")!;
-  const backBtn = document.getElementById("backBtn")!;
   const canvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
-
-  // The #main element is no longer directly hidden by pong logic,
-  // but the menuWindow instance (dragWindow) will be.
-  const menuWindowElement = document.getElementById("dragWindow")!;
-
-  if (clickBtn && menuWindowElement && gameContainer && canvas) {
+  if (clickBtn && gameContainer && canvas) {
     clickBtn.addEventListener("click", () => {
-      menuWindowElement.classList.remove(...defaultShowClasses);
-      menuWindowElement.classList.add(...defaultHideClasses);
-      gameContainer.classList.remove("hidden");
       setCanvas(canvas);
       startPongGame();
     });
   } else {
     console.error("One or more elements for Pong game setup are missing.");
   }
-  if (backBtn) {
-    backBtn.addEventListener("click", () => {
-      location.reload();
-    });
-  }
+
 
   const signupForm = document.getElementById("signupForm") as HTMLFormElement;
 

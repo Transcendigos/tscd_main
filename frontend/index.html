@@ -43,15 +43,6 @@
       </div>
     </header>
 
-    <div id="gameContainer" class="hidden flex flex-col items-center mt-12">
-      <canvas id="pongCanvas" width="800" height="600"
-        class="border border-white"></canvas>
-      <button id="backBtn"
-        class="mt-4 bg-red-500 hover:bg-red-700 px-4 py-2 rounded">
-        Back to Menu
-      </button>
-    </div>
-
     <main class="flex-grow px-4
              fixed inset-0 flex justify-center items-center z-10" id="main"
       style="position: relative;">
@@ -172,7 +163,7 @@
           class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
       </div>
 
-      <!-- --------------PUT NEW WINDOW BELOW -------------- -->
+      <!-- --------------PROFILE WINDOW -------------- -->
 
       <div id="profileWindow"
         class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
@@ -214,12 +205,10 @@
 
         <div class="flex-grow p-2 overflow-auto bg-slate-800/50">
 
-
-          <video id="testWebcamVideo" autoplay playsinline muted style="width:100%; max-width:640px;"></video>
+          <video id="testWebcamVideo" autoplay playsinline muted
+            style="width:100%; max-width:640px;"></video>
           <button id="startTestWebcamBtn">TEST</button>
           <p id="yourErrorMessageElementIdGoesHere" style="color:red;"></p>
-
-
 
           <input type="text" placeholder="Sample input..."
             class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
@@ -229,6 +218,61 @@
           class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
       </div>
+
+      <!-- --------------PONG WINDOW -------------- -->
+
+      <div id="pongWindow"
+        class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+            bg-slate-900
+            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+            transition-all duration-300 ease-in-out
+            opacity-0 scale-95 invisible pointer-events-none"
+        style="min-width: 805px; min-height: 600px; max-width: 805px; max-height: 800px;">
+        <div id="pongDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          <div class="flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+              stroke-width="1.5" viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9.75 3.104v5.621a2.25 2.25 0 01-2.25 2.25H5.25a2.25 2.25 0 01-2.25-2.25V3.104M15.75 3.104v5.621a2.25 2.25 0 002.25 2.25h2.25a2.25 2.25 0 002.25-2.25V3.104m-6.75 4.516l-4.5-3.243m0 10.362l4.5-3.243m6.75 3.243l4.5-3.243m-12-3.874l4.5 3.243m2.25-3.243l4.5 3.243M3 10.875l4.5 3.243M3 10.875V7.522m18 3.353V7.522m-9 6.59V3.27m0 17.46V15.3"></path>
+            </svg>
+            <span class="font-bold">Window Title</span> </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg"><rect width="8"
+                  height="2" /></svg>
+            </button>
+            <button aria-label="Maximize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5"
+                  width="8" height="8" /></svg>
+            </button>
+            <button aria-label="Close" id="closepongBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+              X
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-grow bg-slate-800/50">
+          <div id="gameContainer"
+            class="flex flex-col items-center">
+            <canvas id="pongCanvas" width="800" height="600"
+              class="border border-white"></canvas>
+          </div>
+        </div>
+
+        <div id="pongResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+        </div>
+      </div>
+
+      <!-- --------------PUT NEW WINDOW BELOW -------------- -->
 
     </main>
 
