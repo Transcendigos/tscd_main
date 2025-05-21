@@ -1,130 +1,100 @@
-// THIS IS ONE THE FRONT JS FILE
-// Eventually we will have multiple of these (the game, the 3D scene etc)
-
-
-//It is automatically transpiled into a .js by typescript when building the container (in Dockerfile.nginx, npx tsc)
-
-
-// src/main.ts
-import { startPongGame, setCanvas } from "./pong.js"; // Your existing pong imports
-import { DesktopWindow } from "./windows.js"; // Import the new class
+import { startPongGame, setCanvas } from "./pong.js";
+import { DesktopWindow } from "./DesktopWindow.js";
 
 window.addEventListener("DOMContentLoaded", () => {
-  // --- Initialize the Menu Window ---
+  const defaultShowClasses = [
+    "opacity-100",
+    "scale-100",
+    "visible",
+    "pointer-events-auto",
+  ];
+  const defaultHideClasses = [
+    "opacity-0",
+    "scale-95",
+    "invisible",
+    "pointer-events-none",
+  ];
+
+  // --- Menu Window ---
   try {
     const menuWindow = new DesktopWindow({
-      windowId: 'dragWindow',             // The actual window element
-      dragHandleId: 'dragHandle',
-      resizeHandleId: 'resizeHandleBR',
-      boundaryContainerId: 'menu',        // The container that provides bounds for drag/resize
-      visibilityToggleId: 'menu',       // The element whose visibility is toggled (main 'menu' container)
-      openTriggerId: 'menuShortcut',
-      closeButtonId: 'closeMenuBtn',
-      // showClasses and hideClasses are default, but can be overridden
-      // minWindowWidth and minWindowHeight are default, but can be overridden
+      windowId: "dragWindow",
+      dragHandleId: "dragHandle",
+      resizeHandleId: "menuResize",
+      boundaryContainerId: "main",
+      visibilityToggleId: "dragWindow",
+      openTriggerId: "menuShortcut",
+      closeButtonId: "closeMenuBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
     });
-    // If menuWindow.open() or .close() is used, it will toggle the '#menu' element.
   } catch (error) {
     console.error("Failed to initialize the menu window:", error);
   }
 
-  // --- Example: Initializing a hypothetical Second Window (Chat) ---
-  // First, you would need to add the HTML for this chat window, e.g.:
-  // <div id="chatAppContainer" class="...some hide classes...">
-  //   <div id="chatWindow" class="...actual window styles...">
-  //     <div id="chatDragHandle">Drag Me</div>
-  //     ... content ...
-  //     <div id="chatResizeHandle"></div>
-  //     <button id="closeChatBtn">X</button>
-  //   </div>
-  // </div>
-  // <button id="openChatShortcut">Open Chat</button>
-
-  /*
+  // --- Signup Window ---
   try {
-    const chatWindow = new DesktopWindow({
-      windowId: 'chatWindow',
-      dragHandleId: 'chatDragHandle',
-      resizeHandleId: 'chatResizeHandle',
-      boundaryContainerId: 'chatAppContainer', // Or perhaps 'body' or another global container
-      visibilityToggleId: 'chatAppContainer',
-      openTriggerId: 'openChatShortcut',
-      closeButtonId: 'closeChatBtn',
-      initialZIndex: 101 // Example for slightly higher initial z-index
+    const signupWindow = new DesktopWindow({
+      windowId: "signupWindow",
+      dragHandleId: "signupDragHandle",
+      resizeHandleId: "signupResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "signupWindow",
+      openTriggerId: "signupTab",
+      closeButtonId: "closeSignupBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
     });
   } catch (error) {
-    console.error("Failed to initialize the chat window:", error);
+    console.error("Failed to initialize the signup window:", error);
   }
-  */
 
-
-  // --- Pong Game Specific Logic (Remains mostly the same) ---
+  // --- Pong Game Specific Logic ---
   const gameContainer = document.getElementById("gameContainer")!;
-  const clickBtn = document.getElementById("clickMeBtn")!; // This is inside your 'dragWindow'
+  const clickBtn = document.getElementById("clickMeBtn")!;
   const backBtn = document.getElementById("backBtn")!;
   const canvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
-  const menuContainer = document.getElementById("menu")!; // Still needed for pong logic that hides it
 
-  // Default show/hide classes for pong game transition (if different from window)
-  const gameShowClasses = ['opacity-100', 'scale-100', 'visible', 'pointer-events-auto'];
-  const gameHideClasses = ['opacity-0', 'scale-10', 'invisible', 'pointer-events-none'];
+  // The #main element is no longer directly hidden by pong logic,
+  // but the menuWindow instance (dragWindow) will be.
+  const menuWindowElement = document.getElementById("dragWindow")!;
 
-
-  if (clickBtn && menuContainer && gameContainer && canvas) {
+  if (clickBtn && menuWindowElement && gameContainer && canvas) {
     clickBtn.addEventListener("click", () => {
-      // Hide the menu container (which holds the menu window)
-      menuContainer.classList.remove(...gameShowClasses); // Or use menuWindow.hideClasses
-      menuContainer.classList.add(...gameHideClasses);
-      
-      gameContainer.classList.remove("hidden"); // Assuming "hidden" is your primary way to hide gameContainer
+      menuWindowElement.classList.remove(...defaultShowClasses);
+      menuWindowElement.classList.add(...defaultHideClasses);
+      gameContainer.classList.remove("hidden");
       setCanvas(canvas);
       startPongGame();
     });
   } else {
     console.error("One or more elements for Pong game setup are missing.");
-    if (!clickBtn) console.error("clickMeBtn not found for Pong.");
-    // Add more specific checks if needed
   }
-
   if (backBtn) {
     backBtn.addEventListener("click", () => {
-      // This logic might need adjustment depending on how you want to "go back"
-      // For now, reload is simple.
-      // You might want to hide gameContainer and show menuContainer (e.g., using menuWindow.open())
-      location.reload(); 
+      location.reload();
     });
   }
-
-    // Toggle Sign-Up Window
-  const signupTab = document.getElementById("signupTab");
-  const signupWindow = document.getElementById("signupWindow");
-  const closeSignupBtn = document.getElementById("closeSignupBtn");
-
-  signupTab?.addEventListener("click", () => {
-    signupWindow?.classList.remove("hidden");
-  });
-
-  closeSignupBtn?.addEventListener("click", () => {
-    signupWindow?.classList.add("hidden");
-  });
-
-  // Handle Form Submission
   const signupForm = document.getElementById("signupForm") as HTMLFormElement;
-
-    // Toggle Sign-In Window
-  const signinTab = document.getElementById("signinTab");
-  const signinWindow = document.getElementById("signinWindow");
-  const closeSigninBtn = document.getElementById("closeSigninBtn");
-
-  signinTab?.addEventListener("click", () => {
-    signinWindow?.classList.remove("hidden");
-  });
-
-  closeSigninBtn?.addEventListener("click", () => {
-    signinWindow?.classList.add("hidden");
-  });
-
-  // Handle Form Submission
-  const signinForm = document.getElementById("signinForm") as HTMLFormElement;
 });
 
+
+
+
+
+// ----------------WINDOW TEMPLATE----------------
+
+
+  // try {
+  //   const myNewWindow = new DesktopWindow({
+  //     windowId: "PREFIXWindow",
+  //     dragHandleId: "PREFIXDragHandle",
+  //     resizeHandleId: "PREFIXResizeHandle",
+  //     boundaryContainerId: "main",
+  //     visibilityToggleId: "PREFIXWindow",
+  //     openTriggerId: "signinTab",
+  //     closeButtonId: "closePREFIXBtn",
+  //   });
+  // } catch (error) {
+  //   console.error("Failed to initialize 'PREFIXWindow':", error);
+  // }
