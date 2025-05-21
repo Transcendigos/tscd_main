@@ -10,6 +10,8 @@ interface DesktopWindowOptions {
   hideClasses?: string[];
   minWindowWidth?: number;
   minWindowHeight?: number;
+  maxWindowWidth?: number;
+  maxWindowHeight?: number;
   initialZIndex?: number;
 }
 
@@ -26,6 +28,8 @@ export class DesktopWindow {
   private hideClasses: string[];
   private minWidth: number;
   private minHeight: number;
+  private maxWidth: number;
+  private maxHeight : number;
   public zIndex: number;
 
   private isDragging: boolean = false;
@@ -69,6 +73,8 @@ export class DesktopWindow {
     this.hideClasses = options.hideClasses || ['opacity-0', 'scale-95', 'invisible', 'pointer-events-none'];
     this.minWidth = options.minWindowWidth || 200;
     this.minHeight = options.minWindowHeight || 300;
+    this.maxWidth = options.maxWindowWidth || Number.MAX_SAFE_INTEGER;
+    this.maxHeight = options.maxWindowHeight || Number.MAX_SAFE_INTEGER;
 
     this.zIndex = options.initialZIndex !== undefined ? options.initialZIndex : DesktopWindow.highestZIndex;
     if (this.zIndex >= DesktopWindow.highestZIndex) {
@@ -78,6 +84,7 @@ export class DesktopWindow {
 
     this._initEventListeners();
     this._updateMinDimensions();
+    this._updateMaxDimensions();
     DesktopWindow.activeWindows.push(this);
   }
 
@@ -136,6 +143,14 @@ export class DesktopWindow {
     const mh = parseInt(style.minHeight, 10);
     if (!isNaN(mw) && mw > 0) this.minWidth = mw;
     if (!isNaN(mh) && mh > 0) this.minHeight = mh;
+  }
+
+    private _updateMaxDimensions = (): void => {
+    const style = window.getComputedStyle(this.windowElement);
+    const mw = parseInt(style.maxWidth, 10);
+    const mh = parseInt(style.maxHeight, 10);
+    if (!isNaN(mw) && mw > 0) this.maxWidth = mw;
+    if (!isNaN(mh) && mh > 0) this.maxHeight = mh;
   }
 
   private _onDragStart = (event: MouseEvent | TouchEvent): void => {
