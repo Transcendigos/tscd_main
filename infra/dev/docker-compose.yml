@@ -25,8 +25,13 @@ services:
   backend:
     build:
       context: ../..
-      dockerfile: infra/prod/Dockerfile_backend
+      dockerfile: infra/dev/Dockerfile_backend
     container_name: backend
+    volumes:
+      - sqlite-data:/app/data
     ports:
       - "3000:3000"
     restart: unless-stopped
+
+volumes:
+  sqlite-data:

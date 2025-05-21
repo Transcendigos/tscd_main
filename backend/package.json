@@ -3,6 +3,7 @@
   "type": "module",
   "dependencies": {
     "fastify": "^4.0.0",
-    "@fastify/cors": "^8.0.0"
+    "@fastify/cors": "^8.0.0",
+    "sqlite3": "^5.1.6"
   }
 }
