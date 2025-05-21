@@ -110,7 +110,7 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("One or more elements for Pong game setup are missing.");
   }
 
-
+//SIGN UP SECTION
   const signupForm = document.getElementById("signupForm") as HTMLFormElement;
 
   // Toggle Sign-Up Window

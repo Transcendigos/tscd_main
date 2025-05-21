@@ -4,6 +4,8 @@
   "dependencies": {
     "fastify": "^4.0.0",
     "@fastify/cors": "^8.0.0",
-    "sqlite3": "^5.1.6"
+    "@fastify/cookie": "^7.0.0",
+    "sqlite3": "^5.1.6",
+    "bcrypt": "^5.1.1"
   }
 }
