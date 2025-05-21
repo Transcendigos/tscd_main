@@ -7,7 +7,7 @@ Commands:
 
 Create a new window: 
 - copy the commented template found at the end of index.html
-- paste inside <main> , just before </main>/!\ important
+- paste inside main container, just before "</main>"/!\ important
 - select PREFIX -> ctrl + d -> replace all by your window name (ex: chat, settings etc)
 - copy the commented try/catch template found at the end of main.ts
 - paste it after the other similar blocks
