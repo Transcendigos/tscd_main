@@ -4,6 +4,15 @@ Commands:
 - 'make clean' ==> clean all unnecessary files
 - 'make dev clean' ==> clean all unnecessary files on the dev side
 
+Create a new window: 
+- copy the commented template found at the end of index.html
+- paste inside main container, just before "< / main >"/!\ important
+- select PREFIX -> ctrl + d -> replace all by your window name (ex: chat, settings etc)
+- copy the commented try/catch template found at the end of main.ts
+- paste it after the other similar blocks
+- select PREFIX -> ctrl + d -> replace all by your window name (exactly same as for html)
+- set spawner in 'openTriggerId: "spawner"' to the id of the button that should make your window appear
+
 To remove the persistant database of login/users:
 - docker volume rm
 

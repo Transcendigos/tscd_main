@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <title>ft_transcendence</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- <link href="/main.css" rel="stylesheet"> -->
     <link rel="stylesheet" href="/src/style.css">
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
@@ -21,10 +20,19 @@
       );
       font-family: 'Inter', sans-serif;
     }
+    .opacity-0 { opacity: 0; }
+    .opacity-100 { opacity: 1; }
+    .scale-95 { transform: scale(0.95); }
+    .scale-100 { transform: scale(1); }
+    .invisible { visibility: hidden; }
+    .visible { visibility: visible; }
+    .pointer-events-none { pointer-events: none; }
+    .pointer-events-auto { pointer-events: auto; }
   </style>
   </head>
 
-  <body class="text-[#4cb4e7] min-h-screen flex flex-col bg-[#1b3f72] justify-between">
+  <body
+    class="text-[#4cb4e7] min-h-screen flex flex-col bg-[#1b3f72] justify-between">
 
     <header class="py-5 flex justify-center text-center">
       <div class="flex flex-col items-center ">
@@ -45,13 +53,18 @@
     </div>
 
     <main class="flex-grow px-4
-             opacity-0 scale-95 invisible pointer-events-none  transform transition-all duration-300 ease-in-out
-             fixed inset-0 flex justify-center items-center z-50" id="menu"
+             fixed inset-0 flex justify-center items-center z-10" id="main"
       style="position: relative;">
 
+      <!-- --------------MENU WINDOW-------------- -->
+
       <div id="dragWindow"
-       class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col py-auto"
-       style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">
+        class="border-2 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+               bg-slate-900
+               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+               transition-all duration-300 ease-in-out
+               opacity-0 scale-95 invisible pointer-events-none"
+        style="min-width: 200px; min-height: 300px;">
 
         <div id="dragHandle"
           class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
@@ -61,7 +74,7 @@
               <rect x="1" y="1" width="14" height="14" rx="1" />
               <line x1="1" y1="5" x2="15" y2="5" />
             </svg>
-            <span class="font-bold">ft_pong</span>
+            <span class="font-bold select-none">ft_pong</span>
           </div>
           <div class="flex items-center space-x-1">
             <button aria-label="Minimize"
@@ -85,51 +98,82 @@
         </div>
 
         <div
-          class="px-1.5 py-0.5 flex items-center space-x-2 border-b border-[#4cb4e7] text-[#4cb4e7]">
+          class="px-1.5 py-0.5 flex items-center space-x-2 border-b border-[#4cb4e7] text-[#4cb4e7] select-none">
           <span
             class="px-1.5 hover-important hover:underline cursor-default"><u>P</u>rofile</span>
-          <span
+          <span id="signinTab"
             class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-in</span>
-          <span
-            id="signupTab" class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-up</span>
+          <span id="signupTab"
+            class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-up</span>
         </div>
 
-        <div class="flex-grow p-0.5">
+        <div class="flex-grow p-0.5 overflow-hidden bg-slate-800/50">
           <div
-            class="border border-[#4cb4e7] h-full text-[#4cb4e7] flex flex-col justify-center items-center  ">
-
+            class="border border-[#4cb4e7] h-full text-[#4cb4e7] flex flex-col justify-center items-center">
             <button id="clickMeBtn"
               class="font-inter font-extrabold hover-important w-full py-7 pt-15 transition-all">
               PLAY PONG
             </button>
-
             <div class="h-[0.9px] bg-[#4cb4e7] origin-center w-1/2"></div>
-
             <button id="darkBtn"
-              class=" font-inter font-extrabold hover-important w-full py-7 transition-all">
+              class="font-inter font-extrabold hover-important w-full py-7 transition-all">
               MULTIPLAYER
             </button>
-
             <div class="h-[1px] bg-[#4cb4e7] origin-center w-1/2"></div>
-
             <button id="tournamentBtn"
               class="font-Inter font-extrabold hover-important w-full py-7 pb-15 transition-all">
               TOURNAMENT
             </button>
-
-            <div class="h text-transparent">.</div>
           </div>
         </div>
 
         <div
-          class="px-1.5 py-0.5 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7]">
+          class="px-1.5 py-1 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7] select-none">
           <div class="border font-extrabold border-[#4cb4e7] px-2">Chat</div>
-          <div class="flex space-x-2">
+          <div class="flex space-x-2 mr-2">
             <div class="border font-extrabold border-[#4cb4e7] px-2">INFO</div>
             <div class="border font-extrabold border-[#4cb4e7] px-2">STATS</div>
           </div>
         </div>
+
+        <div id="menuResize"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
       </div>
+
+      <!-- --------------SIGN UP WINDOW-------------- -->
+
+      <div id="signupWindow"
+        class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+               transition-all duration-300 ease-in-out
+               opacity-0 scale-95 invisible pointer-events-none"
+        style="min-width: 200px; min-height: 250px; max-height: 250px;">
+
+        <div id="signupDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
+          <span class="font-bold">Sign-Up</span>
+          <button id="closeSignupBtn"
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">X</button>
+        </div>
+
+        <form id="signupForm" class="p-4 flex flex-col space-y-3">
+          <input type="text" name="username" placeholder="Username" required
+            class="bg-slate-800 p-2" />
+          <input type="email" name="email" placeholder="Email" required
+            class="bg-slate-800 p-2" />
+          <input type="password" name="password" placeholder="Password" required
+            class="bg-slate-800 p-2" />
+          <button type="submit"
+            class="bg-[#4cb4e7] text-black font-bold py-2 hover:bg-[#f8aab6] transition-all">
+            Sign Up
+          </button>
+        </form>
+        <div id="signupResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
+      </div>
+
+      <!-- --------------PUT NEW WINDOW BELOW -------------- -->
+
     </main>
 
     <footer class="flex items-center text-center justify-center py-auto mb-5">
@@ -147,27 +191,63 @@
         </span>
       </div>
     </footer>
+    <script type="module" src="src/DesktopWindow.js"></script>
     <script type="module" src="src/main.js"></script>
-
-      <!-- Sign-Up Window -->
-  <div id="signupWindow"
-    class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden z-50">
-
-    <div class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7]">
-      <span class="font-bold">Sign-Up</span>
-      <button id="closeSignupBtn" class="border px-2 text-[#4cb4e7] hover-important">X</button>
-    </div>
-
-    <form id="signupForm" class="p-4 flex flex-col space-y-3">
-      <input type="text" name="username" placeholder="Username" required class="bg-slate-800 text-white p-2 rounded" />
-      <input type="email" name="email" placeholder="Email" required class="bg-slate-800 text-white p-2 rounded" />
-      <input type="password" name="password" placeholder="Password" required class="bg-slate-800 text-white p-2 rounded" />
-      <button type="submit"
-        class="bg-[#4cb4e7] text-black font-bold py-2 rounded hover:bg-[#f8aab6] transition-all">
-        Sign Up
-      </button>
-    </form>
-  </div>
-
   </body>
 </html>
+
+<!-- ------------------------WINDOW TEMPLATE------------------------ -->
+
+<!-- 
+
+<div id="PREFIXWindow"
+  class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+            bg-slate-900
+            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+            transition-all duration-300 ease-in-out
+            opacity-0 scale-95 invisible pointer-events-none"
+  style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+  <div id="PREFIXDragHandle"
+    class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+    <div class="flex items-center space-x-1.5">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor"
+        stroke-width="1.5" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M9.75 3.104v5.621a2.25 2.25 0 01-2.25 2.25H5.25a2.25 2.25 0 01-2.25-2.25V3.104M15.75 3.104v5.621a2.25 2.25 0 002.25 2.25h2.25a2.25 2.25 0 002.25-2.25V3.104m-6.75 4.516l-4.5-3.243m0 10.362l4.5-3.243m6.75 3.243l4.5-3.243m-12-3.874l4.5 3.243m2.25-3.243l4.5 3.243M3 10.875l4.5 3.243M3 10.875V7.522m18 3.353V7.522m-9 6.59V3.27m0 17.46V15.3"></path>
+      </svg>
+      <span class="font-bold">Window Title</span> </div>
+    <div class="flex items-center space-x-1">
+      <button aria-label="Minimize" disabled
+        class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+        <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+          xmlns="http://www.w3.org/2000/svg"><rect width="8"
+            height="2" /></svg>
+      </button>
+      <button aria-label="Maximize" disabled
+        class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+        <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+          stroke="#4cb4e7" stroke-width="1"
+          xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5"
+            width="8" height="8" /></svg>
+      </button>
+      <button aria-label="Close" id="closePREFIXBtn"
+        class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+        X
+      </button>
+    </div>
+  </div>
+
+  <div class="flex-grow p-2 overflow-auto bg-slate-800/50">
+    <p>This is the content of PREFIXWindow.</p>
+    <p>Replace this with actual application content.</p>
+    <input type="text" placeholder="Sample input..."
+      class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
+  </div>
+
+  <div id="PREFIXResizeHandle"
+    class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+  </div>
+</div>
+
+-->
