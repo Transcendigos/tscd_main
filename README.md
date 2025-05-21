@@ -2,8 +2,7 @@ Commands:
 - 'make run' ==> launch the prod application
 - 'make dev_restart' ==> launch the dev application with Vite as dataframe on localhost:5173 for the time being
 - 'make clean' ==> clean all unnecessary files
-- 'make dev_clean' ==> clean all unnecessary files on the dev side
-
+- 'make dev clean' ==> clean all unnecessary files on the dev side
 
 Create a new window: 
 - copy the commented template found at the end of index.html
@@ -14,4 +13,12 @@ Create a new window:
 - select PREFIX -> ctrl + d -> replace all by your window name (exactly same as for html)
 - set spawner in 'openTriggerId: "spawner"' to the id of the button that should make your window appear
 
+To remove the persistant database of login/users:
+- docker volume rm
 
+To check the database:
+- docker exec -it backend sh
+- sqlite3 data/db
+- sqlite> .tables
+- sqlite> SELECT * FROM users;
+- sqlite> .exit

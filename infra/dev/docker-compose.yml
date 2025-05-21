@@ -19,3 +19,19 @@ services:
     command: npm run dev
     environment:
       - NODE_ENV=development
+    expose:
+      - "5173"
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: infra/dev/Dockerfile_backend
+    container_name: backend
+    volumes:
+      - sqlite-data:/app/data
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  sqlite-data:
