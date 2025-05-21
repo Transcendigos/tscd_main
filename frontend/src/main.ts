@@ -92,7 +92,7 @@ window.addEventListener("DOMContentLoaded", () => {
   //     resizeHandleId: "PREFIXResizeHandle",
   //     boundaryContainerId: "main",
   //     visibilityToggleId: "PREFIXWindow",
-  //     openTriggerId: "signinTab",
+  //     openTriggerId: "spawner",
   //     closeButtonId: "closePREFIXBtn",
   //   });
   // } catch (error) {

@@ -3,3 +3,15 @@ Commands:
 - 'make dev_restart' ==> launch the dev application with Vite as dataframe on localhost:5173 for the time being
 - 'make clean' ==> clean all unnecessary files
 - 'make dev_clean' ==> clean all unnecessary files on the dev side
+
+
+Create a new window: 
+- copy the commented template found at the end of index.html
+- paste inside <main> , just before </main>/!\ important
+- select PREFIX -> ctrl + d -> replace all by your window name (ex: chat, settings etc)
+- copy the commented try/catch template found at the end of main.ts
+- paste it after the other similar blocks
+- select PREFIX -> ctrl + d -> replace all by your window name (exactly same as for html)
+- set spawner in 'openTriggerId: "spawner"' to the id of the button that should make your window appear
+
+
