@@ -1,6 +1,7 @@
 import { startPongGame, setCanvas } from "./pong.js";
 import { DesktopWindow } from "./DesktopWindow.js";
 // import { startWebcamFeed } from "./webcam.js";
+import { checkSignedIn, setupSignupForm } from "./sign_up.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   const defaultShowClasses = [
@@ -110,55 +111,15 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("One or more elements for Pong game setup are missing.");
   }
 
-//SIGN UP SECTION
-  const signupForm = document.getElementById("signupForm") as HTMLFormElement;
-
-  // Toggle Sign-Up Window
-  const signupTab = document.getElementById("signupTab");
-  const signupWindow = document.getElementById("signupWindow");
-  const closeSignupBtn = document.getElementById("closeSignupBtn");
-
-  signupTab?.addEventListener("click", () => {
-    signupWindow?.classList.remove("hidden");
-  });
-
-  closeSignupBtn?.addEventListener("click", () => {
-    signupWindow?.classList.add("hidden");
-  });
-
-  signupForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const formData = new FormData(signupForm);
-    const body: Record<string, string> = {};
-
-    formData.forEach((value, key) => {
-      body[key] = value.toString(); // convert to string just to be safe
-    });
-
-    try {
-      console.log("Sending signup request:", body);
-
-      const res = await fetch("http://localhost:3000/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const result = await res.json();
-      console.log("Server responded:", result);
-
-      if (res.ok) {
-        // alert("Signed up successfully!");
-        signupWindow?.classList.add("hidden");
-        signupForm.reset();
-      } else {
-        alert("Signup failed.");
-      }
-    } catch (err) {
-      console.error("Request failed:", err);
-      alert("Could not contact the server.");
+  // --- START OF SIGN-UP  Logic ---
+  checkSignedIn().then((isSignedIn) => {
+    if (!isSignedIn) 
+    {
+      setupSignupForm(); 
     }
-  });
+  }); 
+  // --- END OF SIGN-UP  Logic ---
+
 });
 
 // ----------------WINDOW TEMPLATE----------------

@@ -6,7 +6,11 @@ import path from 'path';
 import fs from 'fs';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 
+
+dotenv.config();
 
 const server = Fastify({ logger: true });
 
@@ -17,6 +21,8 @@ server.register(cors, {
 });
 
 server.register(cookie);
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key'; // replace with real secret in production
 
 //ABSOLUTE PATH USED TO LINK OUR DIFFERENT DATABASE
 const dataDir = path.resolve('./data');
@@ -78,21 +84,22 @@ server.post('/api/signup', async (req, reply) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const sessionToken = crypto.randomBytes(32).toString('hex');
 
-    await new Promise((resolve, reject) => {
+    const userID = await new Promise((resolve, reject) => {
       db.run(
         'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
         [username, email, hashedPassword],
         function (err) {
           if (err) return reject(err);
-          resolve();
+          resolve(this.lastID); // return inserted user ID;
         }
       );
     });
 
+    const token = jwt.sign({ userID, username, email }, JWT_SECRET, { expiresIn: '7d'});
+    reply.clearCookie('session_token', { path: '/' }); // cleanup legacy
     return reply
-      .setCookie('session_token', sessionToken, {
+      .setCookie('auth_token', token, {
         httpOnly: true,
         sameSite: 'Lax',
         path: '/',
@@ -105,21 +112,38 @@ server.post('/api/signup', async (req, reply) => {
     return reply.code(500).send({ error: 'Server error during signup' });
   }
 });
-
   // END SIGN-UP SECTION
 
-  // LOGOUT SECTION CLEAR COOKIE
-  server.post('/api/logout', (req, reply) => {
+  // SECTION VERIFY IF LOG IN
+  // `/api/me` – check if user is logged in
+server.get('/api/me', (req, reply) => {
+  const token = req.cookies.auth_token;
+  if (!token) {
+    return reply.send({ signedIn: false });
+  }
+
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    reply.send({ signedIn: true, user: payload });
+  } catch {
+    reply.send({ signedIn: false });
+  }
+});
+// END SECTION
+
+// SECTION LOG OUT - CLEAR COOKIE JWT TOKEN
+server.post('/api/logout', (req, reply) => {
   reply
-    .clearCookie('session_token', { path: '/' })
+    .clearCookie('auth_token', { path: '/' })
     .send({ message: 'Logged out' });
 });
-  // END LOGOUT SECTION
+// END SECTION
+
 
   // VISUALIZING DATA TABLE INTO LOCALHOST:3000
   server.get('/api/dev/users', async (req, reply) => {
     try {
-      const query = 'SELECT id, username, password, email FROM users';
+      const query = 'SELECT id, username, email FROM users';
       const rows = await new Promise((resolve, reject) => {
         db.all(query, [], (err, resultRows) => {
           if (err) {
