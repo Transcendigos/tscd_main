@@ -1,5 +1,6 @@
 import { startPongGame, setCanvas } from "./pong.js";
 import { DesktopWindow } from "./DesktopWindow.js";
+import { startWebcamFeed } from "./webcam.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   const defaultShowClasses = [
@@ -49,6 +50,35 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("Failed to initialize the signup window:", error);
   }
 
+  try {
+    const myNewWindow = new DesktopWindow({
+      windowId: "profileWindow",
+      dragHandleId: "profileDragHandle",
+      resizeHandleId: "profileResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "profileWindow",
+      openTriggerId: "profileBtn",
+      closeButtonId: "closeprofileBtn",
+    });
+  } catch (error) {
+    console.error("Failed to initialize 'profileWindow':", error);
+  }
+
+
+  const startTestWebcamButton = document.getElementById('startTestWebcamBtn'); // Assuming this ID exists
+    if (startTestWebcamButton) {
+        startTestWebcamButton.addEventListener('click', async () => {
+            console.log("Start Test Webcam button clicked.");
+            // Make sure the 'testWindow' is open and its video elements are in the DOM
+            const stream = await startWebcamFeed('testWebcamVideo', 'testWebcamError');
+            if (stream) {
+                // You might want to associate this stream with the testWindow instance
+                // so you can stop it when the testWindow is closed.
+                // e.g., testWindowInstance.setActiveStream(stream);
+            }
+        });
+      }
+
   // --- Pong Game Specific Logic ---
   const gameContainer = document.getElementById("gameContainer")!;
   const clickBtn = document.getElementById("clickMeBtn")!;
@@ -96,51 +126,48 @@ window.addEventListener("DOMContentLoaded", () => {
     const formData = new FormData(signupForm);
     const body: Record<string, string> = {};
 
-
     formData.forEach((value, key) => {
       body[key] = value.toString(); // convert to string just to be safe
     });
 
     try {
-        console.log("Sending signup request:", body);
+      console.log("Sending signup request:", body);
 
-        const res = await fetch("http://localhost:3000/api/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
+      const res = await fetch("http://localhost:3000/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-        const result = await res.json();
-        console.log("Server responded:", result);
+      const result = await res.json();
+      console.log("Server responded:", result);
 
-        if (res.ok) {
-          // alert("Signed up successfully!");
-          signupWindow?.classList.add("hidden");
-          signupForm.reset();
-        } else {
-          alert("Signup failed.");
-        }
-      } catch (err) {
-        console.error("Request failed:", err);
-        alert("Could not contact the server.");
+      if (res.ok) {
+        // alert("Signed up successfully!");
+        signupWindow?.classList.add("hidden");
+        signupForm.reset();
+      } else {
+        alert("Signup failed.");
       }
+    } catch (err) {
+      console.error("Request failed:", err);
+      alert("Could not contact the server.");
+    }
   });
 });
 
-
 // ----------------WINDOW TEMPLATE----------------
 
-
-  // try {
-  //   const myNewWindow = new DesktopWindow({
-  //     windowId: "PREFIXWindow",
-  //     dragHandleId: "PREFIXDragHandle",
-  //     resizeHandleId: "PREFIXResizeHandle",
-  //     boundaryContainerId: "main",
-  //     visibilityToggleId: "PREFIXWindow",
-  //     openTriggerId: "spawner",
-  //     closeButtonId: "closePREFIXBtn",
-  //   });
-  // } catch (error) {
-  //   console.error("Failed to initialize 'PREFIXWindow':", error);
-  // }
+// try {
+//   const myNewWindow = new DesktopWindow({
+//     windowId: "PREFIXWindow",
+//     dragHandleId: "PREFIXDragHandle",
+//     resizeHandleId: "PREFIXResizeHandle",
+//     boundaryContainerId: "main",
+//     visibilityToggleId: "PREFIXWindow",
+//     openTriggerId: "spawner",
+//     closeButtonId: "closePREFIXBtn",
+//   });
+// } catch (error) {
+//   console.error("Failed to initialize 'PREFIXWindow':", error);
+// }
