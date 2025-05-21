@@ -91,9 +91,6 @@ window.addEventListener("DOMContentLoaded", () => {
     signupWindow?.classList.add("hidden");
   });
 
-  // Handle Form Submission
-  const signupForm = document.getElementById("signupForm") as HTMLFormElement;
-
   signupForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(signupForm);
