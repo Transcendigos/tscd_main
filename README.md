@@ -22,3 +22,5 @@ To check the database:
 - sqlite> .tables
 - sqlite> SELECT * FROM users;
 - sqlite> .exit
+
+

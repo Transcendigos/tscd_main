@@ -51,6 +51,7 @@ dev_clean:
 	$(DOCKER_COMPOSE_DEV) down -v --rmi local # -v removes volumes, --rmi local removes images for services without custom names
 	rm -rf "$(PROJECT_DIR)/frontend/dev/node_modules"
 	rm -f "$(PROJECT_DIR)/frontend/dev/package-lock.json"
+	rm -f "$(PROJECT_DIR)/logs/backend.log"
 
 dev_restart: dev_down dev_clean dev_init dev_up
 
