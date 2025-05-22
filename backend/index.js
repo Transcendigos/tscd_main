@@ -8,11 +8,16 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import pino from 'pino';
+
 
 
 dotenv.config();
 
-const server = Fastify({ logger: true });
+const logStream = fs.createWriteStream('/logs/backend.log', {flags: 'a'});
+const logger = pino(logStream);
+
+const server = Fastify({ logger });
 
 // ALLOW DIFFERENT PORT EXCHANGE FOR FRONT TO BACK
 server.register(cors, {
