@@ -23,4 +23,16 @@ To check the database:
 - sqlite> SELECT * FROM users;
 - sqlite> .exit
 
-
+See ELK logs: 
+- access Kibana at http://localhost:5601
+- Go to Management > Kibana > Data View
+- Click “Create data view”
+- Fill the form:
+    Name: Backend Logs
+    Index pattern: backend-logs*
+    Timestamp field: select @timestamp
+    If it doesn’t show up: make sure some logs have reached Elasticsearch first via Logstash (use /api/test-log to trigger if needed).
+- Click “Save data view”
+- Go to the sidebar > click Discover
+- Select the Backend Logs data view (top left dropdown)
+- You now have access to logs stream in real time, they can be searched and filtered via the searchbar
