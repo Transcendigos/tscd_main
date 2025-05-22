@@ -123,6 +123,23 @@ window.addEventListener("DOMContentLoaded", () => {
   }); 
   // --- END OF SIGN-UP  Logic ---
 
+  // --- Signin Window ---
+  try {
+    const signinWindow = new DesktopWindow({
+      windowId: "signinWindow",
+      dragHandleId: "signinDragHandle",
+      resizeHandleId: "signinResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "signinWindow",
+      openTriggerId: "signinTab",
+      closeButtonId: "closeSigninBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  } catch (error) {
+    console.error("Failed to initialize the signin window:", error);
+  }
+
 });
 
 // ----------------WINDOW TEMPLATE----------------

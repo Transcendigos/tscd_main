@@ -273,6 +273,36 @@
         </div>
       </div>
 
+      <!-- --------------SIGN IN WINDOW-------------- -->
+
+      <div id="signinWindow"
+        class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+               transition-all duration-300 ease-in-out
+               opacity-0 scale-95 invisible pointer-events-none"
+        style="min-width: 200px; min-height: 250px; max-height: 250px;">
+
+        <div id="signinDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
+          <span class="font-bold">Sign-In</span>
+          <button id="closeSigninBtn"
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">X</button>
+        </div>
+
+        <form id="signinForm" class="p-4 flex flex-col space-y-3">
+          <input type="text" name="username" placeholder="Username" required
+            class="bg-slate-800 p-2" />
+          <input type="password" name="password" placeholder="Password" required
+            class="bg-slate-800 p-2" />
+          <button type="submit"
+            class="bg-[#4cb4e7] text-black font-bold py-2 hover:bg-[#f8aab6] transition-all">
+            Sign In
+          </button>
+        </form>
+        <div id="signinResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
+      </div>
+
       <!-- --------------PUT NEW WINDOW BELOW -------------- -->
 
     </main>
