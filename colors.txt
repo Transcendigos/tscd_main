@@ -1,0 +1,47 @@
+
+----------Main Colors----------
+
+- seLightBlue
+    Hex: #4cb4e7
+    HSB: [200, 67, 91]
+    usage: text, titles, borders
+- backGroundBlue
+    Hex: #1b3F72
+    HSB: [215, 76, 45]
+    usage: main background
+
+----------Supporting Colors----------
+
+- seLightRed
+    Hex: #f8aab6
+    HSB: [351, 31, 97]
+    usage: on hover interactables
+
+- seLightGreen
+    Hex: #8be076
+    HSB: [108, 47, 88]
+    usage: occasional pop of color
+
+- supRed
+    Hex: #D4535B
+    HSB: [356, 61, 83]
+    usage: error messages (ex: "email already in use")
+
+- supGreen
+    Hex: #53D4C0
+    HSB: [171, 61, 83]
+    usage: success messages (ex: "")
+
+----------Neutral Colors----------
+
+- slate-900
+    Hex: #020617
+    HSB: [229, 91, 9]
+    usage: windows dragHandles
+- altSlate
+    Hex: #1e293b
+    HSB: [217, 49, 23]
+    usage: windows body background
+    note: need to define a lighter shade for forms background
+
+
