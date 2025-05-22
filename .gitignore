@@ -1,0 +1,25 @@
+# Ignore backend environment variables
+/backend/.env
+
+# Ignore frontend environment variables
+/frontend/dev/.env
+
+# Node.js dependencies
+node_modules/
+
+# SQLite database (optional for prod)
+*.sqlite
+*.db
+
+# Logs
+logs
+*.log
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
