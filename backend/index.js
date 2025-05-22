@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
+import { OAuth2Client } from 'google-auth-library';
 
 dotenv.config();
 
@@ -30,7 +31,7 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-// SIGN-UP SECTION
+// SIGN-UP SECTION - NO GOOGLE
 const dbPath = path.join(dataDir, 'db.sqlite');
 
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -114,8 +115,70 @@ server.post('/api/signup', async (req, reply) => {
 });
   // END SIGN-UP SECTION
 
-  // SECTION VERIFY IF LOG IN
-  // `/api/me` – check if user is logged in
+//GOOGLE AUTHORIZATION SIGN UP
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+server.post('/api/google-login', async (req, reply) => {
+  const { credential } = req.body;
+  if (!credential) {
+    return reply.code(400).send({ error: 'Missing credential token' });
+  }
+
+  try 
+  {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub, email, name, picture } = payload;
+
+    const user = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT * FROM users WHERE email = ?',
+        [email],
+        (err, row) => {
+          if (err) return reject(err);
+          resolve(row);
+        }
+      );
+    });
+
+    if (!user) {
+      await new Promise((resolve, reject) => {
+        db.run(
+          'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+          [name, email, 'google-oauth'],
+          function (err) {
+            if (err) return reject(err);
+            resolve();
+          }
+        );
+      });
+    }
+
+    const token = jwt.sign({ userID, name, email }, JWT_SECRET, { expiresIn: '7d' });
+
+    return reply
+      .setCookie('auth_token', token, {
+        httpOnly: true,
+        sameSite: 'Lax',
+        path: '/',
+      })
+      .send({ message: 'Google login successful', name });
+
+  } 
+  catch (err) 
+  {
+    console.error('Google login error:', err.message);
+    return reply.code(401).send({ error: 'Invalid Google token' });
+  }
+});
+// END GOOGLE AUTHORIZATION SIGN UP
+
+// SECTION VERIFY IF LOG IN
+// `/api/me` – check if user is logged in
 server.get('/api/me', (req, reply) => {
   const token = req.cookies.auth_token;
   if (!token) {

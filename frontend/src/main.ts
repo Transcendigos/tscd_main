@@ -2,6 +2,7 @@ import { startPongGame, setCanvas } from "./pong.js";
 import { DesktopWindow } from "./DesktopWindow.js";
 // import { startWebcamFeed } from "./webcam.js";
 import { checkSignedIn, setupSignupForm } from "./sign_up.js";
+import { initGoogleSignIn } from "./google_auth";
 
 window.addEventListener("DOMContentLoaded", () => {
   const defaultShowClasses = [
@@ -117,6 +118,8 @@ window.addEventListener("DOMContentLoaded", () => {
     {
       setupSignupForm(); 
     }
+    
+    initGoogleSignIn();
   }); 
   // --- END OF SIGN-UP  Logic ---
 

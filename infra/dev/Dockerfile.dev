@@ -6,6 +6,7 @@ WORKDIR /app
 
 COPY dev/package.json ./
 COPY dev/package-lock.json ./
+COPY dev/.env ./
 
 
 RUN npm install

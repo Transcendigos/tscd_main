@@ -86,3 +86,53 @@ export function setupSignupForm() {
     }
   });
 }
+
+
+export function setupAlreadySignIn() {
+  const signupForm = document.getElementById("signupForm") as HTMLFormElement;
+  const signupTab = document.getElementById("signupTab");
+  const signupWindow = document.getElementById("signupWindow");
+  const closeSignupBtn = document.getElementById("closeSignupBtn");
+
+  signupTab?.addEventListener("click", () => {
+    signupWindow?.classList.remove("hidden");
+  });
+
+  closeSignupBtn?.addEventListener("click", () => {
+    signupWindow?.classList.add("hidden");
+  });
+
+  signupForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(signupForm);
+    const body: Record<string, string> = {};
+
+    formData.forEach((value, key) => {
+      body[key] = value.toString();
+    });
+
+    try {
+      console.log("Sending signup request:", body);
+
+      const res = await fetch("http://localhost:3000/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        credentials: "include",
+      });
+
+      const result = await res.json();
+      console.log("Server responded:", result);
+
+      if (res.ok) {
+        signupWindow?.classList.add("hidden");
+        signupForm.reset();
+      } else {
+        alert("Signup failed.");
+      }
+    } catch (err) {
+      console.error("Request failed:", err);
+      alert("Could not contact the server.");
+    }
+  });
+}
