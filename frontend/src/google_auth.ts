@@ -1,6 +1,6 @@
 declare global {
   interface Window {
-    google: any;
+    google?: any;
   }
 }
 
@@ -15,24 +15,34 @@ function handleCredentialResponse(response: any) {
   })
     .then((res) => res.json())
     .then((data) => {
-      console.log("Google login successful:", data);
+      console.log("Frontend:", data);
       // Redirect or update UI as needed
     })
-    .catch((err) => console.error("Google login failed:", err));
+    .catch((err) => console.error("issue:", err));
 }
 
 export function initGoogleSignIn() {
-    console.log("Loaded client ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
-  window.google.accounts.id.initialize({
-    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-    callback: handleCredentialResponse,
-  });
+  const tryInit = () => {
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      console.log("Loaded client ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
-  window.google.accounts.id.renderButton(
-    document.getElementById("google-signin"),
-    {
-      theme: "outline",
-      size: "large",
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+      });
+
+      const buttonDiv = document.getElementById("google-signin");
+      if (buttonDiv) {
+        window.google.accounts.id.renderButton(buttonDiv, {
+          theme: "outline",
+          size: "large",
+        });
+      }
+    } else {
+      // Retry in 100ms
+      setTimeout(tryInit, 100);
     }
-  );
+  };
+
+  tryInit();
 }

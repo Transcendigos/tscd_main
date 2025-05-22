@@ -104,6 +104,8 @@ server.post('/api/signup', async (req, reply) => {
 
     const token = jwt.sign({ userID, username, email }, JWT_SECRET, { expiresIn: '7d'});
     reply.clearCookie('session_token', { path: '/' }); // cleanup legacy
+    console.log("token from signup api is ", token);
+
     return reply
       .setCookie('auth_token', token, {
         httpOnly: true,
@@ -122,6 +124,7 @@ server.post('/api/signup', async (req, reply) => {
 
 //GOOGLE AUTHORIZATION SIGN UP
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+console.log("BACKEND GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
 
 server.post('/api/google-login', async (req, reply) => {
   const { credential } = req.body;
@@ -139,6 +142,7 @@ server.post('/api/google-login', async (req, reply) => {
     const payload = ticket.getPayload();
     const { sub, email, name, picture } = payload;
 
+    let userId;
     const user = await new Promise((resolve, reject) => {
       db.get(
         'SELECT * FROM users WHERE email = ?',
@@ -150,21 +154,26 @@ server.post('/api/google-login', async (req, reply) => {
       );
     });
 
-    if (!user) {
-      await new Promise((resolve, reject) => {
+    if (!user) 
+    {
+       userId = await new Promise((resolve, reject) => {
         db.run(
           'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
           [name, email, 'google-oauth'],
           function (err) {
             if (err) return reject(err);
-            resolve();
+            resolve(this.lastID);
           }
         );
       });
     }
+    else
+    {
+      userId = user.id;
+    }
 
-    const token = jwt.sign({ userID, name, email }, JWT_SECRET, { expiresIn: '7d' });
-
+    const token = jwt.sign({ userId, name, email }, JWT_SECRET, { expiresIn: '7d' });
+    console.log("token from goog api is ", token);
     return reply
       .setCookie('auth_token', token, {
         httpOnly: true,
@@ -211,7 +220,7 @@ server.post('/api/logout', (req, reply) => {
   // VISUALIZING DATA TABLE INTO LOCALHOST:3000
   server.get('/api/dev/users', async (req, reply) => {
     try {
-      const query = 'SELECT id, username, email FROM users';
+      const query = 'SELECT id, username, email, password FROM users';
       const rows = await new Promise((resolve, reject) => {
         db.all(query, [], (err, resultRows) => {
           if (err) {

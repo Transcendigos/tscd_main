@@ -36,3 +36,4 @@ See ELK logs:
 - Go to the sidebar > click Discover
 - Select the Backend Logs data view (top left dropdown)
 - You now have access to logs stream in real time, they can be searched and filtered via the searchbar
+

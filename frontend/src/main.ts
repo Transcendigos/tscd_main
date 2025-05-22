@@ -112,6 +112,7 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("One or more elements for Pong game setup are missing.");
   }
 
+  initGoogleSignIn();
   // --- START OF SIGN-UP  Logic ---
   checkSignedIn().then((isSignedIn) => {
     if (!isSignedIn) 
@@ -119,7 +120,6 @@ window.addEventListener("DOMContentLoaded", () => {
       setupSignupForm(); 
     }
     
-    initGoogleSignIn();
   }); 
   // --- END OF SIGN-UP  Logic ---
 
