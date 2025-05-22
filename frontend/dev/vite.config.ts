@@ -12,4 +12,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173, // Default Vite port
   },
+  
 });
+
+console.log("ENV DEBUG:", process.env.VITE_GOOGLE_CLIENT_ID);
