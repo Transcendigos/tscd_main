@@ -27,7 +27,7 @@ export default async function chatRoutes(server, options) {
         let authenticatedUserId = null;
         let userJWTPayload = null; // Store the verified JWT payload
 
-        const ws = connection.socket;
+        const ws = connection;
 
         ws.on('message', async (messageBuffer) => {
             const messageString = messageBuffer.toString();
