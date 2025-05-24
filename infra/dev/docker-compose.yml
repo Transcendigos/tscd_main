@@ -32,7 +32,21 @@ services:
       - ../../logs:/logs
     ports:
       - "3000:3000"
+    depends_on:
+      - redis_chat
     restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://redis_chat:6379
+
+  redis_chat:
+    image: redis:alpine
+    container_name: redis_chat
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-chat-data:/data
+    restart: unless-stopped
+
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.18.1
@@ -70,3 +84,4 @@ services:
 volumes:
   sqlite-data:
   esdata:
+  redis-chat-data:
