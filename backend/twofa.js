@@ -1,14 +1,15 @@
 import speakeasy from 'speakeasy';
-import qrcode from 'qrcode';
-import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
+import { setAuthCookie } from './auth.js';
 
+
+export default async function twofaRoutes(server, options) {
 
 ////////////////EMAIL/////////////////////////////////
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // TO SEND EMAIL FOR 2FA
-export async function sendEmail(to, subject, text) {
+async function sendEmail(to, subject, text) {
   try {
     const result = await resend.emails.send({
       from: 'Transcendance <noreply@resend.dev>',
@@ -60,87 +61,6 @@ server.post('/api/2fa/send-code', async (req, reply) => {
 );
 
   reply.send({ message: '2FA code sent to email' });
-});
-
-
-/////////////////////TOTP//////////////////////////////////////////////////
-
-//SET UP TOTP (create the secret key for server and phone of the client)
-server.post('/api/2fa/setup-totp', async (req, reply) => {
-  const token = req.cookies.auth_token;
-  if (!token) 
-    return reply.code(401).send({ error: 'Not logged in' });
-
-  let user;
-  try 
-  {
-    user = jwt.verify(token, JWT_SECRET);
-  } 
-  catch 
-  {
-    return reply.code(401).send({ error: 'Invalid token' });
-  }
-
-  // Step 1: Generate secret
-  const secret = speakeasy.generateSecret({
-    name: `Transcendance (${user.email})`,
-  });
-
-  // Step 2: Create QR code
-  const otpAuthUrl = secret.otpauth_url;
-  const qrCode = await qrcode.toDataURL(otpAuthUrl);
-
-  // Step 3: Send secret and QR to frontend (temporary)
-  reply.send({
-    qrCodeUrl: qrCode,
-    base32: secret.base32, // used later to confirm user input
-  });
-
-});
-
-// REGISTER TOTP (verify the secret code and store in DB)
-server.post('/api/2fa/verify-totp', async (req, reply) => {
-  const { token: userToken, secret } = req.body;
-  if (!userToken || !secret)
-  {
-    return reply.code(400).send({ error: 'Missing token or secret' });
-  }
-
-  const jwtToken = req.cookies.auth_token;
-  if (!jwtToken) 
-    return reply.code(401).send({ error: 'Not logged in' });
-
-  let user;
-  try 
-  {
-    user = jwt.verify(jwtToken, JWT_SECRET);
-  } 
-  catch 
-  {
-    return reply.code(401).send({ error: 'Invalid session token' });
-  }
-
-  const verified = speakeasy.totp.verify({
-    secret,
-    encoding: 'base32',
-    token: userToken,
-    window: 1, // allow 30s drift
-  });
-
-  if (!verified) {
-    return reply.code(400).send({ error: 'Invalid TOTP code' });
-  }
-
-  // Save secret to DB
-  await new Promise((resolve, reject) => {
-    db.run(
-      'UPDATE users SET totp_secret = ? WHERE id = ?',
-      [secret, user.id],
-      (err) => (err ? reject(err) : resolve())
-    );
-  });
-
-  reply.send({ message: 'TOTP 2FA enabled successfully' });
 });
 
 
@@ -202,26 +122,18 @@ server.post('/api/2fa/verify', async (req, reply) => {
     return reply.code(400).send({ error: 'Unsupported 2FA method' });
   }
 
-  // ✅ If valid: issue JWT
-  const token = jwt.sign(
-    {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      auth_provider: user.auth_provider,
-    },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+// If verified, issue JWT
+  const tokenPayload = {
+    userId: user.id,
+    username: user.username,
+    email: user.email,
+    picture: user.picture || null,
+  };
 
-  return reply
-    .setCookie('auth_token', token, {
-      httpOnly: true,
-      sameSite: 'Lax',
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 // 7 days
-    })
-    .send({ message: 'Login successful with 2FA' });
+  const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+  setAuthCookie(reply, token);
+
+  return reply.send({ message: '2FA verification successful', user: tokenPayload });
 });
 
+}

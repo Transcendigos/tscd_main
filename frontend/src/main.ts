@@ -4,6 +4,7 @@ import { DesktopWindow } from "./DesktopWindow.js";
 import { checkSignedIn, setupSignupForm } from "./sign_up.js";
 import { initGoogleSignIn } from "./google_auth";
 import { setupSettingForm } from "./setting.js";
+import { setupSigninForm } from "./sign_in.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   const defaultShowClasses = [
@@ -36,7 +37,23 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("Failed to initialize the menu window:", error);
   }
 
-  // --- Signup Window ---
+  
+  // --- Signin Window ---
+  try {
+    const signinWindow = new DesktopWindow({
+      windowId: "signinWindow",
+      dragHandleId: "signinDragHandle",
+      resizeHandleId: "signinResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "signinWindow",
+      openTriggerId: "signinTab",
+      closeButtonId: "closesigninBtn",
+    });
+  } catch (error) {
+    console.error("Failed to initialize the signin window:", error);
+  }
+
+    // --- Signup Window ---
   try {
     const signupWindow = new DesktopWindow({
       windowId: "signupWindow",
@@ -46,14 +63,12 @@ window.addEventListener("DOMContentLoaded", () => {
       visibilityToggleId: "signupWindow",
       openTriggerId: "signupTab",
       closeButtonId: "closeSignupBtn",
-      showClasses: defaultShowClasses,
-      hideClasses: defaultHideClasses,
     });
   } catch (error) {
     console.error("Failed to initialize the signup window:", error);
   }
 
-  // ----------------SETTING TEMPLATE----------------
+  // --- Setting Window ---
 
   try {
     const myNewWindow = new DesktopWindow({
@@ -133,19 +148,23 @@ window.addEventListener("DOMContentLoaded", () => {
   // --- START OF SETTING  Logic ---
   setupSettingForm();
 
-    // --- INIT OF GOOGLE SING UP LOGIC ---
+  
+  // --- INIT OF GOOGLE SING UP LOGIC ---
   initGoogleSignIn();
-
-
+  
+  
   // --- START OF SIGN-UP  Logic ---
   checkSignedIn().then((isSignedIn) => {
     if (!isSignedIn) 
-    {
-      setupSignupForm(); 
-    }
-    
-  }); 
-  // --- END OF SIGN-UP  Logic ---
+      {
+        setupSignupForm(); 
+      }
+      
+    }); 
+    // --- END OF SIGN-UP  Logic ---
+
+    // --- START OF SIGN IN  Logic ---
+  setupSigninForm();
 
 });
 

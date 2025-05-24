@@ -31,13 +31,19 @@ export function initGoogleSignIn() {
         callback: handleCredentialResponse,
       });
 
-      const buttonDiv = document.getElementById("google-signin");
-      if (buttonDiv) {
-        window.google.accounts.id.renderButton(buttonDiv, {
-          theme: "outline",
-          size: "large",
-        });
-      }
+
+      const targets = ["google-signin-signin", "google-signin-signup"];
+      targets.forEach((id) => {
+        const container = document.getElementById(id);
+        if (container) {
+          window.google.accounts.id.renderButton(container, {
+            theme: "outline",
+            size: "large",
+            width: 250,
+          });
+        }
+      });
+      
     } else {
       // Retry in 100ms
       setTimeout(tryInit, 100);

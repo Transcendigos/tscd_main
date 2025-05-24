@@ -7,7 +7,7 @@ import { getDB } from './db.js'; // Assuming db.js is in the same directory
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
 // Helper function to set auth cookie
-const setAuthCookie = (reply, token) => {
+export const setAuthCookie = (reply, token) => {
   return reply.setCookie('auth_token', token, {
     httpOnly: true,
     sameSite: 'Lax',
@@ -204,8 +204,10 @@ server.post('/api/signin', async (req, reply) => {
     }
 
     const twofaMethods = [];
-    if (user.totp_secret) twofaMethods.push('totp');
-    if (user.email_2fa_enabled) twofaMethods.push('email');
+    if (user.totp_secret) 
+      twofaMethods.push('totp');
+    if (user.email_2fa_enabled) 
+      twofaMethods.push('email');
 
     if (twofaMethods.length > 0) {
       return reply.send({
@@ -238,25 +240,47 @@ server.post('/api/signin', async (req, reply) => {
 
 
   // SECTION VERIFY IF LOG IN
-  server.get('/api/me', (req, reply) => {
-    const token = req.cookies.auth_token;
-    if (!token) {
-      return reply.send({ signedIn: false });
-    }
-    try {
-      const payload = jwt.verify(token, JWT_SECRET);
-      if (!payload.userId || !payload.username || !payload.email) {
-          server.log.warn({ payload }, 'JWT payload missing expected fields for /api/me');
-          reply.clearCookie('auth_token', { path: '/' });
-          return reply.send({ signedIn: false, error: 'Invalid session data.' });
-      }
-      reply.send({ signedIn: true, user: payload });
-    } catch (err) {
-      server.log.warn({ err }, 'Invalid token for /api/me');
+server.get('/api/me', async (req, reply) => {
+  const token = req.cookies.auth_token;
+  if (!token) {
+    return reply.send({ signedIn: false });
+  }
+
+  let payload;
+  try {
+    payload = jwt.verify(token, JWT_SECRET);
+    if (!payload.userId || !payload.username || !payload.email) {
+      server.log.warn({ payload }, 'JWT payload missing expected fields for /api/me');
       reply.clearCookie('auth_token', { path: '/' });
-      reply.send({ signedIn: false });
+      return reply.send({ signedIn: false, error: 'Invalid session data.' });
     }
+  } catch (err) {
+    server.log.warn({ err }, 'Invalid token for /api/me');
+    reply.clearCookie('auth_token', { path: '/' });
+    return reply.send({ signedIn: false });
+  }
+
+  // 🔍 Fetch user’s 2FA status from DB
+  const userRow = await new Promise((resolve, reject) => {
+    db.get(
+      'SELECT totp_secret, email_2fa_enabled FROM users WHERE id = ?',
+      [payload.userId],
+      (err, row) => {
+        if (err) return reject(err);
+        resolve(row);
+      }
+    );
   });
+
+  reply.send({
+    signedIn: true,
+    user: {
+      ...payload,
+      totp_enabled: Boolean(userRow?.totp_secret),
+      email_enabled: Boolean(userRow?.email_2fa_enabled),
+    },
+  });
+});
 
   // SECTION LOG OUT
   server.post('/api/logout', (req, reply) => {
