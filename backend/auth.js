@@ -174,6 +174,69 @@ export default async function authRoutes(server, options) {
     }
   });
 
+
+//////SIGN IN///////////////////////
+server.post('/api/signin', async (req, reply) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return reply.code(400).send({ error: 'Missing email or password' });
+  }
+
+  try {
+    const user = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT * FROM users WHERE email = ?',
+        [email],
+        (err, row) => {
+          if (err) return reject(err);
+          resolve(row);
+        }
+      );
+    });
+
+    if (!user) {
+      return reply.code(401).send({ error: 'Invalid credentials' });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return reply.code(401).send({ error: 'Invalid credentials' });
+    }
+
+    const twofaMethods = [];
+    if (user.totp_secret) twofaMethods.push('totp');
+    if (user.email_2fa_enabled) twofaMethods.push('email');
+
+    if (twofaMethods.length > 0) {
+      return reply.send({
+        twofa_required: true,
+        available_methods: twofaMethods,
+        email: user.email,
+      });
+    }
+
+    // No 2FA → issue token
+    const tokenPayload = {
+      userId: user.id,
+      username: user.username,
+      email: user.email,
+      picture: user.picture || null,
+    };
+
+    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+    setAuthCookie(reply, token);
+
+    return reply.send({ message: 'Login successful', user: tokenPayload });
+
+  } catch (err) {
+    server.log.error({ err }, 'Signin error');
+    return reply.code(500).send({ error: 'Server error during signin' });
+  }
+});
+
+////////////////////END SIGN IN//////////////////////////////
+
+
   // SECTION VERIFY IF LOG IN
   server.get('/api/me', (req, reply) => {
     const token = req.cookies.auth_token;
