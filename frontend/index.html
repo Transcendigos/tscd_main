@@ -145,7 +145,12 @@
 
         <div id="signinDragHandle"
           class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
+          <div class="flex items-center space-x-1.5">
+        <svg class="bi bi-sign-in text-[#4cb4e7]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12H4m12 0-4 4m4-4-4-4m3-4h2a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-2"/>
+        </svg>
           <span class="font-bold">Sign-in</span>
+        </div>
           <button id="closesigninBtn"
             class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">X</button>
         </div>
@@ -192,7 +197,12 @@
 
         <div id="signupDragHandle"
           class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
+            <div class="flex items-center space-x-1.5">
+        <svg class="bi bi-gear" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" d="M9 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4H7Zm8-1a1 1 0 0 1 1-1h1v-1a1 1 0 1 1 2 0v1h1a1 1 0 1 1 0 2h-1v1a1 1 0 1 1-2 0v-1h-1a1 1 0 0 1-1-1Z" clip-rule="evenodd"/>
+          </svg>
           <span class="font-bold">Sign-Up</span>
+          </div>
           <button id="closeSignupBtn"
             class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">X</button>
         </div>
@@ -365,8 +375,9 @@
         </div>
 
         <div id="twofaSection" class="mt-4">
-          <h2 class="text-lg font-bold mb-2">Two-Factor Authentication</h2>
+          <h2 class="text-sm font-semibold mb-1 px-1">Two-Factor Authentication</h2>
 
+        <div class="pl-12">
           <label class="flex items-center space-x-2 mb-1">
             <input type="checkbox" id="email2faCheckbox" class="accent-[#4cb4e7]" />
             <span>Enable Email 2FA</span>
@@ -376,6 +387,7 @@
             <input type="checkbox" id="totp2faCheckbox" class="accent-[#4cb4e7]" />
             <span>Enable TOTP (Google Authenticator)</span>
           </label>
+        </div>
 
           <div id="qrContainer" class="mt-3 hidden">
             <p>Scan this QR code in your authenticator app:</p>
