@@ -18,7 +18,7 @@ To remove the persistant database of login/users:
 
 To check the database:
 - docker exec -it backend sh
-- sqlite3 data/db
+- sqlite3 data/db.sqlite
 - sqlite> .tables
 - sqlite> SELECT * FROM users;
 - sqlite> .exit

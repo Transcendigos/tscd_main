@@ -3,6 +3,7 @@ import { DesktopWindow } from "./DesktopWindow.js";
 // import { startWebcamFeed } from "./webcam.js";
 import { checkSignedIn, setupSignupForm } from "./sign_up.js";
 import { initGoogleSignIn } from "./google_auth";
+import { setupSettingForm } from "./setting.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   const defaultShowClasses = [
@@ -51,6 +52,23 @@ window.addEventListener("DOMContentLoaded", () => {
   } catch (error) {
     console.error("Failed to initialize the signup window:", error);
   }
+
+  // ----------------SETTING TEMPLATE----------------
+
+  try {
+    const myNewWindow = new DesktopWindow({
+      windowId: "settingWindow",
+      dragHandleId: "settingDragHandle",
+      resizeHandleId: "settingResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "settingWindow",
+      openTriggerId: "settingTab",
+      closeButtonId: "closesettingBtn",
+    });
+  } catch (error) {
+    console.error("Failed to initialize 'settingWindow':", error);
+  }
+
 
     // --- Profile Window ---
 
@@ -112,7 +130,13 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("One or more elements for Pong game setup are missing.");
   }
 
+  // --- START OF SETTING  Logic ---
+  setupSettingForm();
+
+    // --- INIT OF GOOGLE SING UP LOGIC ---
   initGoogleSignIn();
+
+
   // --- START OF SIGN-UP  Logic ---
   checkSignedIn().then((isSignedIn) => {
     if (!isSignedIn) 
