@@ -1,3 +1,19 @@
+import { checkSignedIn } from "./sign_up.js"; 
+
+
+const signinWindow = document.getElementById("signinWindow")!;
+const twofaFields = document.getElementById("twofaFields")!;
+
+function show2FAFields() {
+  twofaFields.classList.remove("hidden");
+  signinWindow.style.maxHeight = "500px";
+}
+
+function hide2FAFields() {
+  twofaFields.classList.add("hidden");
+  signinWindow.style.maxHeight = "350px";
+}
+
 export function setupSigninForm() {
   const signinForm = document.getElementById("signinForm") as HTMLFormElement;
   const methodSelect = document.getElementById("methodSelect") as HTMLSelectElement;
@@ -9,6 +25,21 @@ export function setupSigninForm() {
 
   let tempEmail = "";
 
+
+const signinTab = document.getElementById("signinTab");
+const signinWindow = document.getElementById("signinWindow");
+const closeSigninBtn = document.getElementById("closesigninBtn");
+
+signinTab?.addEventListener("click", async () => {
+  const isSignedIn = await checkSignedIn(true); // show logoutWindow if signed in
+  if (!isSignedIn) {
+    signinWindow?.classList.remove("hidden");
+  }
+});
+
+closeSigninBtn?.addEventListener("click", () => {
+  signinWindow?.classList.add("hidden");
+});
   signinForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     errorBox.textContent = "";
