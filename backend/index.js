@@ -1,3 +1,5 @@
+console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
+
 // tscd_main/backend/index.js
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -18,6 +20,10 @@ const logStream = fs.createWriteStream('/logs/backend.log', { flags: 'a' });
 const logger = pino(logStream);
 
 const server = Fastify({ logger });
+
+server.get('/', async (request, reply) => {
+  return { message: 'Hello from backend!' };
+});
 
 // Initialize DB and Redis
 const db = initializeDB(server.log);
