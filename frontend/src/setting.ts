@@ -9,7 +9,7 @@ export function setupSettingForm() {
 
   // ✅ Load current 2FA status from server
   (async () => {
-    const res = await fetch('/api/me', { credentials: 'include' });
+    const res = await fetch('http://localhost:3000/api/me', { credentials: 'include' });
     const data = await res.json();
     if (data.signedIn && data.user) {
       email2faCheckbox.checked = data.user.email_enabled;
@@ -20,7 +20,7 @@ export function setupSettingForm() {
   // ✅ Enable/Disable Email 2FA
   email2faCheckbox.addEventListener('change', async () => {
     const enable = email2faCheckbox.checked;
-    const res = await fetch('/api/2fa/enable-email', {
+    const res = await fetch('http://localhost:3000/api/2fa/enable-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -35,7 +35,7 @@ export function setupSettingForm() {
   totp2faCheckbox.addEventListener('change', async () => {
     if (!totp2faCheckbox.checked) {
       // ❌ Disable TOTP
-      const res = await fetch('/api/2fa/disable-totp', {
+      const res = await fetch('http://localhost:3000/api/2fa/disable-totp', {
         method: 'POST',
         credentials: 'include',
       });
@@ -46,7 +46,7 @@ export function setupSettingForm() {
     }
 
     // ✅ Start TOTP setup
-    const res = await fetch('/api/2fa/setup-totp', {
+    const res = await fetch('http://localhost:3000/api/2fa/setup-totp', {
       method: 'POST',
       credentials: 'include',
     });
@@ -65,7 +65,7 @@ export function setupSettingForm() {
     const token = verifyTotpInput.value;
     const secret = qrCodeImage.dataset.secret || '';
 
-    const res = await fetch('/api/2fa/verify-totp', {
+    const res = await fetch('http://localhost:3000/api/2fa/verify-totp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

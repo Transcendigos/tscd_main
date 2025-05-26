@@ -1,20 +1,6 @@
-import { checkSignedIn } from "./sign_up.js"; 
+import { DesktopWindow } from "./DesktopWindow.js";
 
-
-const signinWindow = document.getElementById("signinWindow")!;
-const twofaFields = document.getElementById("twofaFields")!;
-
-function show2FAFields() {
-  twofaFields.classList.remove("hidden");
-  signinWindow.style.maxHeight = "500px";
-}
-
-function hide2FAFields() {
-  twofaFields.classList.add("hidden");
-  signinWindow.style.maxHeight = "350px";
-}
-
-export function setupSigninForm() {
+export function setupSigninForm(signinWindow: DesktopWindow) {
   const signinForm = document.getElementById("signinForm") as HTMLFormElement;
   const methodSelect = document.getElementById("methodSelect") as HTMLSelectElement;
   const codeInput = document.getElementById("codeInput") as HTMLInputElement;
@@ -22,32 +8,128 @@ export function setupSigninForm() {
   const submit2FAButton = document.getElementById("submit2FA") as HTMLButtonElement;
   const resendCodeButton = document.getElementById("resendCode") as HTMLButtonElement;
   const errorBox = document.getElementById("twofaError") as HTMLDivElement;
+  const closeBtn = document.getElementById("closesigninBtn");
+
+  const emailInput = signinForm.querySelector('input[name="email"]') as HTMLInputElement;
+  const passwordInput = signinForm.querySelector('input[name="password"]') as HTMLInputElement;
+  const submitBtn = signinForm.querySelector('button[type="submit"]') as HTMLButtonElement;
+  const googleBtnContainer = document.getElementById("google-signin-signin");
 
   let tempEmail = "";
 
+    // 🔁 Reset sign-in form (called on window open)
+  function resetSigninForm() {
+    console.log("[SignIn] Resetting form");
 
-const signinTab = document.getElementById("signinTab");
-const signinWindow = document.getElementById("signinWindow");
-const closeSigninBtn = document.getElementById("closesigninBtn");
-
-signinTab?.addEventListener("click", async () => {
-  const isSignedIn = await checkSignedIn(true); // show logoutWindow if signed in
-  if (!isSignedIn) {
-    signinWindow?.classList.remove("hidden");
+    signinForm.reset();
+    errorBox.textContent = "";
+    twofaFields.classList.add("hidden");
+    methodSelect.innerHTML = "";
+    codeInput.value = "";
+    tempEmail = "";
+    passwordInput.disabled = false;
+    passwordInput.classList.remove("opacity-50");
+    submitBtn.disabled = false;
+    googleBtnContainer?.classList.remove("hidden");
   }
+
+  // Reset on first load
+  resetSigninForm();
+
+  // Manual close
+  closeBtn?.addEventListener("click", () => {
+    signinWindow.close();
+  });
+
+
+  // ✅ Detect login method and adjust UI
+  async function detectAuthMethod(email: string) {
+    if (!email) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/auth/methods?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
+
+      const methods = data.methods || [];
+
+      // Case: New email (no existing user)
+      if (methods.length === 0) {
+        // New user detected — block sign-in and prompt to sign up
+        passwordInput.disabled = true;
+        passwordInput.classList.add("opacity-50");
+        submitBtn.disabled = true;
+        googleBtnContainer?.classList.add("hidden");
+        errorBox.textContent = "New user — redirecting to Sign-Up...";
+
+
+        // Auto-switch after short delay
+        setTimeout(() => {
+          // Close Sign-In window
+          signinWindow.close();
+
+          // Trigger Sign-Up tab
+          const signupTab = document.getElementById("signupTab");
+          signupTab?.click(); // Triggers DesktopWindow to open sign-up
+        }, 1500);
+        return;
+      }
+
+      // Case: Google only
+      if (methods.includes("google") && !methods.includes("local")) {
+        passwordInput.disabled = true;
+        passwordInput.classList.add("opacity-50");
+        submitBtn.disabled = true;
+        googleBtnContainer?.classList.remove("hidden");
+        errorBox.textContent = "This account uses Google Sign-In only.";
+        return;
+      }
+
+      // Case: Local only
+      if (methods.includes("local") && !methods.includes("google")) {
+        passwordInput.disabled = false;
+        passwordInput.classList.remove("opacity-50");
+        submitBtn.disabled = false;
+        googleBtnContainer?.classList.add("hidden");
+        errorBox.textContent = "";
+        return;
+      }
+
+      // Case: Both
+      //   passwordInput.disabled = false;
+      //   passwordInput.classList.remove("opacity-50");
+      //   submitBtn.disabled = false;
+      //   googleBtnContainer?.classList.remove("hidden");
+      //   errorBox.textContent = "";
+
+
+    } catch (err) {
+      console.error("Failed to detect auth method:", err);
+      errorBox.textContent = "Something went wrong while checking the login method.";
+    }
+  }
+
+  // Trigger detection on blur
+  emailInput.addEventListener("blur", () => {
+    detectAuthMethod(emailInput.value);
+  });
+
+  emailInput.addEventListener("input", () => {
+  errorBox.textContent = "";
+  passwordInput.disabled = false;
+  passwordInput.classList.remove("opacity-50");
+  submitBtn.disabled = false;
+  googleBtnContainer?.classList.remove("hidden");
+  twofaFields.classList.add("hidden");
 });
 
-closeSigninBtn?.addEventListener("click", () => {
-  signinWindow?.classList.add("hidden");
-});
   signinForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     errorBox.textContent = "";
 
-    const email = (signinForm.elements.namedItem("email") as HTMLInputElement).value;
-    const password = (signinForm.elements.namedItem("password") as HTMLInputElement).value;
+    const email = emailInput.value;
+    const password = passwordInput.value;
 
-    const res = await fetch("/api/signin", {
+    const res = await fetch("http://localhost:3000/api/signin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -68,9 +150,8 @@ closeSigninBtn?.addEventListener("click", () => {
 
       twofaFields.classList.remove("hidden");
 
-      // Pre-send email code
       if (data.available_methods.includes("email")) {
-        await fetch("/api/2fa/send-code", {
+        await fetch("http://localhost:3000/api/2fa/send-code", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -78,12 +159,14 @@ closeSigninBtn?.addEventListener("click", () => {
         });
       }
     } else if (data.user) {
-      window.location.reload();
+      signinWindow.close(); // ✅ close window
+      window.dispatchEvent(new Event("auth:updated")); // 🔁 update UI
     } else {
       errorBox.textContent = data.error || "Login failed";
     }
   });
 
+  // 2FA Submit
   submit2FAButton.addEventListener("click", async (e) => {
     e.preventDefault();
     errorBox.textContent = "";
@@ -91,7 +174,7 @@ closeSigninBtn?.addEventListener("click", () => {
     const code = codeInput.value;
     const method = methodSelect.value;
 
-    const res = await fetch("/api/2fa/verify", {
+    const res = await fetch("http://localhost:3000/api/2fa/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -100,19 +183,22 @@ closeSigninBtn?.addEventListener("click", () => {
 
     const data = await res.json();
     if (data.user) {
-      window.location.reload();
+      signinWindow.close();
+      window.dispatchEvent(new Event("auth:updated"));
     } else {
       errorBox.textContent = data.error || "Invalid 2FA code";
     }
   });
 
+
+  // Resend 2FA code
   resendCodeButton.addEventListener("click", async () => {
     errorBox.textContent = "";
     if (!tempEmail) return;
     const method = methodSelect.value;
     if (method !== "email") return;
 
-    const res = await fetch("/api/2fa/send-code", {
+    const res = await fetch("http://localhost:3000/api/2fa/send-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

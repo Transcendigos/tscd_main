@@ -33,6 +33,7 @@ export function initializeDB(logger) {
         username TEXT NOT NULL UNIQUE,
         email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
+        method_sign TEXT NOT NULL,
         picture TEXT,
         totp_secret TEXT,
         email_2fa_enabled INTEGER DEFAULT 0,

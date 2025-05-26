@@ -3,18 +3,19 @@ import { DesktopWindow } from "./DesktopWindow.js";
 import { checkSignedIn, setupSignupForm } from "./sign_up.js";
 import { initGoogleSignIn } from "./google_auth.js";
 import { setupLogoutForm } from "./logout.js";
+import { setupSigninForm } from "./sign_in.js";
 // import { startWebcamFeed } from "./webcam.js";
 
 // Top of the file
-let signinWindow: any;
-let signupWindow: any;
-let logoutWindow: any;
-let profileWindow: any;
-let settingWindow: any;
-let pongWindow: any;
+let signinWindow: DesktopWindow;
+let signupWindow: DesktopWindow;
+let logoutWindow: DesktopWindow;
+let profileWindow: DesktopWindow;
+let settingWindow: DesktopWindow;
+let pongWindow: DesktopWindow;
 
 // Utility functions
-function assignOpenTrigger(windowInstance: any, triggerId: string) {
+function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string) {
   const trigger = document.getElementById(triggerId);
   if (trigger) {
     trigger.addEventListener("click", () => windowInstance.open());
@@ -214,6 +215,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   initGoogleSignIn();
 
   setupLogoutForm();
+
+  setupSigninForm(signinWindow);
 
   // --- Pong Game Specific Logic ---
   const gameContainer = document.getElementById("gameContainer")!;
