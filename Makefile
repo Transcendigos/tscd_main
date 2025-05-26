@@ -44,6 +44,9 @@ dev_down:
 dev_logs:
 	$(DOCKER_COMPOSE_DEV) logs -f web
 
+dev_logs_backend:
+	$(DOCKER_COMPOSE_DEV) logs -f backend
+
 dev_shell:
 	$(DOCKER_COMPOSE_DEV) exec web sh
 
