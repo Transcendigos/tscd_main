@@ -28,7 +28,8 @@ function handleCredentialResponse(response: any) {
 
       closeWindowById("signupWindow");
       closeWindowById("signinWindow");
-      // ✅ Tell the app to refresh UI based on auth_token
+      (window as any).resetSigninForm?.();   
+      (window as any).resetSigninForm = resetSigninForm;
       window.dispatchEvent(new Event("auth:updated"));
     })
     .catch((err) => console.error("issue:", err));

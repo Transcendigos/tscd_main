@@ -4,6 +4,8 @@ import { checkSignedIn, setupSignupForm } from "./sign_up.js";
 import { initGoogleSignIn } from "./google_auth.js";
 import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
+import { setupSettingForm } from "./setting.js";
+
 // import { startWebcamFeed } from "./webcam.js";
 
 // Top of the file
@@ -51,6 +53,7 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(signinWindow, "signinTab");
     (window as any).resetSigninForm?.();
     assignOpenTrigger(signupWindow, "signupTab");
+    (window as any).resetSignupForm?.();
 
     disableTrigger("profileBtn");
     disableTrigger("settingTab");
@@ -214,10 +217,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   setupSignupForm(signupWindow);
 
   initGoogleSignIn();
-
-  setupLogoutForm();
-
+  
   setupSigninForm(signinWindow);
+  
+  setupSettingForm();
+
+  setupLogoutForm(logoutWindow);
 
   // --- Pong Game Specific Logic ---
   const gameContainer = document.getElementById("gameContainer")!;

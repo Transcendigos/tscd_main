@@ -21,10 +21,10 @@ export function setupSignupForm(signupWindow: DesktopWindow) {
 
   function resetSignupForm() {
     console.log("[SignUp] Resetting form");
-   signupForm.reset();
+    signupForm.reset();
   }
 
-  (window as any).resetSigninForm = resetSignupForm;
+  (window as any).resetSignupForm = resetSignupForm;
 
   // Reset on first load
   resetSignupForm();
@@ -60,6 +60,8 @@ export function setupSignupForm(signupWindow: DesktopWindow) {
       console.error("Signup failed:", err);
       alert("Could not contact the server.");
     }
+
+    resetSignupForm();
   });
 
   closeSignupBtn?.addEventListener("click", () => {
