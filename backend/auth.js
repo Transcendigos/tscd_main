@@ -65,7 +65,7 @@ export default async function authRoutes(server, options) {
         );
       });
 
-      const tokenPayload = { userId: insertedUserId, username, email, method_sign: 'local', picture: NULL};
+      const tokenPayload = { userId: insertedUserId, username, email, method_sign: 'local', picture: null};
       const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
 
       reply.clearCookie('session_token', { path: '/' }); // cleanup legacy
@@ -300,7 +300,7 @@ export default async function authRoutes(server, options) {
   // Dev endpoint
   server.get('/api/dev/users', async (req, reply) => {
     try {
-      const query = 'SELECT id, username, email, method_sign, picture FROM users';
+      const query = 'SELECT id, username, email, method_sign, picture, totp_secret, email_2fa_enabled, email_2fa_code, email_2fa_expiry FROM users';
       const rows = await new Promise((resolve, reject) => {
         db.all(query, [], (err, resultRows) => {
           if (err) return reject(err);

@@ -49,6 +49,7 @@ async function updateUIBasedOnAuth() {
   }
   else {
     assignOpenTrigger(signinWindow, "signinTab");
+    (window as any).resetSigninForm?.();
     assignOpenTrigger(signupWindow, "signupTab");
 
     disableTrigger("profileBtn");

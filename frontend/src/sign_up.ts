@@ -18,6 +18,18 @@ export function setupSignupForm(signupWindow: DesktopWindow) {
   const signupForm = document.getElementById("signupForm") as HTMLFormElement;
   const closeSignupBtn = document.getElementById("closeSignupBtn");
 
+
+  function resetSignupForm() {
+    console.log("[SignUp] Resetting form");
+   signupForm.reset();
+  }
+
+  (window as any).resetSigninForm = resetSignupForm;
+
+  // Reset on first load
+  resetSignupForm();
+
+
   signupForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -52,5 +64,6 @@ export function setupSignupForm(signupWindow: DesktopWindow) {
 
   closeSignupBtn?.addEventListener("click", () => {
     signupWindow.close(); // ✅ use DesktopWindow method
+    resetSignupForm();
   });
 }
