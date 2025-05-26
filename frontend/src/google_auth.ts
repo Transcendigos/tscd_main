@@ -16,34 +16,53 @@ function handleCredentialResponse(response: any) {
     .then((res) => res.json())
     .then((data) => {
       console.log("Frontend:", data);
-      // Redirect or update UI as needed
+
+      // ✅ Close both signup and signin windows if open
+      const closeWindowById = (id: string) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.remove("opacity-100", "scale-100", "visible", "pointer-events-auto");
+          el.classList.add("opacity-0", "scale-95", "invisible", "pointer-events-none");
+        }
+      };
+
+      closeWindowById("signupWindow");
+      closeWindowById("signinWindow");
+      // ✅ Tell the app to refresh UI based on auth_token
+      window.dispatchEvent(new Event("auth:updated"));
     })
     .catch((err) => console.error("issue:", err));
 }
 
 export function initGoogleSignIn() {
   const tryInit = () => {
-    if (window.google && window.google.accounts && window.google.accounts.id) {
-      console.log("Loaded client ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
+    if (window.google && window.google.accounts && window.google.accounts.id) 
+    {
+      console.log("Loaded Google Client");
 
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
       });
 
-
       const targets = ["google-signin-signin", "google-signin-signup"];
       targets.forEach((id) => {
         const container = document.getElementById(id);
-        if (container) {
+        if (container) 
+        {
           window.google.accounts.id.renderButton(container, {
             theme: "outline",
             size: "large",
             width: 250,
           });
+          console.log(`Rendered Google button in #${id}`);
+        }
+        else 
+        {
+          console.warn(`Container #${id} not found for Google button`);
         }
       });
-      
+
     } else {
       // Retry in 100ms
       setTimeout(tryInit, 100);

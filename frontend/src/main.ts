@@ -2,7 +2,7 @@ import { startPongGame, setCanvas } from "./pong.js";
 import { DesktopWindow } from "./DesktopWindow.js";
 import { checkSignedIn, setupSignupForm } from "./sign_up.js";
 import { initGoogleSignIn } from "./google_auth.js";
-
+import { setupLogoutForm } from "./logout.js";
 // import { startWebcamFeed } from "./webcam.js";
 
 // Top of the file
@@ -212,6 +212,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   setupSignupForm(signupWindow);
 
   initGoogleSignIn();
+
+  setupLogoutForm();
 
   // --- Pong Game Specific Logic ---
   const gameContainer = document.getElementById("gameContainer")!;
