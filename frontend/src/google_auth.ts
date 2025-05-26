@@ -28,8 +28,6 @@ function handleCredentialResponse(response: any) {
 
       closeWindowById("signupWindow");
       closeWindowById("signinWindow");
-      (window as any).resetSigninForm?.();   
-      (window as any).resetSigninForm = resetSigninForm;
       window.dispatchEvent(new Event("auth:updated"));
     })
     .catch((err) => console.error("issue:", err));

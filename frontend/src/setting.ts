@@ -19,6 +19,7 @@ export function setupSettingForm() {
 
   // ✅ Enable/Disable Email 2FA
   email2faCheckbox.addEventListener('change', async () => {
+    console.log('CHANGING BOX');
     const enable = email2faCheckbox.checked;
     const res = await fetch('http://localhost:3000/api/2fa/enable-email', {
       method: 'POST',
@@ -26,6 +27,7 @@ export function setupSettingForm() {
       credentials: 'include',
       body: JSON.stringify({ enable }),
     });
+    console.log('I fetched');
 
     const result = await res.json();
     alert(result.message || 'Email 2FA updated.');
