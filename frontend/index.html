@@ -205,19 +205,18 @@
         <div id="google-signin-signin" class="flex justify-center hidden"></div>
       </div>
       <div id="signinResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
-      <div id="twofaFields" class="flex flex-col space-y-2 mt-2 hidden">
-        <select id="methodSelect" class="bg-slate-800 p-2"></select>
-        <input type="text" id="codeInput" placeholder="Enter 2FA code" class="bg-slate-800 p-2" />
-        <div class="flex justify-between items-center">
-          <button id="submit2FA" class="bg-[#4cb4e7] text-black font-bold py-1 px-2 hover:bg-[#f8aab6] transition-all">
-            Verify 2FA
-          </button>
-          <button id="resendCode" class="text-sm underline text-[#4cb4e7] hover:text-[#f8aab6]">
-            Resend code
-          </button>
-        </div>
-        <div id="twofaError" class="text-red-500 text-sm mt-1"></div>
+
+      <div id="twofaFields" class="flex flex-col items-center justify-center space-y-3 mt-4 hidden text-center">
+        <p class="text-sm font-semibold text-[#4cb4e7]">Two-Factor Authentication</p>
+        <input type="text" id="codeInput" maxlength="6" inputmode="numeric" placeholder="Enter 6-digit TOTP code"
+          class="w-60 p-2 text-center bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]" />
+        <button id="submit2FA"
+          class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
+          Verify 2FA
+        </button>
+        <p id="twofaError" class="text-sm text-red-500 font-semibold"></p>
       </div>
+
     </div>
 
     <!-- --------------SIGN UP WINDOW-------------- -->

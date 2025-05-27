@@ -220,7 +220,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   
   setupSigninForm(signinWindow);
   
-  setupSettingForm();
+  setupSettingForm(settingWindow);
 
   setupLogoutForm(logoutWindow);
 

@@ -1,4 +1,6 @@
-export function setupSettingForm() {
+import { DesktopWindow } from "./DesktopWindow.js";
+
+export function setupSettingForm(settingWindow: DesktopWindow) {
   const totp2faCheckbox = document.getElementById('totp2faCheckbox') as HTMLInputElement;
   const qrContainer = document.getElementById('qrContainer') as HTMLDivElement;
   const qrCodeImage = document.getElementById('qrCodeImage') as HTMLImageElement;
@@ -6,21 +8,31 @@ export function setupSettingForm() {
   const confirmTotpButton = document.getElementById('confirmTotpButton') as HTMLButtonElement;
   const statusMsg = document.getElementById('totpStatus') as HTMLParagraphElement;
 
-  //is called an Immediately Invoked Async Function Expression or async IIFE.
-(async () => {
-  totp2faCheckbox.checked = false; // 🔁 Always reset first
-
-  try {
-    const res = await fetch('http://localhost:3000/api/me', { credentials: 'include' });
-    const data = await res.json();
-
-    if (data.signedIn && data.user) {
-      totp2faCheckbox.checked = data.user.totp_enabled;
+  async function refreshTotpState() {
+    console.log("Refreshing TOTP state");
+    qrContainer.classList.add('hidden');
+    try {
+      const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+      const data = await res.json();
+      if (data.signedIn && data.user) {
+        totp2faCheckbox.checked = data.user.totp_enabled;
+      }
+    } catch (err) {
+      console.error("Failed to refresh TOTP state:", err);
+      totp2faCheckbox.checked = false;
     }
-  } catch (err) {
-    console.error("Failed to load 2FA state:", err);
   }
-})();
+
+  // Patch the open method to always update TOTP checkbox
+  const originalOpen = settingWindow.open.bind(settingWindow);
+  settingWindow.open = async () => {
+    await refreshTotpState();
+    originalOpen();
+  };
+
+  // Call once during init just in case
+  refreshTotpState();
+
 
   // ✅ Enable/Disable TOTP 2FA
   totp2faCheckbox.addEventListener('change', async () => {
@@ -55,16 +67,24 @@ export function setupSettingForm() {
   confirmTotpButton.addEventListener('click', async () => {
     const token = verifyTotpInput.value;
     const secret = qrCodeImage.dataset.secret || '';
-    console.log("A");
-    const res = await fetch('http://localhost:3000/api/2fa/verify-totp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ token, secret }),
-    });
-    const data = await res.json();
-    if (data.message) {
-      statusMsg.textContent = '✅ TOTP enabled!';
+    statusMsg.textContent = ''; // clear previous
+
+    try {
+      const res = await fetch('http://localhost:3000/api/2fa/verify-totp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ token, secret }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Unknown error');
+      }
+
+      // ✅ Success
+      statusMsg.textContent = data.message;
       statusMsg.classList.remove('text-red-500');
       statusMsg.classList.add('text-green-500');
       setTimeout(() => {
@@ -72,8 +92,10 @@ export function setupSettingForm() {
         statusMsg.textContent = '';
       }, 1500);
 
-    } else {
-      statusMsg.textContent = data.error || 'Failed to verify TOTP code.';
+    } catch (err) {
+      // 👇 You will see any backend-provided error here
+      console.error("❌ TOTP verification failed:", err);
+      statusMsg.textContent = err.message || 'TOTP verification failed';
       statusMsg.classList.remove('text-green-500');
       statusMsg.classList.add('text-red-500');
     }

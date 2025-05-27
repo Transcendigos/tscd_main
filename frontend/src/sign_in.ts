@@ -3,11 +3,9 @@ import { DesktopWindow } from "./DesktopWindow.js";
 export function setupSigninForm(signinWindow: DesktopWindow) {
   const signinForm = document.getElementById("signinForm") as HTMLFormElement;
   const statusBox = document.getElementById("signinStatus") as HTMLDivElement;
-  const methodSelect = document.getElementById("methodSelect") as HTMLSelectElement;
   const codeInput = document.getElementById("codeInput") as HTMLInputElement;
   const twofaFields = document.getElementById("twofaFields") as HTMLDivElement;
   const submit2FAButton = document.getElementById("submit2FA") as HTMLButtonElement;
-  const resendCodeButton = document.getElementById("resendCode") as HTMLButtonElement;
   const errorBox = document.getElementById("twofaError") as HTMLDivElement;
   const closeBtn = document.getElementById("closesigninBtn");
   const signinGOOGLE = document.getElementById("signinGOOGLE") as HTMLSelectElement;
@@ -19,7 +17,7 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
 
   let tempEmail = "";
 
-  // 🔁 Reset sign-in form (called on window open)
+  //Reset sign-in form (called on window open)
   function resetSigninForm() {
     console.log("[SignIn] Resetting form");
 
@@ -29,7 +27,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
     statusBox.classList.remove("opacity-100");
     errorBox.textContent = "";
     twofaFields.classList.add("hidden");
-    methodSelect.innerHTML = "";
     codeInput.value = "";
     tempEmail = "";
     passwordInput.disabled = false;
@@ -148,12 +145,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
 
     if (data.twofa_required) {
       tempEmail = email;
-      methodSelect.innerHTML = "";
-      const option = document.createElement("option");
-      option.value = data.available_methods;
-      option.textContent = data.available_methods.toUpperCase();
-      methodSelect.appendChild(option);
-
       twofaFields.classList.remove("hidden");
 
     } else if (data.user) {
@@ -170,8 +161,7 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
     errorBox.textContent = "";
 
     const code = codeInput.value;
-    const method = methodSelect.value;
-
+    const method = "TOTP"; 
     const res = await fetch("http://localhost:3000/api/2fa/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -188,5 +178,5 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
     }
   });
 
-  
+
 }
