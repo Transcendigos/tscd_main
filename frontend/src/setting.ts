@@ -76,13 +76,13 @@ export function setupSettingForm() {
 
     const data = await res.json();
     if (data.message) {
-      statusMsg.textContent = '✅ TOTP enabled!';
-      statusMsg.classList.remove('text-red-500');
-      statusMsg.classList.add('text-green-500');
+      statusMsg.textContent = 'TOTP enabled!';
+      statusMsg.classList.remove('text-[#D4535B]');
+      statusMsg.classList.add('text-[#53D4C0]');
     } else {
       statusMsg.textContent = data.error || 'Failed to verify TOTP code.';
-      statusMsg.classList.remove('text-green-500');
-      statusMsg.classList.add('text-red-500');
+      statusMsg.classList.remove('text-[#53D4C0]');
+      statusMsg.classList.add('text-[#D4535B]');
     }
   });
 }
