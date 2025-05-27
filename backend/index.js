@@ -1,4 +1,3 @@
-
 // tscd_main/backend/index.js
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -12,8 +11,10 @@ import { initializeDB, getDB } from './db.js';
 import { initializeRedisClients, getRedisPublisher, getRedisSubscriber } from './redis.js';
 import authRoutes from './auth.js';
 import chatRoutes, { cleanupChatResources } from './chat.js'; // Import cleanup
-import setting_twofa from './setting_2fa.js';
-import twofaRoutes from './twofa.js';
+import twoFASettingRoutes from './setting_2fa.js';
+import twofaRoutes from './signin_twofa.js';
+
+console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
 
 dotenv.config();
 
@@ -42,8 +43,9 @@ server.register(fastifyWebsocket);
 // Register modular routes
 server.register(authRoutes);
 server.register(chatRoutes);
-server.register(setting_twofa);
 server.register(twofaRoutes);
+server.register(twoFASettingRoutes);
+
 
 // Start server
 const start = async () => {

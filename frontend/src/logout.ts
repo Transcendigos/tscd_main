@@ -6,20 +6,26 @@ export function setupLogoutForm(logoutWindow: DesktopWindow) {
 
   // ✅ Patch .open() to auto-populate username every time
   const originalOpen = logoutWindow.open.bind(logoutWindow);
-  logoutWindow.open = async () => {
 
+  logoutWindow.open = async () => {
     try {
       const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
       const data = await res.json();
+      console.log("🧾 /api/me response:", data);
+
       if (data?.signedIn && data.user?.username) {
         logoutUsername.textContent = data.user.username;
+      } else {
+        logoutUsername.textContent = "Unknown user";
       }
     } catch (err) {
+      console.error("❌ Failed to fetch /api/me:", err);
       logoutUsername.textContent = "Unknown user";
     }
 
-    originalOpen(); // call the original open behavior
+    originalOpen(); // Always show window after attempt
   };
+  
   // Handle logout
   const logoutBtn = document.getElementById("logoutBtn");
   logoutBtn?.addEventListener("click", async () => {

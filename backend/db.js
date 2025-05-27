@@ -35,10 +35,7 @@ export function initializeDB(logger) {
         password TEXT NOT NULL,
         method_sign TEXT NOT NULL,
         picture TEXT,
-        totp_secret TEXT,
-        email_2fa_enabled INTEGER DEFAULT 0,
-        email_2fa_code TEXT,
-        email_2fa_expiry INTEGER
+        totp_secret TEXT
       )
     `);
     usersTableStmt.run((err) => {

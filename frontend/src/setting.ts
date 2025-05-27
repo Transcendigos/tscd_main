@@ -1,5 +1,6 @@
-export function setupSettingForm() {
-  const email2faCheckbox = document.getElementById('email2faCheckbox') as HTMLInputElement;
+import { DesktopWindow } from "./DesktopWindow.js";
+
+export function setupSettingForm(settingWindow: DesktopWindow) {
   const totp2faCheckbox = document.getElementById('totp2faCheckbox') as HTMLInputElement;
   const qrContainer = document.getElementById('qrContainer') as HTMLDivElement;
   const qrCodeImage = document.getElementById('qrCodeImage') as HTMLImageElement;
@@ -7,31 +8,31 @@ export function setupSettingForm() {
   const confirmTotpButton = document.getElementById('confirmTotpButton') as HTMLButtonElement;
   const statusMsg = document.getElementById('totpStatus') as HTMLParagraphElement;
 
-  // ✅ Load current 2FA status from server
-  (async () => {
-    const res = await fetch('http://localhost:3000/api/me', { credentials: 'include' });
-    const data = await res.json();
-    if (data.signedIn && data.user) {
-      email2faCheckbox.checked = data.user.email_enabled;
-      totp2faCheckbox.checked = data.user.totp_enabled;
+  async function refreshTotpState() {
+    console.log("Refreshing TOTP state");
+    qrContainer.classList.add('hidden');
+    try {
+      const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+      const data = await res.json();
+      if (data.signedIn && data.user) {
+        totp2faCheckbox.checked = data.user.totp_enabled;
+      }
+    } catch (err) {
+      console.error("Failed to refresh TOTP state:", err);
+      totp2faCheckbox.checked = false;
     }
-  })();
+  }
 
-  // ✅ Enable/Disable Email 2FA
-  email2faCheckbox.addEventListener('change', async () => {
-    console.log('CHANGING BOX');
-    const enable = email2faCheckbox.checked;
-    const res = await fetch('http://localhost:3000/api/2fa/enable-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ enable }),
-    });
-    console.log('I fetched');
+  // Patch the open method to always update TOTP checkbox
+  const originalOpen = settingWindow.open.bind(settingWindow);
+  settingWindow.open = async () => {
+    await refreshTotpState();
+    originalOpen();
+  };
 
-    const result = await res.json();
-    alert(result.message || 'Email 2FA updated.');
-  });
+  // Call once during init just in case
+  refreshTotpState();
+
 
   // ✅ Enable/Disable TOTP 2FA
   totp2faCheckbox.addEventListener('change', async () => {
@@ -41,8 +42,8 @@ export function setupSettingForm() {
         method: 'POST',
         credentials: 'include',
       });
-      const result = await res.json();
-      alert(result.message || 'TOTP disabled.');
+      // const result = await res.json();
+      // alert(result.message || 'TOTP disabled.');
       qrContainer.classList.add('hidden');
       return;
     }
@@ -66,23 +67,38 @@ export function setupSettingForm() {
   confirmTotpButton.addEventListener('click', async () => {
     const token = verifyTotpInput.value;
     const secret = qrCodeImage.dataset.secret || '';
+    statusMsg.textContent = ''; // clear previous
 
-    const res = await fetch('http://localhost:3000/api/2fa/verify-totp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ token, secret }),
-    });
+    try {
+      const res = await fetch('http://localhost:3000/api/2fa/verify-totp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ token, secret }),
+      });
 
-    const data = await res.json();
-    if (data.message) {
-      statusMsg.textContent = 'TOTP enabled!';
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Unknown error');
+      }
+
+      // ✅ Success
+      statusMsg.textContent = data.message;
       statusMsg.classList.remove('text-[#D4535B]');
       statusMsg.classList.add('text-[#53D4C0]');
-    } else {
-      statusMsg.textContent = data.error || 'Failed to verify TOTP code.';
+      setTimeout(() => {
+        qrContainer.classList.add('hidden');
+        statusMsg.textContent = '';
+      }, 1500);
+
+    } catch (err) {
+      // 👇 You will see any backend-provided error here
+      console.error("❌ TOTP verification failed:", err);
+      statusMsg.textContent = err.message || 'TOTP verification failed';
       statusMsg.classList.remove('text-[#53D4C0]');
       statusMsg.classList.add('text-[#D4535B]');
+
     }
   });
 }

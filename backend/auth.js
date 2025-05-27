@@ -209,16 +209,10 @@ export default async function authRoutes(server, options) {
         return reply.code(401).send({ error: 'Invalid credentials' });
       }
 
-      const twofaMethods = [];
-      if (user.totp_secret)
-        twofaMethods.push('totp');
-      if (user.email_2fa_enabled)
-        twofaMethods.push('email');
-
-      if (twofaMethods.length > 0) {
+      if (user.totp_secret) {
         return reply.send({
           twofa_required: true,
-          available_methods: twofaMethods,
+          available_methods: 'TOTP',
           email: user.email,
         });
       }
@@ -228,7 +222,7 @@ export default async function authRoutes(server, options) {
         userId: user.id,
         username: user.username,
         email: user.email,
-        method_sign: user.method_sign, // Add it from DB
+        method_sign: user.method_sign,
         picture: user.picture || null,
       };
 
@@ -270,7 +264,7 @@ export default async function authRoutes(server, options) {
     // 🔍 Fetch user’s 2FA status from DB
     const userRow = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT totp_secret, email_2fa_enabled FROM users WHERE id = ?',
+        'SELECT totp_secret FROM users WHERE id = ?',
         [payload.userId],
         (err, row) => {
           if (err) return reject(err);
@@ -284,7 +278,6 @@ export default async function authRoutes(server, options) {
       user: {
         ...payload,
         totp_enabled: Boolean(userRow?.totp_secret),
-        email_enabled: Boolean(userRow?.email_2fa_enabled),
       },
     });
   });
@@ -300,7 +293,7 @@ export default async function authRoutes(server, options) {
   // Dev endpoint
   server.get('/api/dev/users', async (req, reply) => {
     try {
-      const query = 'SELECT id, username, email, method_sign, picture, totp_secret, email_2fa_enabled, email_2fa_code, email_2fa_expiry FROM users';
+      const query = 'SELECT id, username, email, method_sign, picture, totp_secret FROM users';
       const rows = await new Promise((resolve, reject) => {
         db.all(query, [], (err, resultRows) => {
           if (err) return reject(err);

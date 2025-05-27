@@ -219,41 +219,32 @@
           class="transition-opacity duration-300 opacity-0 text-[#f8aab6] font-inter font-extrabold text-center text-base mt-3">
         </div>
 
-        <form id="signinForm" class="p-4 flex flex-col space-y-3">
-          <input type="email" name="email" placeholder="Email" required
-            class="bg-slate-800 p-2" />
-          <input type="password" name="password" placeholder="Password" required
-            class="bg-slate-800 p-2" />
-          <button type="submit"
-            class="bg-[#4cb4e7] text-black font-bold py-2 hover:bg-[#f8aab6] transition-all">
-            Sign In
-          </button>
-        </form>
-        <div id="signinGOOGLE" class="mt-3 text-center">
-          <p class="mb-2 text-sm">Or sign in with Google</p>
-          <div id="google-signin-signin"
-            class="flex justify-center hidden"></div>
-        </div>
-        <div id="signinResizeHandle"
-          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
-        <div id="twofaFields" class="flex flex-col space-y-2 mt-2 hidden">
-          <select id="methodSelect" class="bg-slate-800 p-2"></select>
-          <input type="text" id="codeInput" placeholder="Enter 2FA code"
-            class="bg-slate-800 p-2" />
-          <div class="flex justify-between items-center">
-            <button id="submit2FA"
-              class="bg-[#4cb4e7] text-black font-bold py-1 px-2 hover:bg-[#f8aab6] transition-all">
-              Verify 2FA
-            </button>
-            <button id="resendCode"
-              class="text-sm underline text-[#4cb4e7] hover:text-[#f8aab6]">
-              Resend code
-            </button>
-          </div>
-          <div id="twofaError" class="text-red-500 text-sm mt-1"></div>
-        </div>
+      <form id="signinForm" class="p-4 flex flex-col space-y-3">
+        <input type="email" name="email" placeholder="Email" required class="bg-slate-800 p-2" />
+        <input type="password" name="password" placeholder="Password" required class="bg-slate-800 p-2" />
+        <button type="submit" class="bg-[#4cb4e7] text-black font-bold py-2 hover:bg-[#f8aab6] transition-all">
+          Sign In
+        </button>
+      </form>
+      <div id="signinGOOGLE" class="mt-3 text-center">
+        <p class="mb-2 text-sm">Or sign in with Google</p>
+        <div id="google-signin-signin" class="flex justify-center hidden"></div>
+      </div>
+      <div id="signinResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
+
+      <div id="twofaFields" class="flex flex-col items-center justify-center space-y-3 mt-4 hidden text-center">
+        <p class="text-sm font-semibold text-[#4cb4e7]">Two-Factor Authentication</p>
+        <input type="text" id="codeInput" maxlength="6" inputmode="numeric" placeholder="Enter 6-digit TOTP code"
+          class="w-60 p-2 text-center bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]" />
+        <button id="submit2FA"
+          class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
+          Verify 2FA
+        </button>
+        <p id="twofaError" class="text-sm text-red-500 font-semibold"></p>
       </div>
 
+    </div>
+    
       <!-- --------------SIGN UP WINDOW-------------- -->
 
       <div id="signupWindow"
@@ -476,42 +467,35 @@
             </button>
           </div>
         </div>
+      </div>
 
-        <div id="twofaSection" class="mt-4">
-          <h2 class="text-sm font-semibold mb-1 px-1">Two-Factor
-            Authentication</h2>
+      <div id="twofaSection" class="mt-4">
+        <h2 class="text-sm font-semibold mb-1 px-1">Two-Factor
+          Authentication</h2>
 
-          <div class="pl-12">
-            <label class="flex items-center space-x-2 mb-1">
-              <input type="checkbox" id="email2faCheckbox"
-                class="accent-[#4cb4e7]" />
-              <span>Enable Email 2FA</span>
-            </label>
-
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" id="totp2faCheckbox"
-                class="accent-[#4cb4e7]" />
-              <span>Enable TOTP (Google Authenticator)</span>
-            </label>
-          </div>
-
-          <div id="qrContainer" class="mt-3 hidden">
-            <p>Scan this QR code in your authenticator app:</p>
-            <img id="qrCodeImage" src alt="QR Code" class="w-40 h-40" />
-            <input id="verifyTotpInput" class="mt-2 p-1 bg-slate-800"
-              placeholder="Enter 6-digit code" />
-            <button id="confirmTotpButton"
-              class="mt-2 bg-[#4cb4e7] text-black font-bold px-2 py-1 hover:bg-[#f8aab6] transition-all">
-              Confirm TOTP
-            </button>
-            <p id="totpStatus" class="text-sm mt-1 text-[#D4535B]"></p>
-          </div>
+        <div class="pl-12">
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" id="totp2faCheckbox" class="accent-[#4cb4e7]" />
+            <span>Enable TOTP (Google Authenticator)</span>
+          </label>
         </div>
 
-        <div id="settingResizeHandle"
-          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+        <div id="qrContainer" class="mt-3 hidden flex flex-col items-center text-center space-y-2">
+          <p class="text-sm font-semibold text-[#4cb4e7]">Scan this QR code in your authenticator app:</p>
+          <img id="qrCodeImage" src alt="QR Code" class="w-40 h-40 border border-[#4cb4e7] rounded-lg" />
+          <input id="verifyTotpInput"
+            class="w-48 p-2 bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]"
+            placeholder="Enter 6-digit code" />
+          <button id="confirmTotpButton"
+            class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
+            Confirm TOTP
+          </button>
+          <p id="totpStatus" class="text-sm mt-1 text-red-500 font-semibold"></p>
+
+        <div id="settingResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
       </div>
+    </div>
 
       <!-- Logout WINDOW-->
       <div id="logoutWindow"
