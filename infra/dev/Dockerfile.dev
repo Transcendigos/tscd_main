@@ -4,7 +4,8 @@ FROM node:24.0-alpine
 WORKDIR /app
 
 
-COPY dev/package*.json ./
+COPY dev/package.json ./
+COPY dev/package-lock.json ./
 COPY dev/.env ./
 
 
