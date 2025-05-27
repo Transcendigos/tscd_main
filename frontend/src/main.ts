@@ -1,4 +1,4 @@
-import { startPongGame, setCanvas } from "./pong.js";
+import { startPongGame, setCanvas } from "./pong.ts";
 import { DesktopWindow } from "./DesktopWindow.js";
 import { checkSignedIn, setupSignupForm } from "./sign_up.js";
 import { initGoogleSignIn } from "./google_auth.js";

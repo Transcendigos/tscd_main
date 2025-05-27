@@ -8,6 +8,16 @@ export function setupSettingForm(settingWindow: DesktopWindow) {
   const confirmTotpButton = document.getElementById('confirmTotpButton') as HTMLButtonElement;
   const statusMsg = document.getElementById('totpStatus') as HTMLParagraphElement;
 
+
+  function disableTrigger(triggerId: string) {
+  const el = document.getElementById(triggerId);
+  if (el) {
+    el.classList.add("opacity-50", "cursor-not-allowed", "select-none");
+    el.classList.remove("hover-important", "cursor-default");
+    const clone = el.cloneNode(true);
+    el.parentNode?.replaceChild(clone, el);
+  }
+}
   async function refreshTotpState() {
     console.log("Refreshing TOTP state");
     qrContainer.classList.add('hidden');
@@ -22,6 +32,16 @@ export function setupSettingForm(settingWindow: DesktopWindow) {
       totp2faCheckbox.checked = false;
     }
   }
+
+// `  async function disabletopCheckbox(){
+//     try{
+//       const res = await fetch("http://localhost:3000/api/me", {credentials: "include" });
+//       const data = await res.json();
+//       if (data.user && data.user.method_sign == "method"){
+//         disableTrigger("twofaSection");
+//       }
+//     }
+//   }`
 
   // Patch the open method to always update TOTP checkbox
   const originalOpen = settingWindow.open.bind(settingWindow);

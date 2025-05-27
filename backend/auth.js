@@ -264,7 +264,7 @@ export default async function authRoutes(server, options) {
     // 🔍 Fetch user’s 2FA status from DB
     const userRow = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT totp_secret FROM users WHERE id = ?',
+        'SELECT totp_secret, method_sign FROM users WHERE id = ?',
         [payload.userId],
         (err, row) => {
           if (err) return reject(err);
@@ -278,6 +278,7 @@ export default async function authRoutes(server, options) {
       user: {
         ...payload,
         totp_enabled: Boolean(userRow?.totp_secret),
+        method_sign: userRow?.method_sign,
       },
     });
   });
