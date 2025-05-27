@@ -15,5 +15,4 @@ RUN npm install
 # Step 3 : Copy the rest of the code (backend)
 COPY ./backend/ ./
 
-# Launch the app in watch mode
 CMD ["node", "--watch", "--watch-path=.", "index.js"]

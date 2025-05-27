@@ -7,12 +7,15 @@ export default defineConfig({
     tailwindcssVite(),
   ],
   server: {
-    // This ensures Vite listens on 0.0.0.0 inside the container
-    // and is accessible from your host machine.
     host: '0.0.0.0',
-    port: 5173, // Default Vite port
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://backend:3000',
+        changeOrigin: true,
+      }
+    }
   },
-  
 });
 
 console.log("ENV DEBUG:", process.env.VITE_GOOGLE_CLIENT_ID);

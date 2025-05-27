@@ -5,6 +5,7 @@ import { initGoogleSignIn } from "./google_auth.js";
 import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
+import { initializeChatSystem } from "./chatClient.js";
 
 // import { startWebcamFeed } from "./webcam.js";
 
@@ -45,6 +46,7 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(settingWindow, "settingTab");
     assignOpenTrigger(logoutWindow, "logoutTab");
     assignOpenTrigger(pongWindow, "clickMeBtn");
+    initializeChatSystem();
 
     disableTrigger("signinTab");
     disableTrigger("signupTab");
@@ -193,6 +195,23 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   } catch (error) {
     console.error("Failed to initialize 'PREFIXWindow':", error);
+  }
+
+  // --- Chat Window ---
+  try {
+    const chatWindow = new DesktopWindow({
+      windowId: "chatWindow",
+      dragHandleId: "chatDragHandle",
+      resizeHandleId: "chatResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "chatWindow", // The window itself is the toggle target
+      openTriggerId: "chatBtn", // ID of the "Chat" link we added to the menu
+      closeButtonId: "closeChatBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  } catch (error) {
+    console.error("Failed to initialize the chat window:", error);
   }
 
   // WEBCAM FUNCTION TO BE TESTED LATER
