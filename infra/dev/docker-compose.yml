@@ -28,7 +28,6 @@ services:
       dockerfile: infra/dev/Dockerfile_backend
     container_name: backend
     volumes:
-      # - ../../backend:/app
       - sqlite-data:/app/data
       - ../../logs:/logs
     ports:
