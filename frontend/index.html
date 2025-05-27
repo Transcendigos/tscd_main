@@ -423,30 +423,27 @@
           Authentication</h2>
 
         <div class="pl-12">
-          <label class="flex items-center space-x-2 mb-1">
-            <input type="checkbox" id="email2faCheckbox" class="accent-[#4cb4e7]" />
-            <span>Enable Email 2FA</span>
-          </label>
-
           <label class="flex items-center space-x-2">
             <input type="checkbox" id="totp2faCheckbox" class="accent-[#4cb4e7]" />
             <span>Enable TOTP (Google Authenticator)</span>
           </label>
         </div>
 
-        <div id="qrContainer" class="mt-3 hidden">
-          <p>Scan this QR code in your authenticator app:</p>
-          <img id="qrCodeImage" src alt="QR Code" class="w-40 h-40" />
-          <input id="verifyTotpInput" class="mt-2 p-1 bg-slate-800" placeholder="Enter 6-digit code" />
+        <div id="qrContainer" class="mt-3 hidden flex flex-col items-center text-center space-y-2">
+          <p class="text-sm font-semibold text-[#4cb4e7]">Scan this QR code in your authenticator app:</p>
+          <img id="qrCodeImage" src alt="QR Code" class="w-40 h-40 border border-[#4cb4e7] rounded-lg" />
+          <input id="verifyTotpInput"
+            class="w-48 p-2 bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]"
+            placeholder="Enter 6-digit code" />
           <button id="confirmTotpButton"
-            class="mt-2 bg-[#4cb4e7] text-black font-bold px-2 py-1 hover:bg-[#f8aab6] transition-all">
+            class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
             Confirm TOTP
           </button>
-          <p id="totpStatus" class="text-sm mt-1 text-red-500"></p>
+          <p id="totpStatus" class="text-sm mt-1 text-red-500 font-semibold"></p>
         </div>
-      </div>
 
-      <div id="settingResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+        <div id="settingResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+        </div>
       </div>
     </div>
 

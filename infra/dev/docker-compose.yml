@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   web:
     build:
@@ -26,7 +28,7 @@ services:
       dockerfile: infra/dev/Dockerfile_backend
     container_name: backend
     volumes:
-      - ../../backend:/app
+      # - ../../backend:/app
       - sqlite-data:/app/data
       - ../../logs:/logs
     ports:

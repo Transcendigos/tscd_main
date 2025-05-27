@@ -3,40 +3,11 @@ import qrcode from 'qrcode';
 import jwt from 'jsonwebtoken';
 import { getDB } from './db.js';
 
-
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
-// Update Db User table to change the email_2fa_enabled
+export default async function twoFASettingRoutes(server, options) {
 
-export default async function setting_twofa(server, options) {
-  
-  const db = getDB();
-
-  server.post('/api/2fa/enable-email', async (req, reply) => {
-    const { enable } = req.body;
-    const token = req.cookies.auth_token;
-
-    if (!token) return reply.code(401).send({ error: 'Not authenticated' });
-
-    let user;
-    try {
-      user = jwt.verify(token, JWT_SECRET);
-    } catch {
-      return reply.code(401).send({ error: 'Invalid session token' });
-    }
-
-    await new Promise((resolve, reject) => {
-      db.run(
-        'UPDATE users SET email_2fa_enabled = ? WHERE id = ?',
-        [enable ? 1 : 0, user.userId],
-        (err) => (err ? reject(err) : resolve())
-      );
-    });
-
-    return reply.send({
-      message: `Email 2FA ${enable ? 'enabled' : 'disabled'}`,
-    });
-  });
+  let db = getDB();
 
   //SET UP TOTP (create the secret key for server and phone of the client)
   server.post('/api/2fa/setup-totp', async (req, reply) => {
@@ -58,8 +29,15 @@ export default async function setting_twofa(server, options) {
     });
 
     // Step 2: Create QR code
-    const otpAuthUrl = secret.otpauth_url;
-    const qrCode = await qrcode.toDataURL(otpAuthUrl);
+    let qrCode;
+    try {
+      const otpAuthUrl = secret.otpauth_url;
+      qrCode = await qrcode.toDataURL(otpAuthUrl);
+    }
+    catch {
+      console.error("❌ Failed to generate QR code:", err);
+      return reply.code(500).send({ error: "QR code generation failed" });
+    }
 
     // Step 3: Send secret and QR to frontend (temporary)
     reply.send({
@@ -69,7 +47,6 @@ export default async function setting_twofa(server, options) {
 
   });
 
-
   // REGISTER TOTP (verify the secret code and store in DB)
   server.post('/api/2fa/verify-totp', async (req, reply) => {
     const { token: userToken, secret } = req.body;
@@ -78,8 +55,9 @@ export default async function setting_twofa(server, options) {
     }
 
     const jwtToken = req.cookies.auth_token;
-    if (!jwtToken)
+    if (!jwtToken) {
       return reply.code(401).send({ error: 'Not logged in' });
+    }
 
     let user;
     try {
@@ -104,11 +82,10 @@ export default async function setting_twofa(server, options) {
     await new Promise((resolve, reject) => {
       db.run(
         'UPDATE users SET totp_secret = ? WHERE id = ?',
-        [secret, user.id],
+        [secret, user.userId],
         (err) => (err ? reject(err) : resolve())
       );
     });
-
     reply.send({ message: 'TOTP 2FA enabled successfully' });
   });
 

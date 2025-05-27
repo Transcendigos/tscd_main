@@ -109,13 +109,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
         return;
       }
 
-      // Case: Both
-      //   passwordInput.disabled = false;
-      //   passwordInput.classList.remove("opacity-50");
-      //   submitBtn.disabled = false;
-      //   googleBtnContainer?.classList.remove("hidden");
-      //   errorBox.textContent = "";
-
 
     } catch (err) {
       console.error("Failed to detect auth method:", err);
@@ -156,23 +149,13 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
     if (data.twofa_required) {
       tempEmail = email;
       methodSelect.innerHTML = "";
-      data.available_methods.forEach((method: string) => {
-        const option = document.createElement("option");
-        option.value = method;
-        option.textContent = method.toUpperCase();
-        methodSelect.appendChild(option);
-      });
+      const option = document.createElement("option");
+      option.value = data.available_methods;
+      option.textContent = data.available_methods.toUpperCase();
+      methodSelect.appendChild(option);
 
       twofaFields.classList.remove("hidden");
 
-      if (data.available_methods.includes("email")) {
-        await fetch("http://localhost:3000/api/2fa/send-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ email }),
-        });
-      }
     } else if (data.user) {
       signinWindow.close(); // ✅ close window
       window.dispatchEvent(new Event("auth:updated")); // 🔁 update UI
@@ -205,26 +188,5 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
     }
   });
 
-
-  // Resend 2FA code
-  resendCodeButton.addEventListener("click", async () => {
-    errorBox.textContent = "";
-    if (!tempEmail) return;
-    const method = methodSelect.value;
-    if (method !== "email") return;
-
-    const res = await fetch("http://localhost:3000/api/2fa/send-code", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email: tempEmail }),
-    });
-
-    const result = await res.json();
-    if (result.error) {
-      errorBox.textContent = result.error;
-    } else {
-      errorBox.textContent = "A new email code was sent.";
-    }
-  });
+  
 }
