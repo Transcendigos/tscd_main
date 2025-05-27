@@ -13,6 +13,8 @@ import { initializeDB, getDB } from './db.js';
 import { initializeRedisClients, getRedisPublisher, getRedisSubscriber } from './redis.js';
 import authRoutes from './auth.js';
 import chatRoutes, { cleanupChatResources } from './chat.js'; // Import cleanup
+import setting_twofa from './setting_2fa.js';
+import twofaRoutes from './twofa.js';
 
 dotenv.config();
 
@@ -40,6 +42,8 @@ server.register(fastifyWebsocket);
 // Register modular routes
 server.register(authRoutes);
 server.register(chatRoutes);
+server.register(setting_twofa);
+server.register(twofaRoutes);
 
 // Start server
 const start = async () => {
