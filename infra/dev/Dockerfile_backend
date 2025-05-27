@@ -6,13 +6,10 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Step 1 : Copy only files necessary for dependency install
 COPY ./backend/package*.json ./
 
-# Step 2 : Install dependencies
 RUN npm install
 
-# Step 3 : Copy the rest of the code (backend)
 COPY ./backend/ ./
 
-CMD ["node", "--watch", "--watch-path=.", "index.js"]
+CMD ["node", "index.js"]
