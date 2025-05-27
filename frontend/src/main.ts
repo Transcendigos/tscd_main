@@ -5,6 +5,7 @@ import { initGoogleSignIn } from "./google_auth.js";
 import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
+import { initializeChatSystem } from "./chatClient.js";
 
 // import { startWebcamFeed } from "./webcam.js";
 
@@ -45,6 +46,7 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(settingWindow, "settingTab");
     assignOpenTrigger(logoutWindow, "logoutTab");
     assignOpenTrigger(pongWindow, "clickMeBtn");
+    initializeChatSystem();
 
     disableTrigger("signinTab");
     disableTrigger("signupTab");
