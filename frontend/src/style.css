@@ -12,3 +12,8 @@
 @theme {
     --font-inter: "Inter", sans-serif;
 }
+
+#signinWindow {
+  transition: height 0.3s ease, max-height 0.3s ease;
+  overflow: hidden; /* prevents sudden overflow during animation */
+}
