@@ -4,7 +4,8 @@ import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import fastifyWebsocket from '@fastify/websocket';
 import dotenv from 'dotenv';
-import pino from 'pino';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import fs from 'fs';
 
 import { initializeDB, getDB } from './db.js';
@@ -18,15 +19,34 @@ console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
 
 dotenv.config();
 
-const logStream = fs.createWriteStream('/logs/backend.log', { flags: 'a' });
-const logger = pino({
-    level: process.env.LOG_LEVEL || 'info',
-}, pino.multistream([
-    { level: 'info', stream: process.stdout },
-    { level: 'info', stream: logStream }
-]));
+const server = Fastify({
+  logger: { 
+	transport: {
+		targets: [
+			{ level: 'info', target: 'pino/file', options: { destination: '/logs/backend.log' } }
+			]
+		}
+	}
+});
 
-const server = Fastify({ logger });
+// Setup Swagger (API visualizer tool)
+await server.register(swagger, {
+  openapi: {
+    info: {
+      title: 'Transcendance API',
+      description: 'API du projet Transcendance',
+      version: '1.0.0'
+    }
+  }
+});
+await server.register(swaggerUi, {
+  routePrefix: '/docs',
+});
+
+server.get('/', async (request, reply) => {
+	reply.send({ hello: 'world' });
+});
+
 
 // Initialize DB and Redis
 const db = initializeDB(server.log);
