@@ -195,17 +195,17 @@ async function loadUserList() {
                 li.dataset.userId = user.id.toString();
                 if (user.picture) li.dataset.userPicture = user.picture;
                 
-                li.className = 'p-1.5 hover:bg-slate-700 cursor-pointer rounded text-xs flex items-center space-x-2';
+                li.className = 'p-1.5 hover:bg-slate-700 cursor-pointer text-xs flex items-center space-x-2';
                 
                 if (user.picture) {
                     const img = document.createElement('img');
                     img.src = user.picture;
                     img.alt = user.username;
-                    img.className = 'w-5 h-5 rounded-full object-cover pointer-events-none';
+                    img.className = 'w-5 h-5 object-cover pointer-events-none';
                     li.appendChild(img);
                 } else {
                     const placeholder = document.createElement('div');
-                    placeholder.className = 'w-5 h-5 rounded-full bg-slate-500 flex items-center justify-center text-xs text-slate-300 pointer-events-none';
+                    placeholder.className = 'w-5 h-5 bg-slate-500 flex items-center justify-center text-xs text-slate-300 pointer-events-none';
                     placeholder.textContent = user.username.substring(0,1).toUpperCase();
                     li.appendChild(placeholder);
                 }
@@ -231,36 +231,36 @@ function createPrivateChatWindowHtml(peerUser: User): string {
 
     return `
         <div id="privateChatWindow_${peerId}"
-             class="border-2 border-mpink w-[450px] text-mpink text-sm flex flex-col
-                    bg-slate-900/95 backdrop-blur-sm 
+             class="border-2 w-[450px] text-sm flex flex-col
+                    bg-slate-900/80 
                     absolute left-1/3 top-1/3 transform -translate-x-1/2 -translate-y-1/2 
                     transition-all duration-300 ease-in-out
-                    opacity-0 scale-95 invisible pointer-events-none rounded-lg shadow-2xl"
+                    opacity-0 scale-95 invisible pointer-events-none shadow-2xl"
              style="min-width: 300px; min-height: 350px; max-width: 600px; max-height: 80vh;">
 
             <div id="privateChatDragHandle_${peerId}"
-                 class="px-1.5 py-1 flex items-center justify-between border-b-2 border-mpink cursor-grab active:cursor-grabbing select-none rounded-t-md">
+                 class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 cursor-grab active:cursor-grabbing select-none">
                 <div class="flex items-center space-x-1.5">
-                    <svg class="w-4 h-4 text-mpink" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span class="font-bold">Chat with ${peerUsername}</span>
                 </div>
                 <button aria-label="Close private chat with ${peerUsername}" id="closePrivateChatBtn_${peerId}"
-                        class="w-5 h-5 border border-mpink rounded-sm flex items-center justify-center font-bold hover:bg-mpink hover:text-slate-900 transition-colors">
+                        class="w-5 h-5 border flex items-center justify-center font-bold hover-important transition-colors">
                     X
                 </button>
             </div>
 
-            <div class="flex-grow p-2 overflow-y-auto space-y-2" id="privateMessagesArea_${peerId}" style="background-color: rgba(30, 41, 59, 0.5);">
+            <div class="flex-grow p-2 overflow-y-auto space-y-2 backdrop-blur-xs" id="privateMessagesArea_${peerId}">
             </div>
 
-            <div class="p-2 border-t border-mpink/50">
+            <div class="p-2 border-t">
                 <div class="flex space-x-2">
                     <input type="text" id="privateMessageInput_${peerId}" placeholder="Message ${peerUsername}..."
-                           class="flex-grow p-1.5 bg-slate-700 border border-mpink/50 rounded text-xs focus:ring-1 focus:ring-[#4cb4e7] focus:border-[#4cb4e7] outline-none text-slate-50 placeholder-slate-400" />
+                           class="flex-grow p-1.5 bg-slate-900 border text-xs focus:ring-1 focus:ring-[#4cb4e7] focus:border-[#4cb4e7] outline-none" />
                     <button id="privateSendBtn_${peerId}"
-                            class="px-3 py-1.5 bg-mpink text-slate-900 font-semibold rounded hover:bg-[#4cb4e7] hover:text-slate-50 transition-colors text-xs">
+                            class="border px-3 py-1.5 font-semibold hover:bg-[#8be076] hover:text-slate-900 transition-colors text-xs">
                         Send
                     </button>
                 </div>
@@ -470,14 +470,14 @@ function displayMessageInWindow(msg: ChatMessage, messagesArea: HTMLElement, pee
     const messageDiv = document.createElement('div');
     const messageBubble = document.createElement('div');
     messageBubble.textContent = msg.content;
-    messageBubble.className = 'px-3 py-1.5 rounded-lg text-xs inline-block max-w-[80%] break-words shadow'; 
+    messageBubble.className = 'px-3 py-1.5 text-xs inline-block max-w-[80%] break-words shadow'; 
 
     if (msg.fromUserId === currentUserId) {
         messageDiv.className = 'flex justify-end my-1.5';
-        messageBubble.classList.add('bg-mgreen', 'text-mdarktext');
+        messageBubble.classList.add('text-[#8be076]', 'font-bold', 'border-b', 'border-[#8be076]');
     } else if (msg.fromUserId === peerIdOfThisWindow) {
         messageDiv.className = 'flex justify-start my-1.5';
-        messageBubble.classList.add('bg-mpink', 'text-mdarktext');
+        messageBubble.classList.add('text-[#4cb4e7]', 'border-b', 'font-bold', 'border-[#4cb4e7]');
     } else {
         console.warn("displayMessageInWindow: Message doesn't match current context.", { msg, peerIdOfThisWindow });
         return; 
