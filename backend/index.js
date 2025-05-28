@@ -19,15 +19,14 @@ console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
 
 dotenv.config();
 
-const logStream = fs.createWriteStream('/logs/backend.log', { flags: 'a' });
-
 const server = Fastify({
-  logger: {
-    transport: {
-      target: 'pino/file',
-      options: { destination: '../logs/backend.log' }
-    }
-  }
+  logger: { 
+	transport: {
+		targets: [
+			{ level: 'info', target: 'pino/file', options: { destination: '/logs/backend.log' } }
+			]
+		}
+	}
 });
 
 // Setup Swagger (API visualizer tool)
