@@ -10,20 +10,16 @@
   <style>
     body {
       background-color: #1b3f72;
-    background-image:
-      repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.15),
-        rgba(0, 0, 0, 0.15) 2px,
-        transparent 2px,
-        transparent 4px
-      ),
-      linear-gradient(
-        to bottom,
-        #1e293b 0%,
-        #1b3f72 50%,
-        #1e293b 100%
-      );
+      background-image:
+        repeating-linear-gradient(0deg,
+          rgba(0, 0, 0, 0.15),
+          rgba(0, 0, 0, 0.15) 2px,
+          transparent 2px,
+          transparent 4px),
+        linear-gradient(to bottom,
+          #1e293b 0%,
+          #1b3f72 50%,
+          #1e293b 100%);
       font-family: 'Inter', sans-serif;
     }
 
@@ -151,11 +147,12 @@
         </div>
       </div>
 
-      <div class="bg-slate-900/50 px-1.5 py-1 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7] select-none">
+      <div
+        class="bg-slate-900/50 px-1.5 py-1 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7] select-none">
         <button id="chatBtn" class="border font-extrabold hover-important border-[#4cb4e7] px-2">Chat</button>
         <div class="flex space-x-2 mr-2">
-          <div class="border font-extrabold border-[#4cb4e7] px-2">INFO</div>
-          <div class="border font-extrabold border-[#4cb4e7] px-2">STATS</div>
+          <div id="infoTab" class="border font-extrabold hover-important border-[#4cb4e7] px-2">INFO</div>
+          <div id="statsTab" class="border font-extrabold border-[#4cb4e7] px-2">STATS</div>
         </div>
       </div>
 
@@ -203,9 +200,12 @@
       </div>
 
       <form id="signinForm" class="p-4 flex flex-col space-y-5">
-        <input type="email" name="email" placeholder="Email..." required class="bg-slate-900/50 border-2 border-[#4cb4e7] p-2" />
-        <input type="password" name="password" placeholder="Password..." required class="bg-slate-900/50 border-2 border-[#4cb4e7] p-2" />
-        <button type="submit" class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] hover:text-slate-900 transition-all">
+        <input type="email" name="email" placeholder="Email..." required
+          class="bg-slate-900/50 border-2 border-[#4cb4e7] p-2" />
+        <input type="password" name="password" placeholder="Password..." required
+          class="bg-slate-900/50 border-2 border-[#4cb4e7] p-2" />
+        <button type="submit"
+          class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] hover:text-slate-900 transition-all">
           Sign In
         </button>
       </form>
@@ -346,13 +346,14 @@
       <div id="pongDragHandle"
         class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
         <div class="flex items-center space-x-1.5">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M9.75 3.104v5.621a2.25 2.25 0 01-2.25 2.25H5.25a2.25 2.25 0 01-2.25-2.25V3.104M15.75 3.104v5.621a2.25 2.25 0 002.25 2.25h2.25a2.25 2.25 0 002.25-2.25V3.104m-6.75 4.516l-4.5-3.243m0 10.362l4.5-3.243m6.75 3.243l4.5-3.243m-12-3.874l4.5 3.243m2.25-3.243l4.5 3.243M3 10.875l4.5 3.243M3 10.875V7.522m18 3.353V7.522m-9 6.59V3.27m0 17.46V15.3">
-            </path>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="#4cb4e7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M12.718 20.713a7.64 7.64 0 0 1 -7.48 -12.755l.72 -.72a7.643 7.643 0 0 1 9.105 -1.283l2.387 -2.345a2.08 2.08 0 0 1 3.057 2.815l-.116 .126l-2.346 2.387a7.644 7.644 0 0 1 -1.052 8.864" />
+            <path d="M14 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+            <path d="M9.3 5.3l9.4 9.4" />
           </svg>
-          <span class="font-bold">Window Title</span>
+          <span class="font-bold">PONG PONG PONG</span>
         </div>
         <div class="flex items-center space-x-1">
           <button aria-label="Minimize" disabled
@@ -562,6 +563,159 @@
       </div>
 
       <div id="chatResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+      </div>
+    </div>
+
+    <!-- INFO WINDOW -->
+    <div id="infoWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+            bg-slate-900
+            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+            transition-all duration-300 ease-in-out
+            opacity-0 scale-95 invisible pointer-events-none"
+      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+      <div id="infoDragHandle"
+        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+        <div class="flex items-center space-x-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle"
+            viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+            <path
+              d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+          </svg>
+          <span class="font-bold">Info</span>
+        </div>
+        <div class="flex items-center space-x-1">
+          <button aria-label="Minimize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
+              <rect width="8" height="2" />
+            </svg>
+          </button>
+          <button aria-label="Maximize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
+              xmlns="http://www.w3.org/2000/svg">
+              <rect x="0.5" y="0.5" width="8" height="8" />
+            </svg>
+          </button>
+          <button aria-label="Close" id="closeinfoBtn"
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+            X
+          </button>
+        </div>
+      </div>
+
+      <p class="text-sm font-semibold text-[#4cb4e7] py-2">What do you wish to explore</p>
+      <div class="flex flex-col items-center justify-center space-y-4">
+        <button id="openWeatherBtn" class="font-inter font-extrabold hover-important w-full py-6 pt-10 transition-all">
+          Ecole 42 Paris Weather
+        </button>
+      </div>
+
+      <div id="infoResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+      </div>
+    </div>
+
+    <!-- STATS WINDOW -->
+    <div id="statsWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+            bg-slate-900
+            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+            transition-all duration-300 ease-in-out
+            opacity-0 scale-95 invisible pointer-events-none"
+      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+      <div id="statsDragHandle"
+        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+        <div class="flex items-center space-x-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+            class="bi bi-clipboard-data" viewBox="0 0 16 16">
+            <path
+              d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0z" />
+            <path
+              d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
+            <path
+              d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
+          </svg>
+          <span class="font-bold">My Dashboard</span>
+        </div>
+        <div class="flex items-center space-x-1">
+          <button aria-label="Minimize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
+              <rect width="8" height="2" />
+            </svg>
+          </button>
+          <button aria-label="Maximize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
+              xmlns="http://www.w3.org/2000/svg">
+              <rect x="0.5" y="0.5" width="8" height="8" />
+            </svg>
+          </button>
+          <button aria-label="Close" id="closestatsBtn"
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+            X
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-grow p-2 overflow-auto bg-slate-800/50">
+        <p>This is the content of statsWindow.</p>
+        <p>Replace this with actual application content.</p>
+        <input type="text" placeholder="Sample input..."
+          class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
+      </div>
+
+      <div id="statsResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+      </div>
+    </div>
+
+
+    <div id="weatherWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+            bg-slate-900
+            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+            transition-all duration-300 ease-in-out
+            opacity-0 scale-95 invisible pointer-events-none"
+      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+      <div id="weatherDragHandle"
+        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+        <div class="flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.75 3.104v5.621a2.25 2.25 0 01-2.25 2.25H5.25a2.25 2.25 0 01-2.25-2.25V3.104M15.75 3.104v5.621a2.25 2.25 0 002.25 2.25h2.25a2.25 2.25 0 002.25-2.25V3.104m-6.75 4.516l-4.5-3.243m0 10.362l4.5-3.243m6.75 3.243l4.5-3.243m-12-3.874l4.5 3.243m2.25-3.243l4.5 3.243M3 10.875l4.5 3.243M3 10.875V7.522m18 3.353V7.522m-9 6.59V3.27m0 17.46V15.3">
+            </path>
+          </svg>
+          <span class="font-bold">Window Title</span>
+        </div>
+        <div class="flex items-center space-x-1">
+          <button aria-label="Minimize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
+              <rect width="8" height="2" />
+            </svg>
+          </button>
+          <button aria-label="Maximize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
+              xmlns="http://www.w3.org/2000/svg">
+              <rect x="0.5" y="0.5" width="8" height="8" />
+            </svg>
+          </button>
+          <button aria-label="Close" id="closeweatherBtn"
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+            X
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-grow p-2 overflow-auto bg-slate-800/50">
+        <p>This is the content of weatherWindow.</p>
+        <p>Replace this with actual application content.</p>
+        <input type="text" placeholder="Sample input..."
+          class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
+      </div>
+
+      <div id="weatherResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
       </div>
     </div>
 

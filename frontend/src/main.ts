@@ -6,7 +6,7 @@ import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
 import { initializeChatSystem } from "./chatClient.js";
-
+import { setupInfoWindow } from "./infowindow.ts";
 // import { startWebcamFeed } from "./webcam.js";
 
 // Top of the file
@@ -16,6 +16,9 @@ let logoutWindow: DesktopWindow;
 let profileWindow: DesktopWindow;
 let settingWindow: DesktopWindow;
 let pongWindow: DesktopWindow;
+let chatWindow: DesktopWindow;
+let statsWindow: DesktopWindow;
+let infoWindow: DesktopWindow;
 
 // Utility functions
 function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string) {
@@ -46,6 +49,9 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(settingWindow, "settingTab");
     assignOpenTrigger(logoutWindow, "logoutTab");
     assignOpenTrigger(pongWindow, "clickMeBtn");
+    assignOpenTrigger(chatWindow, "chatBtn");
+    assignOpenTrigger(infoWindow, "infoTab");
+    assignOpenTrigger(statsWindow, "statsTab");
     initializeChatSystem();
 
     disableTrigger("signinTab");
@@ -61,6 +67,10 @@ async function updateUIBasedOnAuth() {
     disableTrigger("settingTab");
     disableTrigger("logoutTab");
     disableTrigger("clickMeBtn");
+    disableTrigger("chatBtn");
+    disableTrigger("infoTab");
+    disableTrigger("statsTab");
+
   }
 }
 
@@ -159,6 +169,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       visibilityToggleId: "settingWindow",
       // openTriggerId: "settingTab",
       closeButtonId: "closesettingBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
     });
   } catch (error) {
     console.error("Failed to initialize 'settingWindow':", error);
@@ -176,10 +188,49 @@ window.addEventListener("DOMContentLoaded", async () => {
       visibilityToggleId: "profileWindow",
       // openTriggerId: "profileBtn",
       closeButtonId: "closeprofileBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
     });
   } catch (error) {
     console.error("Failed to initialize 'profileWindow':", error);
   }
+
+  // --- Info Window ---
+
+  try {
+    infoWindow = new DesktopWindow({
+      windowId: "infoWindow",
+      dragHandleId: "infoDragHandle",
+      resizeHandleId: "infoResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "infoWindow",
+      // openTriggerId: "infoTab",
+      closeButtonId: "closeinfoBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  } catch (error) {
+    console.error("Failed to initialize 'infoWindow':", error);
+  }
+
+  // --- Stats Window ---
+
+  try {
+    statsWindow = new DesktopWindow({
+      windowId: "statsWindow",
+      dragHandleId: "statsDragHandle",
+      resizeHandleId: "statsResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "statsWindow",
+      // openTriggerId: "spawner",
+      closeButtonId: "closestatsBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  } catch (error) {
+    console.error("Failed to initialize 'statsWindow':", error);
+  }
+
 
   // --- Pong Window ---
 
@@ -192,20 +243,22 @@ window.addEventListener("DOMContentLoaded", async () => {
       visibilityToggleId: "pongWindow",
       // openTriggerId: "clickMeBtn",
       closeButtonId: "closepongBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
     });
   } catch (error) {
-    console.error("Failed to initialize 'PREFIXWindow':", error);
+    console.error("Failed to initialize 'pongWindow':", error);
   }
 
   // --- Chat Window ---
   try {
-    const chatWindow = new DesktopWindow({
+    chatWindow = new DesktopWindow({
       windowId: "chatWindow",
       dragHandleId: "chatDragHandle",
       resizeHandleId: "chatResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "chatWindow", // The window itself is the toggle target
-      openTriggerId: "chatBtn", // ID of the "Chat" link we added to the menu
+      // openTriggerId: "chatBtn", // ID of the "Chat" link we added to the menu
       closeButtonId: "closeChatBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -229,20 +282,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   //       });
   //     }
 
-  await updateUIBasedOnAuth();
-
-  window.addEventListener("auth:updated", updateUIBasedOnAuth);
-
-  setupSignupForm(signupWindow);
-
-  initGoogleSignIn();
-  
-  setupSigninForm(signinWindow);
-  
-  setupSettingForm(settingWindow);
-
-  setupLogoutForm(logoutWindow);
-
   // --- Pong Game Specific Logic ---
   const gameContainer = document.getElementById("gameContainer")!;
   const clickBtn = document.getElementById("clickMeBtn")!;
@@ -255,6 +294,23 @@ window.addEventListener("DOMContentLoaded", async () => {
   } else {
     console.error("One or more elements for Pong game setup are missing.");
   }
+
+  await updateUIBasedOnAuth();
+
+  window.addEventListener("auth:updated", updateUIBasedOnAuth);
+
+  setupSignupForm(signupWindow);
+
+  initGoogleSignIn();
+
+  setupSigninForm(signinWindow);
+
+  setupSettingForm(settingWindow);
+
+  setupLogoutForm(logoutWindow);
+
+  setupInfoWindow(infoWindow);
+
 });
 
 // ----------------WINDOW TEMPLATE----------------

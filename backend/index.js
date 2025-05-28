@@ -13,6 +13,7 @@ import authRoutes from './auth.js';
 import chatRoutes, { cleanupChatResources } from './chat.js'; // Import cleanup
 import twoFASettingRoutes from './setting_2fa.js';
 import twofaRoutes from './signin_twofa.js';
+import weatherRoutes from './weather.js';
 
 console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
 
@@ -45,6 +46,7 @@ server.register(authRoutes);
 server.register(chatRoutes);
 server.register(twofaRoutes);
 server.register(twoFASettingRoutes);
+server.register(weatherRoutes);
 
 
 // Start server
