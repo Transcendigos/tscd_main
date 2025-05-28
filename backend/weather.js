@@ -9,9 +9,9 @@ const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 export default fp(async function weatherRoutes(server, options) {
 
-  
+
   server.get('/api/weather/paris', async (req, reply) => {
-    
+
     const API_KEY = process.env.OPENWEATHER_API_KEY;
     const now = Date.now();
 
@@ -32,8 +32,9 @@ export default fp(async function weatherRoutes(server, options) {
         server.log.error("[Weather API] Could not resolve Paris coordinates", geoData);
         return reply.code(500).send({ error: "Could not resolve coordinates for Paris" });
       }
-
-      const { lat, lon } = geoData[0];
+      const location = geoData[0];
+      const lat = location.lat;
+      const lon = location.lon;
 
       const [current, forecast, pollution] = await Promise.all([
         fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`).then(res => res.json()),
@@ -41,9 +42,24 @@ export default fp(async function weatherRoutes(server, options) {
         fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`).then(res => res.json()),
       ]);
 
-      if (!current || !current.main || !current.weather) {
-        server.log.error("[Weather API] Invalid current weather response", current);
-        return reply.code(500).send({ error: "Invalid current weather data" });
+      // Select one forecast per day (preferably at 12:00 PM)
+      const dailyForecast = [];
+      const seenDays = new Set();
+      for (const entry of forecast.list) {
+        const date = new Date(entry.dt_txt);
+        const day = date.toISOString().split('T')[0];
+        const hour = date.getHours();
+
+        if (!seenDays.has(day) && hour === 12) {
+          seenDays.add(day);
+          dailyForecast.push({
+            time: entry.dt_txt,
+            temp: entry.main.temp,
+            icon: `http://openweathermap.org/img/wn/${entry.weather[0].icon}@2x.png`,
+          });
+        }
+
+        if (dailyForecast.length >= 5) break;
       }
 
       const result = {
@@ -57,11 +73,7 @@ export default fp(async function weatherRoutes(server, options) {
           icon: `http://openweathermap.org/img/wn/${current.weather[0].icon}@2x.png`,
 
         },
-        forecast: forecast.list.slice(0, 5).map(entry => ({
-          time: entry.dt_txt,
-          temp: entry.main.temp,
-          icon: `http://openweathermap.org/img/wn/${entry.weather[0].icon}@2x.png`,
-        })),
+        forecast: dailyForecast,
         air: pollution.list[0].main.aqi,
       };
 

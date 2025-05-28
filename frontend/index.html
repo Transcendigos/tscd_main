@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 
-<head>
-  <meta charset="UTF-8" />
-  <title>ft_transcendence</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="/src/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <style>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ft_transcendence</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/src/style.css">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
+      rel="stylesheet">
+    <style>
     body {
       background-color: #1b3f72;
       background-image:
@@ -55,706 +57,811 @@
       pointer-events: auto;
     }
   </style>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-</head>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
 
-<body class="text-[#4cb4e7] min-h-screen flex flex-col bg-[#1b3f72] justify-between">
+  <body
+    class="text-[#4cb4e7] min-h-screen flex flex-col bg-[#1b3f72] justify-between">
 
-  <header class="py-5 flex justify-center text-center">
-    <div class="flex flex-col items-center ">
-      <div class="h-0.5 bg-[#4cb4e7] w-[110%]"></div>
-      <h1 class="text-5xl font-extrabold font-inter">
-        TRANSCENDENCE
-      </h1>
-    </div>
-  </header>
+    <header class="py-5 flex justify-center text-center">
+      <div class="flex flex-col items-center ">
+        <div class="h-0.5 bg-[#4cb4e7] w-[110%]"></div>
+        <h1 class="text-5xl font-extrabold font-inter">
+          TRANSCENDENCE
+        </h1>
+      </div>
+    </header>
 
-  <main class="flex-grow px-4
-             fixed inset-0 flex justify-center items-center z-10" id="main" style="position: relative;">
+    <main class="flex-grow px-4
+             fixed inset-0 flex justify-center items-center z-10" id="main"
+      style="position: relative;">
 
-    <!-- --------------MENU WINDOW-------------- -->
+      <!-- --------------MENU WINDOW-------------- -->
 
-    <div id="dragWindow" class="border-2 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+      <div id="dragWindow"
+        class="border-2 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
                bg-slate-900/60
                absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                transition-all duration-300 ease-in-out
-               opacity-0 scale-95 invisible pointer-events-none" style="min-width: 350px; min-height: 350px;">
+               opacity-0 scale-95 invisible pointer-events-none"
+        style="min-width: 350px; min-height: 350px;">
 
-      <div id="dragHandle"
-        class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
-        <div class="flex items-center space-x-1.5">
-          <svg class="w-4 h-4" fill="none" stroke="#4cb4e7" stroke-width="1" viewBox="0 0 16 16"
-            xmlns="http://www.w3.org/2000/svg">
-            <rect x="1" y="1" width="14" height="14" rx="1" />
-            <line x1="1" y1="5" x2="15" y2="5" />
-          </svg>
-          <span class="font-bold select-none">ft_pong</span>
-        </div>
-        <div class="flex items-center space-x-1">
-          <button aria-label="Minimize"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
-              <rect width="8" height="2" />
-            </svg>
-          </button>
-          <button aria-label="Maximize"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
+        <div id="dragHandle"
+          class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
+          <div class="flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="#4cb4e7" stroke-width="1"
+              viewBox="0 0 16 16"
               xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" y="0.5" width="8" height="8" />
+              <rect x="1" y="1" width="14" height="14" rx="1" />
+              <line x1="1" y1="5" x2="15" y2="5" />
             </svg>
-          </button>
-          <button aria-label="Close" id="closeMenuBtn"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-            X
-          </button>
+            <span class="font-bold select-none">ft_pong</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="8" height="2" />
+              </svg>
+            </button>
+            <button aria-label="Maximize"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="8" height="8" />
+              </svg>
+            </button>
+            <button aria-label="Close" id="closeMenuBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+              X
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="px-1.5 py-0.5 flex justify-between items-center border-b border-[#4cb4e7] text-[#4cb4e7] select-none">
-        <!-- Left-aligned tabs -->
-        <div class="flex items-center space-x-2">
-          <span id="profileBtn" class="px-1.5 text-[#4cb4e7] opacity-50 cursor-not-allowed select-none">
-            <u>P</u>rofile
-          </span>
-          <span id="signinTab" class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-in</span>
-          <span id="signupTab" class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-up</span>
-          <span id="settingTab" class="px-1.5 text-[#4cb4e7] opacity-50 cursor-not-allowed select-none">
-            <u>S</u>etting
-          </span>
+        <div
+          class="px-1.5 py-0.5 flex justify-between items-center border-b border-[#4cb4e7] text-[#4cb4e7] select-none">
+          <!-- Left-aligned tabs -->
+          <div class="flex items-center space-x-2">
+            <span id="profileBtn"
+              class="px-1.5 text-[#4cb4e7] opacity-50 cursor-not-allowed select-none">
+              <u>P</u>rofile
+            </span>
+            <span id="signinTab"
+              class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-in</span>
+            <span id="signupTab"
+              class="px-1.5 hover-important hover:underline cursor-default"><u>S</u>ign-up</span>
+            <span id="settingTab"
+              class="px-1.5 text-[#4cb4e7] opacity-50 cursor-not-allowed select-none">
+              <u>S</u>etting
+            </span>
+          </div>
+          <!-- Right-aligned logout tab -->
+          <div>
+            <span id="logoutTab"
+              class="px-1.5 text-[#4cb4e7] opacity-50 cursor-not-allowed select-none">
+              <u>L</u>ogout
+            </span>
+          </div>
         </div>
-        <!-- Right-aligned logout tab -->
-        <div>
-          <span id="logoutTab" class="px-1.5 text-[#4cb4e7] opacity-50 cursor-not-allowed select-none">
-            <u>L</u>ogout
-          </span>
+
+        <div class="flex-grow p-0.5 overflow-hidden">
+          <div
+            class="h-full text-[#4cb4e7] flex flex-col justify-center items-center">
+            <button id="clickMeBtn"
+              class="font-inter font-extrabold hover-important w-full py-6 pt-10 transition-all">
+              PLAY PONG
+            </button>
+            <div class="h-[1px] bg-[#4cb4e7] origin-center w-1/3"></div>
+            <button id="darkBtn"
+              class="font-inter font-extrabold hover-important w-full py-6 transition-all">
+              MULTIPLAYER
+            </button>
+            <div class="h-[1px] bg-[#4cb4e7] origin-center w-1/3"></div>
+            <button id="tournamentBtn"
+              class="font-Inter font-extrabold hover-important w-full py-6 pb-10 transition-all">
+              TOURNAMENT
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="flex-grow p-0.5 overflow-hidden">
-        <div class="h-full text-[#4cb4e7] flex flex-col justify-center items-center">
-          <button id="clickMeBtn" class="font-inter font-extrabold hover-important w-full py-6 pt-10 transition-all">
-            PLAY PONG
-          </button>
-          <div class="h-[1px] bg-[#4cb4e7] origin-center w-1/3"></div>
-          <button id="darkBtn" class="font-inter font-extrabold hover-important w-full py-6 transition-all">
-            MULTIPLAYER
-          </button>
-          <div class="h-[1px] bg-[#4cb4e7] origin-center w-1/3"></div>
-          <button id="tournamentBtn" class="font-Inter font-extrabold hover-important w-full py-6 pb-10 transition-all">
-            TOURNAMENT
-          </button>
+        <div
+          class="bg-slate-900/50 px-1.5 py-1 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7] select-none">
+          <button id="chatBtn"
+            class="border font-extrabold hover-important border-[#4cb4e7] px-2">Chat</button>
+          <div class="flex space-x-2 mr-2">
+            <div id="infoTab"
+              class="border font-extrabold hover-important border-[#4cb4e7] px-2">INFO</div>
+            <div id="statsTab"
+              class="border font-extrabold border-[#4cb4e7] px-2">STATS</div>
+          </div>
         </div>
+
+        <div id="menuResize"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
       </div>
 
-      <div
-        class="bg-slate-900/50 px-1.5 py-1 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7] select-none">
-        <button id="chatBtn" class="border font-extrabold hover-important border-[#4cb4e7] px-2">Chat</button>
-        <div class="flex space-x-2 mr-2">
-          <div id="infoTab" class="border font-extrabold hover-important border-[#4cb4e7] px-2">INFO</div>
-          <div id="statsTab" class="border font-extrabold border-[#4cb4e7] px-2">STATS</div>
-        </div>
-      </div>
+      <!-- --------------SIGN IN WINDOW-------------- -->
 
-      <div id="menuResize" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
-    </div>
-
-    <!-- --------------SIGN IN WINDOW-------------- -->
-
-    <div id="signinWindow" class="border-2 bg-slate-900/80 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
-               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
-               transition-all duration-300 ease-in-out
-               opacity-0 scale-95 invisible pointer-events-none" style="min-width: 320px; min-height: 350px;">
-
-      <div id="signinDragHandle"
-        class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
-        <div class="flex items-center space-x-1.5">
-          <svg class="bi bi-sign-in text-[#4cb4e7]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16"
-            height="16" fill="currentColor" viewBox="0 0 24 24">
-            <path fill-rule="evenodd"
-              d="M12 20a7.966 7.966 0 0 1-5.002-1.756l.002.001v-.683c0-1.794 1.492-3.25 3.333-3.25h3.334c1.84 0 3.333 1.456 3.333 3.25v.683A7.966 7.966 0 0 1 12 20ZM2 12C2 6.477 6.477 2 12 2s10 4.477 10 10c0 5.5-4.44 9.963-9.932 10h-.138C6.438 21.962 2 17.5 2 12Zm10-5c-1.84 0-3.333 1.455-3.333 3.25S10.159 13.5 12 13.5c1.84 0 3.333-1.455 3.333-3.25S13.841 7 12 7Z"
-              clip-rule="evenodd" />
-          </svg>
-          <span class="font-bold">Sign-in</span>
-        </div>
-        <div class="flex items-center space-x-1">
-          <button aria-label="Minimize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
-              <rect width="8" height="2" />
-            </svg>
-          </button>
-          <button aria-label="Maximize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
-              xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" y="0.5" width="8" height="8" />
-            </svg>
-          </button>
-          <button id="closesigninBtn"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">X</button>
-        </div>
-      </div>
-      <div id="signinStatus"
-        class="transition-opacity duration-300 opacity-0 text-[#f8aab6] font-inter font-extrabold text-center text-base mt-3">
-      </div>
-
-      <form id="signinForm" class="p-4 flex flex-col space-y-5">
-        <input type="email" name="email" placeholder="Email..." required
-          class="bg-slate-900/50 border-2 border-[#4cb4e7] p-2" />
-        <input type="password" name="password" placeholder="Password..." required
-          class="bg-slate-900/50 border-2 border-[#4cb4e7] p-2" />
-        <button type="submit"
-          class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] hover:text-slate-900 transition-all">
-          Sign In
-        </button>
-      </form>
-      <div id="signinGOOGLE" class=" text-center">
-        <p class="mb-3 font-bold">Or</p>
-        <div id="google-signin-signin" class="flex justify-center hidden"></div>
-      </div>
-      <div id="signinResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
-
-      <div id="twofaFields" class="flex flex-col items-center justify-center space-y-3 mt-4 hidden text-center">
-        <p class="text-sm font-semibold text-[#4cb4e7]">Two-Factor Authentication</p>
-        <input type="text" id="codeInput" maxlength="6" inputmode="numeric" placeholder="Enter 6-digit TOTP code"
-          class="w-60 p-2 text-center bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]" />
-        <button id="submit2FA"
-          class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
-          Verify 2FA
-        </button>
-        <p id="twofaError" class="text-sm text-[#D4535B] font-semibold"></p>
-      </div>
-
-    </div>
-
-    <!-- --------------SIGN UP WINDOW-------------- -->
-
-    <div id="signupWindow" class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+      <div id="signinWindow"
+        class="border-2 bg-slate-900/80 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
                absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 290px; min-height: 350px; max-height: 350px;">
+        style="min-width: 320px; min-height: 350px;">
 
-      <div id="signupDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
-        <div class="flex items-center space-x-1.5">
-          <svg class="bi bi-gear" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-            fill="currentColor" viewBox="0 0 24 24">
-            <path fill-rule="evenodd"
-              d="M9 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4H7Zm8-1a1 1 0 0 1 1-1h1v-1a1 1 0 1 1 2 0v1h1a1 1 0 1 1 0 2h-1v1a1 1 0 1 1-2 0v-1h-1a1 1 0 0 1-1-1Z"
-              clip-rule="evenodd" />
-          </svg>
-          <span class="font-bold">Sign-Up</span>
-        </div>
-        <div class="flex items-center space-x-1">
-          <button aria-label="Minimize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
-              <rect width="8" height="2" />
+        <div id="signinDragHandle"
+          class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
+          <div class="flex items-center space-x-1.5">
+            <svg class="bi bi-sign-in text-[#4cb4e7]" aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg" width="16"
+              height="16" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd"
+                d="M12 20a7.966 7.966 0 0 1-5.002-1.756l.002.001v-.683c0-1.794 1.492-3.25 3.333-3.25h3.334c1.84 0 3.333 1.456 3.333 3.25v.683A7.966 7.966 0 0 1 12 20ZM2 12C2 6.477 6.477 2 12 2s10 4.477 10 10c0 5.5-4.44 9.963-9.932 10h-.138C6.438 21.962 2 17.5 2 12Zm10-5c-1.84 0-3.333 1.455-3.333 3.25S10.159 13.5 12 13.5c1.84 0 3.333-1.455 3.333-3.25S13.841 7 12 7Z"
+                clip-rule="evenodd" />
             </svg>
-          </button>
-          <button aria-label="Maximize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
-              xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" y="0.5" width="8" height="8" />
-            </svg>
-          </button>
-          <button id="closeSignupBtn"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">X</button>
+            <span class="font-bold">Sign-in</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="8" height="2" />
+              </svg>
+            </button>
+            <button aria-label="Maximize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="8" height="8" />
+              </svg>
+            </button>
+            <button id="closesigninBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">X</button>
+          </div>
         </div>
+        <div id="signinStatus"
+          class="transition-opacity duration-300 opacity-0 text-[#f8aab6] font-inter font-extrabold text-center text-base mt-3">
+        </div>
+
+        <form id="signinForm" class="p-4 flex flex-col space-y-5">
+          <input type="email" name="email" placeholder="Email..." required
+            class="bg-slate-900/50 border-2 border-[#4cb4e7] p-2" />
+          <input type="password" name="password" placeholder="Password..."
+            required
+            class="bg-slate-900/50 border-2 border-[#4cb4e7] p-2" />
+          <button type="submit"
+            class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] hover:text-slate-900 transition-all">
+            Sign In
+          </button>
+        </form>
+        <div id="signinGOOGLE" class=" text-center">
+          <p class="mb-3 font-bold">Or</p>
+          <div id="google-signin-signin"
+            class="flex justify-center hidden"></div>
+        </div>
+        <div id="signinResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
+
+        <div id="twofaFields"
+          class="flex flex-col items-center justify-center space-y-3 mt-4 hidden text-center">
+          <p class="text-sm font-semibold text-[#4cb4e7]">Two-Factor
+            Authentication</p>
+          <input type="text" id="codeInput" maxlength="6" inputmode="numeric"
+            placeholder="Enter 6-digit TOTP code"
+            class="w-60 p-2 text-center bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]" />
+          <button id="submit2FA"
+            class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
+            Verify 2FA
+          </button>
+          <p id="twofaError" class="text-sm text-[#D4535B] font-semibold"></p>
+        </div>
+
       </div>
 
-      <form id="signupForm" class="p-4 flex flex-col space-y-3">
-        <input type="text" name="username" placeholder="Username" required class="bg-slate-800 p-2" />
-        <input type="email" name="email" placeholder="Email" required class="bg-slate-800 p-2" />
-        <input type="password" name="password" placeholder="Password" required class="bg-slate-800 p-2" />
-        <button type="submit" class="bg-[#4cb4e7] text-black font-bold py-2 hover:bg-[#f8aab6] transition-all">
-          Sign Up
-        </button>
-      </form>
-      <div class="mt-3 text-center">
-        <p class="mb-2 text-sm">Or sign in with Google</p>
-        <div id="google-signin-signup" class="flex justify-center"></div>
+      <!-- --------------SIGN UP WINDOW-------------- -->
+
+      <div id="signupWindow"
+        class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+               transition-all duration-300 ease-in-out
+               opacity-0 scale-95 invisible pointer-events-none"
+        style="min-width: 290px; min-height: 350px; max-height: 350px;">
+
+        <div id="signupDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
+          <div class="flex items-center space-x-1.5">
+            <svg class="bi bi-gear" aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+              fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd"
+                d="M9 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4H7Zm8-1a1 1 0 0 1 1-1h1v-1a1 1 0 1 1 2 0v1h1a1 1 0 1 1 0 2h-1v1a1 1 0 1 1-2 0v-1h-1a1 1 0 0 1-1-1Z"
+                clip-rule="evenodd" />
+            </svg>
+            <span class="font-bold">Sign-Up</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="8" height="2" />
+              </svg>
+            </button>
+            <button aria-label="Maximize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="8" height="8" />
+              </svg>
+            </button>
+            <button id="closeSignupBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">X</button>
+          </div>
+        </div>
+
+        <form id="signupForm" class="p-4 flex flex-col space-y-3">
+          <input type="text" name="username" placeholder="Username" required
+            class="bg-slate-800 p-2" />
+          <input type="email" name="email" placeholder="Email" required
+            class="bg-slate-800 p-2" />
+          <input type="password" name="password" placeholder="Password" required
+            class="bg-slate-800 p-2" />
+          <button type="submit"
+            class="bg-[#4cb4e7] text-black font-bold py-2 hover:bg-[#f8aab6] transition-all">
+            Sign Up
+          </button>
+        </form>
+        <div class="mt-3 text-center">
+          <p class="mb-2 text-sm">Or sign in with Google</p>
+          <div id="google-signin-signup" class="flex justify-center"></div>
+        </div>
+        <div id="signupResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
       </div>
-      <div id="signupResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
-    </div>
 
-    <!-- --------------PROFILE WINDOW -------------- -->
+      <!-- --------------PROFILE WINDOW -------------- -->
 
-    <div id="profileWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+      <div id="profileWindow"
+        class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
             bg-slate-900
             absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
             transition-all duration-300 ease-in-out
             opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
-      <div id="profileDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-        <div class="flex items-center space-x-1.5">
-          <svg class="bi bi-sign-in text-[#4cb4e7]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-            height="24" fill="currentColor" viewBox="0 0 24 24">
-            <path fill-rule="evenodd"
-              d="M4 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4Zm10 5a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm0 3a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm0 3a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm-8-5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Zm1.942 4a3 3 0 0 0-2.847 2.051l-.044.133-.004.012c-.042.126-.055.167-.042.195.006.013.02.023.038.039.032.025.08.064.146.155A1 1 0 0 0 6 17h6a1 1 0 0 0 .811-.415.713.713 0 0 1 .146-.155c.019-.016.031-.026.038-.04.014-.027 0-.068-.042-.194l-.004-.012-.044-.133A3 3 0 0 0 10.059 14H7.942Z"
-              clip-rule="evenodd" />
-          </svg>
-          <span class="font-bold">I SEE U</span>
-        </div>
-        <div class="flex items-center space-x-1">
-          <button aria-label="Minimize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
-              <rect width="8" height="2" />
+        style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+        <div id="profileDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          <div class="flex items-center space-x-1.5">
+            <svg class="bi bi-sign-in text-[#4cb4e7]" aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg" width="24"
+              height="24" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd"
+                d="M4 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4Zm10 5a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm0 3a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm0 3a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm-8-5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Zm1.942 4a3 3 0 0 0-2.847 2.051l-.044.133-.004.012c-.042.126-.055.167-.042.195.006.013.02.023.038.039.032.025.08.064.146.155A1 1 0 0 0 6 17h6a1 1 0 0 0 .811-.415.713.713 0 0 1 .146-.155c.019-.016.031-.026.038-.04.014-.027 0-.068-.042-.194l-.004-.012-.044-.133A3 3 0 0 0 10.059 14H7.942Z"
+                clip-rule="evenodd" />
             </svg>
-          </button>
-          <button aria-label="Maximize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
-              xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" y="0.5" width="8" height="8" />
-            </svg>
-          </button>
-          <button aria-label="Close" id="closeprofileBtn"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-            X
-          </button>
+            <span class="font-bold">I SEE U</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="8" height="2" />
+              </svg>
+            </button>
+            <button aria-label="Maximize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="8" height="8" />
+              </svg>
+            </button>
+            <button aria-label="Close" id="closeprofileBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+              X
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-grow p-2 overflow-auto bg-slate-800/50">
+
+          <video id="testWebcamVideo" autoplay playsinline muted
+            style="width:100%; max-width:640px;"></video>
+          <button id="startTestWebcamBtn">TEST</button>
+          <p id="yourErrorMessageElementIdGoesHere" style="color:red;"></p>
+
+          <input type="text" placeholder="Sample input..."
+            class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
+        </div>
+
+        <div id="profileResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
       </div>
 
-      <div class="flex-grow p-2 overflow-auto bg-slate-800/50">
+      <!-- --------------PONG WINDOW -------------- -->
 
-        <video id="testWebcamVideo" autoplay playsinline muted style="width:100%; max-width:640px;"></video>
-        <button id="startTestWebcamBtn">TEST</button>
-        <p id="yourErrorMessageElementIdGoesHere" style="color:red;"></p>
-
-        <input type="text" placeholder="Sample input..."
-          class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
-      </div>
-
-      <div id="profileResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-      </div>
-    </div>
-
-    <!-- --------------PONG WINDOW -------------- -->
-
-    <div id="pongWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+      <div id="pongWindow"
+        class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
             bg-slate-900
             absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
             transition-all duration-300 ease-in-out
             opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 805px; min-height: 600px; max-width: 805px; max-height: 800px;">
-      <div id="pongDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-        <div class="flex items-center space-x-1.5">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="#4cb4e7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path
-              d="M12.718 20.713a7.64 7.64 0 0 1 -7.48 -12.755l.72 -.72a7.643 7.643 0 0 1 9.105 -1.283l2.387 -2.345a2.08 2.08 0 0 1 3.057 2.815l-.116 .126l-2.346 2.387a7.644 7.644 0 0 1 -1.052 8.864" />
-            <path d="M14 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-            <path d="M9.3 5.3l9.4 9.4" />
-          </svg>
-          <span class="font-bold">PONG PONG PONG</span>
-        </div>
-        <div class="flex items-center space-x-1">
-          <button aria-label="Minimize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
-              <rect width="8" height="2" />
+        style="min-width: 805px; min-height: 600px; max-width: 805px; max-height: 800px;">
+        <div id="pongDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          <div class="flex items-center space-x-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+              viewBox="0 0 24 24" fill="none"
+              stroke="#4cb4e7" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path
+                d="M12.718 20.713a7.64 7.64 0 0 1 -7.48 -12.755l.72 -.72a7.643 7.643 0 0 1 9.105 -1.283l2.387 -2.345a2.08 2.08 0 0 1 3.057 2.815l-.116 .126l-2.346 2.387a7.644 7.644 0 0 1 -1.052 8.864" />
+              <path d="M14 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+              <path d="M9.3 5.3l9.4 9.4" />
             </svg>
-          </button>
-          <button aria-label="Maximize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
-              xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" y="0.5" width="8" height="8" />
-            </svg>
-          </button>
-          <button aria-label="Close" id="closepongBtn"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-            X
-          </button>
+            <span class="font-bold">PONG PONG PONG</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="8" height="2" />
+              </svg>
+            </button>
+            <button aria-label="Maximize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="8" height="8" />
+              </svg>
+            </button>
+            <button aria-label="Close" id="closepongBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+              X
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-grow bg-slate-800/50">
+          <div id="gameContainer" class="flex flex-col items-center">
+            <canvas id="pongCanvas" width="800" height="600"
+              class="border border-white"></canvas>
+          </div>
+        </div>
+
+        <div id="pongResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
       </div>
 
-      <div class="flex-grow bg-slate-800/50">
-        <div id="gameContainer" class="flex flex-col items-center">
-          <canvas id="pongCanvas" width="800" height="600" class="border border-white"></canvas>
-        </div>
-      </div>
-
-      <div id="pongResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-      </div>
-    </div>
-
-    <!-- SETTING WINDOW-->
-    <div id="settingWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+      <!-- SETTING WINDOW-->
+      <div id="settingWindow"
+        class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
                   bg-slate-900
                   absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                   transition-all duration-300 ease-in-out
                   opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
-      <div id="settingDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-        <div class="flex items-center space-x-1.5">
-          <!-- Settings Gear Icon -->
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear"
-            viewBox="0 0 16 16">
-            <path
-              d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0" />
-            <path
-              d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z" />
-          </svg>
-          <span class="font-bold">Setting</span>
-        </div>
-        <div class="flex items-center space-x-1">
-          <button aria-label="Minimize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
-              <rect width="8" height="2" />
+        style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+        <div id="settingDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          <div class="flex items-center space-x-1.5">
+            <!-- Settings Gear Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+              fill="currentColor" class="bi bi-gear"
+              viewBox="0 0 16 16">
+              <path
+                d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0" />
+              <path
+                d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z" />
             </svg>
-          </button>
-          <button aria-label="Maximize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
-              xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" y="0.5" width="8" height="8" />
-            </svg>
-          </button>
-          <button aria-label="Close" id="closesettingBtn"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-            X
-          </button>
-        </div>
-      </div>
-      <div id="twofaSection" class="mt-4">
-        <h2 class="text-sm font-semibold mb-1 px-1">Two-Factor
-          Authentication</h2>
-
-        <div class="pl-12">
-          <label class="flex items-center space-x-2">
-            <input type="checkbox" id="totp2faCheckbox" class="accent-[#4cb4e7]" />
-            <span>Enable TOTP (Google Authenticator)</span>
-          </label>
-        </div>
-
-        <div id="qrContainer" class="mt-3 hidden flex flex-col items-center text-center space-y-2">
-          <p class="text-sm font-semibold text-[#4cb4e7]">Scan this QR code in your authenticator app:</p>
-          <img id="qrCodeImage" src alt="QR Code" class="w-40 h-40 border border-[#4cb4e7] rounded-lg" />
-          <input id="verifyTotpInput"
-            class="w-48 p-2 bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]"
-            placeholder="Enter 6-digit code" />
-          <button id="confirmTotpButton"
-            class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
-            Confirm TOTP
-          </button>
-          <p id="totpStatus" class="text-sm mt-1 text-red-500 font-semibold"></p>
-
-          <div id="settingResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+            <span class="font-bold">Setting</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="8" height="2" />
+              </svg>
+            </button>
+            <button aria-label="Maximize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="8" height="8" />
+              </svg>
+            </button>
+            <button aria-label="Close" id="closesettingBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+              X
+            </button>
           </div>
         </div>
-      </div>
-    </div>
+        <div id="twofaSection" class="mt-4">
+          <h2 class="text-sm font-semibold mb-1 px-1">Two-Factor
+            Authentication</h2>
 
-
-    <!-- Logout WINDOW-->
-    <div id="logoutWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
-            bg-slate-900
-            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
-            transition-all duration-300 ease-in-out
-            opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
-      <div id="logoutDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-        <div class="flex items-center space-x-1.5">
-          <svg class="bi bi-sign-in text-[#4cb4e7]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16"
-            height="16" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M16 12H4m12 0-4 4m4-4-4-4m3-4h2a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-2" />
-          </svg>
-          <span class="font-bold">Logout</span>
-        </div>
-        <div class="flex items-center space-x-1">
-          <button aria-label="Minimize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
-              <rect width="8" height="2" />
-            </svg>
-          </button>
-          <button aria-label="Maximize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
-              xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" y="0.5" width="8" height="8" />
-            </svg>
-          </button>
-          <button aria-label="Close" id="closelogoutBtn"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-            X
-          </button>
-        </div>
-      </div>
-
-      <div class="flex-grow p-4 flex flex-col justify-center items-center text-center bg-slate-800/50 space-y-6">
-        <p class="text-base font-semibold">
-          You are already signed in as <strong id="logoutUsername" class="text-xl font-bold text-[#f8aab6]">...</strong>
-        </p>
-        <button id="logoutBtn"
-          class="bg-[#D4535B] text-white text-base font-bold px-6 py-2 rounded-lg hover:bg-red-700 transition-all">
-          Log Out
-        </button>
-      </div>
-
-      <div id="logoutResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-      </div>
-    </div>
-    <!-- -------------- CHAT WINDOW -------------- -->
-
-    <div id="chatWindow" class="border-2 border-[#4cb4e7] w-[600px] text-[#4cb4e7] text-sm flex flex-col
-               bg-slate-900
-               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
-               transition-all duration-300 ease-in-out
-               opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 350px; min-height: 400px; max-width: 700px; max-height: 90vh;">
-
-      <div id="chatDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-        <div class="flex items-center space-x-1.5">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-3.86 8.25-8.625 8.25S3.75 16.556 3.75 12 7.61 3.75 12.375 3.75s8.625 3.694 8.625 8.25z">
-            </path>
-          </svg>
-          <span class="font-bold">Live Chat</span>
-        </div>
-        <button aria-label="Close" id="closeChatBtn"
-          class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-          X
-        </button>
-      </div>
-
-      <div class="flex flex-grow overflow-hidden">
-        <div id="chatUserListPanel" class="w-1/3 border-r-2 border-[#4cb4e7] bg-slate-900 overflow-y-auto p-2">
-          <h3 class="text-xs font-bold mb-2 sticky top-0 bg-slate-900 py-1 backdrop-blur-sm">Users</h3>
-          <ul id="chatUserList" class="space-y-1">
-          </ul>
-        </div>
-
-        <div class="w-2/3 flex flex-col bg-slate-900">
-          <div id="chatConversationHeader" class="p-2 border-b border-[#4cb4e7] text-center">
-            <span id="chatWithUser" class="font-bold">Select a user to
-              chat</span>
+          <div class="pl-12">
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="totp2faCheckbox"
+                class="accent-[#4cb4e7]" />
+              <span>Enable TOTP (Google Authenticator)</span>
+            </label>
           </div>
-          <div id="chatMessagesArea" class="flex-grow p-2 overflow-y-auto space-y-2">
-          </div>
-          <div class="p-2 border-t border-[#4cb4e7]/50">
-            <div class="flex space-x-2">
-              <input type="text" id="chatMessageInput" placeholder="Type a message..."
-                class="flex-grow p-1.5 bg-slate-900 text-[#8be076] border border-[#4cb4e7] focus:ring-1 focus:ring-[#8be076] focus:border-[#8be076] outline-none"
-                disabled />
-              <button id="chatSendBtn"
-                class="px-3 py-1.5 border-1 border-[#4cb4e7] text-[#4cb4e7] font-semibold rounded hover:bg-[#8be076] hover:text-slate-900 transition-colors"
-                disabled>
-                Send
-              </button>
+
+          <div id="qrContainer"
+            class="mt-3 hidden flex flex-col items-center text-center space-y-2">
+            <p class="text-sm font-semibold text-[#4cb4e7]">Scan this QR code in
+              your authenticator app:</p>
+            <img id="qrCodeImage" src alt="QR Code"
+              class="w-40 h-40 border border-[#4cb4e7] rounded-lg" />
+            <input id="verifyTotpInput"
+              class="w-48 p-2 bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]"
+              placeholder="Enter 6-digit code" />
+            <button id="confirmTotpButton"
+              class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
+              Confirm TOTP
+            </button>
+            <p id="totpStatus"
+              class="text-sm mt-1 text-red-500 font-semibold"></p>
+
+            <div id="settingResizeHandle"
+              class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
             </div>
           </div>
         </div>
       </div>
 
-      <div id="chatResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-      </div>
-    </div>
-
-    <!-- INFO WINDOW -->
-    <div id="infoWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+      <!-- Logout WINDOW-->
+      <div id="logoutWindow"
+        class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
             bg-slate-900
             absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
             transition-all duration-300 ease-in-out
             opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
-      <div id="infoDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-        <div class="flex items-center space-x-1.5">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle"
-            viewBox="0 0 16 16">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
-            <path
-              d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
-          </svg>
-          <span class="font-bold">Info</span>
+        style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+        <div id="logoutDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          <div class="flex items-center space-x-1.5">
+            <svg class="bi bi-sign-in text-[#4cb4e7]" aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg" width="16"
+              height="16" fill="none" viewBox="0 0 24 24">
+              <path stroke="currentColor" stroke-linecap="round"
+                stroke-linejoin="round" stroke-width="2"
+                d="M16 12H4m12 0-4 4m4-4-4-4m3-4h2a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-2" />
+            </svg>
+            <span class="font-bold">Logout</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="8" height="2" />
+              </svg>
+            </button>
+            <button aria-label="Maximize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="8" height="8" />
+              </svg>
+            </button>
+            <button aria-label="Close" id="closelogoutBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+              X
+            </button>
+          </div>
         </div>
-        <div class="flex items-center space-x-1">
-          <button aria-label="Minimize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
-              <rect width="8" height="2" />
-            </svg>
+
+        <div
+          class="flex-grow p-4 flex flex-col justify-center items-center text-center bg-slate-800/50 space-y-6">
+          <p class="text-base font-semibold">
+            You are already signed in as <strong id="logoutUsername"
+              class="text-xl font-bold text-[#f8aab6]">...</strong>
+          </p>
+          <button id="logoutBtn"
+            class="bg-[#D4535B] text-white text-base font-bold px-6 py-2 rounded-lg hover:bg-red-700 transition-all">
+            Log Out
           </button>
-          <button aria-label="Maximize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
+        </div>
+
+        <div id="logoutResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+        </div>
+      </div>
+      <!-- -------------- CHAT WINDOW -------------- -->
+
+      <div id="chatWindow"
+        class="border-2 border-[#4cb4e7] w-[600px] text-[#4cb4e7] text-sm flex flex-col
+               bg-slate-900
+               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+               transition-all duration-300 ease-in-out
+               opacity-0 scale-95 invisible pointer-events-none"
+        style="min-width: 350px; min-height: 400px; max-width: 700px; max-height: 90vh;">
+
+        <div id="chatDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          <div class="flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+              stroke-width="1.5" viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" y="0.5" width="8" height="8" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-3.86 8.25-8.625 8.25S3.75 16.556 3.75 12 7.61 3.75 12.375 3.75s8.625 3.694 8.625 8.25z">
+              </path>
             </svg>
-          </button>
-          <button aria-label="Close" id="closeinfoBtn"
+            <span class="font-bold">Live Chat</span>
+          </div>
+          <button aria-label="Close" id="closeChatBtn"
             class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
             X
           </button>
         </div>
+
+        <div class="flex flex-grow overflow-hidden">
+          <div id="chatUserListPanel"
+            class="w-1/3 border-r-2 border-[#4cb4e7] bg-slate-900 overflow-y-auto p-2">
+            <h3
+              class="text-xs font-bold mb-2 sticky top-0 bg-slate-900 py-1 backdrop-blur-sm">Users</h3>
+            <ul id="chatUserList" class="space-y-1">
+            </ul>
+          </div>
+
+          <div class="w-2/3 flex flex-col bg-slate-900">
+            <div id="chatConversationHeader"
+              class="p-2 border-b border-[#4cb4e7] text-center">
+              <span id="chatWithUser" class="font-bold">Select a user to
+                chat</span>
+            </div>
+            <div id="chatMessagesArea"
+              class="flex-grow p-2 overflow-y-auto space-y-2">
+            </div>
+            <div class="p-2 border-t border-[#4cb4e7]/50">
+              <div class="flex space-x-2">
+                <input type="text" id="chatMessageInput"
+                  placeholder="Type a message..."
+                  class="flex-grow p-1.5 bg-slate-900 text-[#8be076] border border-[#4cb4e7] focus:ring-1 focus:ring-[#8be076] focus:border-[#8be076] outline-none"
+                  disabled />
+                <button id="chatSendBtn"
+                  class="px-3 py-1.5 border-1 border-[#4cb4e7] text-[#4cb4e7] font-semibold rounded hover:bg-[#8be076] hover:text-slate-900 transition-colors"
+                  disabled>
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="chatResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+        </div>
       </div>
 
-      <p class="text-sm font-semibold text-[#4cb4e7] py-2">What do you wish to explore</p>
-      <div class="flex flex-col items-center justify-center space-y-4">
-        <button id="openWeatherBtn" class="font-inter font-extrabold hover-important w-full py-6 pt-10 transition-all">
-          Ecole 42 Paris Weather
-        </button>
-      </div>
-
-      <div id="infoResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-      </div>
-    </div>
-
-    <!-- STATS WINDOW -->
-    <div id="statsWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+      <!-- INFO WINDOW -->
+      <div id="infoWindow"
+        class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
             bg-slate-900
             absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
             transition-all duration-300 ease-in-out
             opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
-      <div id="statsDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-        <div class="flex items-center space-x-1.5">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-            class="bi bi-clipboard-data" viewBox="0 0 16 16">
-            <path
-              d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0z" />
-            <path
-              d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
-            <path
-              d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
-          </svg>
-          <span class="font-bold">My Dashboard</span>
-        </div>
-        <div class="flex items-center space-x-1">
-          <button aria-label="Minimize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
-              <rect width="8" height="2" />
+        style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+        <div id="infoDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          <div class="flex items-center space-x-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+              fill="currentColor" class="bi bi-info-circle"
+              viewBox="0 0 16 16">
+              <path
+                d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+              <path
+                d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
             </svg>
+            <span class="font-bold">Info</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="8" height="2" />
+              </svg>
+            </button>
+            <button aria-label="Maximize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="8" height="8" />
+              </svg>
+            </button>
+            <button aria-label="Close" id="closeinfoBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+              X
+            </button>
+          </div>
+        </div>
+
+        <p class="text-sm font-semibold text-[#4cb4e7] py-2">What do you wish to
+          explore</p>
+        <div class="flex flex-col items-center justify-center space-y-4">
+          <button id="openWeatherBtn"
+            class="font-inter font-extrabold hover-important w-full py-6 pt-10 transition-all">
+            Ecole 42 Paris Weather
           </button>
-          <button aria-label="Maximize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
-              xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" y="0.5" width="8" height="8" />
-            </svg>
-          </button>
-          <button aria-label="Close" id="closestatsBtn"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-            X
-          </button>
+        </div>
+
+        <div id="infoResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
       </div>
 
-      <div class="flex-grow p-2 overflow-auto bg-slate-800/50">
-        <p>This is the content of statsWindow.</p>
-        <p>Replace this with actual application content.</p>
-        <input type="text" placeholder="Sample input..."
-          class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
-      </div>
-
-      <div id="statsResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-      </div>
-    </div>
-
-    <!-- WEATHER WINDOW -->
-
-    <div id="weatherWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+      <!-- STATS WINDOW -->
+      <div id="statsWindow"
+        class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
             bg-slate-900
             absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
             transition-all duration-300 ease-in-out
             opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
-      <div id="weatherDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-        <div class="flex items-center space-x-1.5">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cloud-sun"
-            viewBox="0 0 16 16">
-            <path
-              d="M7 8a3.5 3.5 0 0 1 3.5 3.555.5.5 0 0 0 .624.492A1.503 1.503 0 0 1 13 13.5a1.5 1.5 0 0 1-1.5 1.5H3a2 2 0 1 1 .1-3.998.5.5 0 0 0 .51-.375A3.5 3.5 0 0 1 7 8m4.473 3a4.5 4.5 0 0 0-8.72-.99A3 3 0 0 0 3 16h8.5a2.5 2.5 0 0 0 0-5z" />
-            <path
-              d="M10.5 1.5a.5.5 0 0 0-1 0v1a.5.5 0 0 0 1 0zm3.743 1.964a.5.5 0 1 0-.707-.707l-.708.707a.5.5 0 0 0 .708.708zm-7.779-.707a.5.5 0 0 0-.707.707l.707.708a.5.5 0 1 0 .708-.708zm1.734 3.374a2 2 0 1 1 3.296 2.198q.3.423.516.898a3 3 0 1 0-4.84-3.225q.529.017 1.028.129m4.484 4.074c.6.215 1.125.59 1.522 1.072a.5.5 0 0 0 .039-.742l-.707-.707a.5.5 0 0 0-.854.377M14.5 6.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1z" />
-          </svg>
-          <span class="font-bold">weatherWindow</span>
-        </div>
-        <div class="flex items-center space-x-1">
-          <button aria-label="Minimize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
-              <rect width="8" height="2" />
+        style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+        <div id="statsDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          <div class="flex items-center space-x-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+              fill="currentColor"
+              class="bi bi-clipboard-data" viewBox="0 0 16 16">
+              <path
+                d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0z" />
+              <path
+                d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
+              <path
+                d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
             </svg>
-          </button>
-          <button aria-label="Maximize" disabled
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
-              xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" y="0.5" width="8" height="8" />
+            <span class="font-bold">My Dashboard</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="8" height="2" />
+              </svg>
+            </button>
+            <button aria-label="Maximize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="8" height="8" />
+              </svg>
+            </button>
+            <button aria-label="Close" id="closestatsBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+              X
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-grow p-2 overflow-auto bg-slate-800/50">
+          <p>This is the content of statsWindow.</p>
+          <p>Replace this with actual application content.</p>
+          <input type="text" placeholder="Sample input..."
+            class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
+        </div>
+
+        <div id="statsResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+        </div>
+      </div>
+
+      <!-- WEATHER WINDOW -->
+
+      <div id="weatherWindow"
+        class="border-2 border-[#4cb4e7] w-[420px] text-[#4cb4e7] text-sm flex flex-col
+            bg-slate-900
+            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+            transition-all duration-300 ease-in-out
+            opacity-0 scale-95 invisible pointer-events-none"
+        style="min-width: 420px; min-height: 370px; max-width: 90vw; max-height: 80vh;">
+        <div id="weatherDragHandle"
+          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          <div class="flex items-center space-x-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+              fill="currentColor" class="bi bi-cloud-sun"
+              viewBox="0 0 16 16">
+              <path
+                d="M7 8a3.5 3.5 0 0 1 3.5 3.555.5.5 0 0 0 .624.492A1.503 1.503 0 0 1 13 13.5a1.5 1.5 0 0 1-1.5 1.5H3a2 2 0 1 1 .1-3.998.5.5 0 0 0 .51-.375A3.5 3.5 0 0 1 7 8m4.473 3a4.5 4.5 0 0 0-8.72-.99A3 3 0 0 0 3 16h8.5a2.5 2.5 0 0 0 0-5z" />
+              <path
+                d="M10.5 1.5a.5.5 0 0 0-1 0v1a.5.5 0 0 0 1 0zm3.743 1.964a.5.5 0 1 0-.707-.707l-.708.707a.5.5 0 0 0 .708.708zm-7.779-.707a.5.5 0 0 0-.707.707l.707.708a.5.5 0 1 0 .708-.708zm1.734 3.374a2 2 0 1 1 3.296 2.198q.3.423.516.898a3 3 0 1 0-4.84-3.225q.529.017 1.028.129m4.484 4.074c.6.215 1.125.59 1.522 1.072a.5.5 0 0 0 .039-.742l-.707-.707a.5.5 0 0 0-.854.377M14.5 6.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1z" />
             </svg>
-          </button>
-          <button aria-label="Close" id="closeweatherBtn"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-            X
-          </button>
+            <span class="font-bold">weatherWindow</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button aria-label="Minimize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="8" height="2" />
+              </svg>
+            </button>
+            <button aria-label="Maximize" disabled
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                stroke="#4cb4e7" stroke-width="1"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="8" height="8" />
+              </svg>
+            </button>
+            <button aria-label="Close" id="closeweatherBtn"
+              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+              X
+            </button>
+          </div>
+        </div>
+
+        <div id="weatherContent" class="text-center space-y-2 p-3">
+          <h2 id="weatherCity"
+            class="text-2xl font-bold tracking-wide text-left underline">Weather in ...</h2>
+          <div
+            class="flex flex-col justify-center items-center space-x-2 text-base font-semibold leading-tight -mt-5">
+            <div class="flex items-center space-x-1">
+              <img id="weatherIcon" src alt="icon" class="w-18 h-18">
+              <span id="weatherTemp" class="text-lg "></span>
+            </div>
+            <p id="weatherFeels_Like" class="italic text-base -mt-6">feels like:
+              ...</p>
+          </div>
+
+          <p id="weatherAQI" class="text-sm mt-2">Air Quality: ...</p>
+          <p id="humidity" class="text-sm">Humidity: ...</p>
+          <p id="wind" class="text-sm">Wind Speed: ...</p>
+
+          <div class="p-3 -mt-2">
+            <h3 class="text-md font-bold mb-2 underline text-left">Current Week
+              Forecast</h3>
+            <div id="weatherForecast"
+              class="grid grid-cols-5 gap-2 text-center"></div>
+          </div>
+        </div>
+
+        <div id="weatherResizeHandle"
+          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
       </div>
 
-      <div id="weatherContent" class="text-center space-y-2 p-3">
-        <h2 id="weatherCity" class="text-2xl font-extrabold tracking-wide">Weather in ...</h2>
-        <div class="flex justify-center items-center space-x-2 text-xl font-semibold">
-          <img id="weatherIcon" src="" alt="icon" class="w-12 h-12">
-          <span id="weatherTemp"></span>
-        </div>
-        <p id="weatherFeels_Like" class="italic text-base -mt-4">feels like: ...</p>
-        
-        <p id="weatherAQI" class="text-sm mt-2">Air Quality: ...</p>
-        <p id="humidity" class="text-sm">Humidity: ...</p>
-        <p id="wind" class="text-sm">Wind Speed: ...</p>
+      <!-- --------------PUT NEW WINDOW BELOW -------------- -->
+
+    </main>
+
+    <footer class="flex items-center text-center justify-center py-auto mb-5">
+      <div id="menuShortcut"
+        class="flex flex-col items-center cursor-pointer text-center group p-2 rounded transition-colors duration-150">
+        <svg class="w-11 h-11 text-[#4cb4e7] mb-1 group-hover:text-[#f8aab6]"
+          fill="none" stroke="currentColor"
+          viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-width="1"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+          </path>
+        </svg>
+        <span
+          class="text-xs text-[#4cb4e7] break-words group-hover:text-[#f8aab6]">
+          menu.txt
+        </span>
       </div>
+    </footer>
+    <script type="module" src="src/DesktopWindow.js"></script>
+    <script type="module" src="src/main.js"></script>
 
-      <div class="p-3">
-        <h3 class="text-md font-bold mb-2 underline">Current Week Forecast</h3>
-        <div id="weatherForecast" class="grid grid-cols-5 gap-2 text-center"></div>
-      </div>
-
-      <div id="weatherResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-      </div>
-    </div>
-
-
-    <!-- --------------PUT NEW WINDOW BELOW -------------- -->
-
-  </main>
-
-  <footer class="flex items-center text-center justify-center py-auto mb-5">
-    <div id="menuShortcut"
-      class="flex flex-col items-center cursor-pointer text-center group p-2 rounded transition-colors duration-150">
-      <svg class="w-11 h-11 text-[#4cb4e7] mb-1 group-hover:text-[#f8aab6]" fill="none" stroke="currentColor"
-        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-width="1"
-          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-        </path>
-      </svg>
-      <span class="text-xs text-[#4cb4e7] break-words group-hover:text-[#f8aab6]">
-        menu.txt
-      </span>
-    </div>
-  </footer>
-  <script type="module" src="src/DesktopWindow.js"></script>
-  <script type="module" src="src/main.js"></script>
-
-</body>
+  </body>
 
 </html>
 

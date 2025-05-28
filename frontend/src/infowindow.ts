@@ -22,17 +22,17 @@ async function renderWeatherData() {
     const data = await response.json();
 
     // Set city
-    document.getElementById("weatherCity")!.textContent = `${data.city}`;
+    document.getElementById("weatherCity")!.textContent = "PARIS";
 
-    
+
     // Set current icon and temperature
     const iconImg = document.getElementById("weatherIcon") as HTMLImageElement;
     iconImg.src = data.current.icon;
     iconImg.alt = data.current.description;
-    
+
     document.getElementById("weatherTemp")!.textContent = `Weather : ${data.current.temp.toFixed(1)}°C - ${data.current.description}`;
     document.getElementById("weatherFeels_Like")!.textContent = `But feels like ${data.current.feels_like.toFixed(1)}°C`;
-    
+
     // Set air quality
     const aqiDescription = aqiMeaning(data.air);
     document.getElementById("weatherAQI")!.textContent = `Air Quality Index: ${data.air} - ${aqiDescription}`;
@@ -40,22 +40,25 @@ async function renderWeatherData() {
     document.getElementById("wind")!.textContent = `Wind speed: ${data.current.wind} km/h`;
 
     // Forecast rendering
-    const forecastEl = document.getElementById("weatherForecast")!;
-    forecastEl.innerHTML = "";
+    const weatherForecast = document.getElementById("weatherForecast")!;
+    weatherForecast.innerHTML = "";
 
-    data.forecast.forEach((entry: any) => {
-      const date = new Date(entry.time);
-      const dayMonth = date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+    weatherForecast.innerHTML = data.forecast.map(f => {
+      const date = new Date(f.time);
+      const day = date.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
 
-      const div = document.createElement("div");
-      div.className = "space-y-1";
-      div.innerHTML = `
-        <div class="text-sm">${dayMonth}</div>
-        <img src="${entry.icon}" alt="forecast icon" class="w-8 h-8 mx-auto" />
-        <div class="text-sm">${entry.temp.toFixed(1)}°C</div>
-      `;
-      forecastEl.appendChild(div);
-    });
+      return `
+    <div class="flex flex-col items-center space-y-1">
+      <span class="font-semibold">${day}</span>
+      <img src="${f.icon}" class="w-14 h-14 -mt-3" alt="icon" />
+      <span class="text-sm -mt-3">${Math.round(f.temp)}°C</span>
+    </div>
+  `;
+    }).join("");
 
   } catch (error) {
     console.error("[Weather Fetch Error]", error);
