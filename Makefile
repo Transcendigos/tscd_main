@@ -1,5 +1,5 @@
-DOCKER_COMPOSE=docker-compose -f infra/prod/docker-compose.yml
-DOCKER_COMPOSE_DEV=docker-compose -f infra/dev/docker-compose.yml
+DOCKER_COMPOSE=docker compose -f infra/prod/docker-compose.yml
+DOCKER_COMPOSE_DEV=docker compose -f infra/dev/docker-compose.yml
 PROJECT_DIR = $(shell pwd)
 
 build:

@@ -14,8 +14,12 @@ export function setupSettingForm(settingWindow: DesktopWindow) {
   if (el) {
     el.classList.add("opacity-50", "cursor-not-allowed", "select-none");
     el.classList.remove("hover-important", "cursor-default");
-    const clone = el.cloneNode(true);
-    el.parentNode?.replaceChild(clone, el);
+
+    const inputs = el.querySelectorAll("input");
+    inputs.forEach((input) => {
+      (input as HTMLInputElement).disabled = true;
+      (input as HTMLInputElement).style.pointerEvents = 'none'; // pour être sûr
+    });
   }
 }
   async function refreshTotpState() {
@@ -24,6 +28,9 @@ export function setupSettingForm(settingWindow: DesktopWindow) {
     try {
       const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
       const data = await res.json();
+      if (data.user.method_sign == "google"){
+        disableTrigger("twofaSection")
+      }
       if (data.signedIn && data.user) {
         totp2faCheckbox.checked = data.user.totp_enabled;
       }
@@ -33,25 +40,41 @@ export function setupSettingForm(settingWindow: DesktopWindow) {
     }
   }
 
-// `  async function disabletopCheckbox(){
-//     try{
-//       const res = await fetch("http://localhost:3000/api/me", {credentials: "include" });
-//       const data = await res.json();
-//       if (data.user && data.user.method_sign == "method"){
-//         disableTrigger("twofaSection");
-//       }
-//     }
-//   }`
+  //   async function refreshTotpState() {
+  //   console.log("Refreshing TOTP state");
+  //   qrContainer.classList.add('hidden');
+  //   try {
+  //     const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+  //     const data = await res.json();
+
+  //     if (data.signedIn && data.user) {
+  //       totp2faCheckbox.checked = data.user.totp_enabled;
+  //     }
+  //   } catch (err) {
+  //     console.error("Failed to refresh TOTP state:", err);
+  //     totp2faCheckbox.checked = false;
+  //   }
+  // }
+
+  // async function disabletotpCheckbox(){
+  //     const res = await fetch("http://localhost:3000/api/me", {credentials: "include" });
+  //     const data = await res.json();
+  //     if (data.user.method_sign == "method"){
+  //       disableTrigger("twofaSection");
+  //     }
+  //   }
 
   // Patch the open method to always update TOTP checkbox
   const originalOpen = settingWindow.open.bind(settingWindow);
   settingWindow.open = async () => {
     await refreshTotpState();
+    //await disabletotpCheckbox();
     originalOpen();
   };
 
   // Call once during init just in case
   refreshTotpState();
+  //disabletotpCheckbox();
 
 
   // ✅ Enable/Disable TOTP 2FA
