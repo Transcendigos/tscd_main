@@ -2,7 +2,6 @@ import { DesktopWindow } from "./DesktopWindow.js";
 
 export function setupSigninForm(signinWindow: DesktopWindow) {
   const signinForm = document.getElementById("signinForm") as HTMLFormElement;
-  const statusBox = document.getElementById("signinStatus") as HTMLDivElement;
   const codeInput = document.getElementById("codeInput") as HTMLInputElement;
   const twofaFields = document.getElementById("twofaFields") as HTMLDivElement;
   const submit2FAButton = document.getElementById("submit2FA") as HTMLButtonElement;
@@ -22,9 +21,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
     console.log("[SignIn] Resetting form");
 
     signinForm.reset();
-    statusBox.textContent = "";
-    statusBox.classList.add("opacity-0");
-    statusBox.classList.remove("opacity-100");
     errorBox.textContent = "";
     twofaFields.classList.add("hidden");
     codeInput.value = "";
@@ -66,9 +62,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
         passwordInput.classList.add("opacity-50");
         submitBtn.disabled = true;
         signinGOOGLE?.classList.add("hidden");
-        statusBox.textContent = "New user — redirecting to Sign-Up...";
-        statusBox.classList.remove("opacity-0");
-        statusBox.classList.add("opacity-100");
 
         // Auto-switch after short delay
         setTimeout(() => {
@@ -88,9 +81,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
         passwordInput.disabled = true;
         passwordInput.classList.add("opacity-50");
         submitBtn.disabled = true;
-        statusBox.textContent = "This account uses Google Sign-In only.";
-        statusBox.classList.remove("opacity-0");
-        statusBox.classList.add("opacity-100");
         return;
       }
 
@@ -100,9 +90,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
         passwordInput.classList.remove("opacity-50");
         submitBtn.disabled = false;
         signinGOOGLE?.classList.add("hidden");
-        statusBox.textContent = "This account uses Local Sign-In only.";
-        statusBox.classList.remove("opacity-0");
-        statusBox.classList.add("opacity-100");
         return;
       }
 

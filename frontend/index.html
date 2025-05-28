@@ -79,7 +79,7 @@
     <!-- --------------MENU WINDOW-------------- -->
 
     <div id="dragWindow" class="border-2 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
-               bg-slate-900/60
+               bg-slate-900/80
                absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none" style="min-width: 350px; min-height: 350px;">
@@ -203,9 +203,9 @@
       </div>
 
       <form id="signinForm" class="p-4 flex flex-col space-y-5">
-        <input type="email" name="email" placeholder="Email..." required class="bg-slate-900/50 border-2 border-[#4cb4e7] p-2" />
-        <input type="password" name="password" placeholder="Password..." required class="bg-slate-900/50 border-2 border-[#4cb4e7] p-2" />
-        <button type="submit" class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] hover:text-slate-900 transition-all">
+        <input type="email" name="email" placeholder="Email..." required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+        <input type="password" name="password" placeholder="Password..." required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+        <button type="submit" class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] transition-all">
           Sign In
         </button>
       </form>
@@ -218,9 +218,9 @@
       <div id="twofaFields" class="flex flex-col items-center justify-center space-y-3 mt-4 hidden text-center">
         <p class="text-sm font-semibold text-[#4cb4e7]">Two-Factor Authentication</p>
         <input type="text" id="codeInput" maxlength="6" inputmode="numeric" placeholder="Enter 6-digit TOTP code"
-          class="w-60 p-2 text-center bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]" />
+          class="w-60 p-2 text-center bg-slate-900 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]" />
         <button id="submit2FA"
-          class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
+          class="bg-[#4cb4e7] text-slate-900 font-bold px-4 py-1 hover:bg-[#8be076] transition-all">
           Verify 2FA
         </button>
         <p id="twofaError" class="text-sm text-[#D4535B] font-semibold"></p>
@@ -229,21 +229,18 @@
     </div>
 
     <!-- --------------SIGN UP WINDOW-------------- -->
-
-    <div id="signupWindow" class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+<div id="signupWindow" class="border-2 bg-slate-900/80 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
                absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 290px; min-height: 350px; max-height: 350px;">
+      style="min-width: 320px; min-height: 390px;">
 
       <div id="signupDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
+        class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
         <div class="flex items-center space-x-1.5">
-          <svg class="bi bi-gear" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-            fill="currentColor" viewBox="0 0 24 24">
-            <path fill-rule="evenodd"
-              d="M9 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4H7Zm8-1a1 1 0 0 1 1-1h1v-1a1 1 0 1 1 2 0v1h1a1 1 0 1 1 0 2h-1v1a1 1 0 1 1-2 0v-1h-1a1 1 0 0 1-1-1Z"
-              clip-rule="evenodd" />
+          <svg class="bi bi-person-plus-fill text-[#4cb4e7]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+            <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
           </svg>
           <span class="font-bold">Sign-Up</span>
         </div>
@@ -266,18 +263,24 @@
         </div>
       </div>
 
-      <form id="signupForm" class="p-4 flex flex-col space-y-3">
-        <input type="text" name="username" placeholder="Username" required class="bg-slate-800 p-2" />
-        <input type="email" name="email" placeholder="Email" required class="bg-slate-800 p-2" />
-        <input type="password" name="password" placeholder="Password" required class="bg-slate-800 p-2" />
-        <button type="submit" class="bg-[#4cb4e7] text-black font-bold py-2 hover:bg-[#f8aab6] transition-all">
+      <div id="signupStatus"
+        class="transition-opacity duration-300 opacity-0 text-[#f8aab6] font-inter font-extrabold text-center text-base mt-3">
+      </div>
+
+      <form id="signupForm" class="p-4 flex flex-col space-y-5">
+        <input type="text" name="username" placeholder="Username..." required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+        <input type="email" name="email" placeholder="Email..." required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+        <input type="password" name="password" placeholder="Password..." required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+        <button type="submit" class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] transition-all">
           Sign Up
         </button>
       </form>
-      <div class="mt-3 text-center">
-        <p class="mb-2 text-sm">Or sign in with Google</p>
+
+      <div id="signupGOOGLE" class="text-center">
+        <p class="mb-3 font-bold">Or</p>
         <div id="google-signin-signup" class="flex justify-center"></div>
       </div>
+
       <div id="signupResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
     </div>
 
@@ -457,13 +460,13 @@
 
     <!-- Logout WINDOW-->
     <div id="logoutWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
-            bg-slate-900
+            bg-slate-900/80
             absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
             transition-all duration-300 ease-in-out
             opacity-0 scale-95 invisible pointer-events-none"
       style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
       <div id="logoutDragHandle"
-        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+        class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
         <div class="flex items-center space-x-1.5">
           <svg class="bi bi-sign-in text-[#4cb4e7]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16"
             height="16" fill="none" viewBox="0 0 24 24">
@@ -493,12 +496,12 @@
         </div>
       </div>
 
-      <div class="flex-grow p-4 flex flex-col justify-center items-center text-center bg-slate-800/50 space-y-6">
+      <div class="flex-grow p-4 flex flex-col justify-center items-center text-center bg-slate-900/50 space-y-6">
         <p class="text-base font-semibold">
-          You are already signed in as <strong id="logoutUsername" class="text-xl font-bold text-[#f8aab6]">...</strong>
+          You are already signed in as <strong id="logoutUsername" class="text-xl font-bold text-[#8be076]">...</strong>
         </p>
         <button id="logoutBtn"
-          class="bg-[#D4535B] text-white text-base font-bold px-6 py-2 rounded-lg hover:bg-red-700 transition-all">
+          class="bg-slate-900 border border-[#4cb4e7] font-bold text-base font-bold px-6 py-2 hover:bg-[#D4535B] hover:text-slate-900 transition-all">
           Log Out
         </button>
       </div>
