@@ -50,9 +50,12 @@ export function initGoogleSignIn() {
         if (container) 
         {
           window.google.accounts.id.renderButton(container, {
-            theme: "outline",
-            size: "large",
+            theme: "filled_blue",
+            shape: "rectangular",
+            size: "medium",
             width: 250,
+            text: "continue_with",
+            
           });
           console.log(`Rendered Google button in #${id}`);
         }
