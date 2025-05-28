@@ -19,6 +19,7 @@ let pongWindow: DesktopWindow;
 let chatWindow: DesktopWindow;
 let statsWindow: DesktopWindow;
 let infoWindow: DesktopWindow;
+let weatherWindow: DesktopWindow;
 
 // Utility functions
 function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string) {
@@ -213,6 +214,26 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize 'infoWindow':", error);
   }
 
+
+  // --- Weather Window ---
+
+  try {
+    weatherWindow = new DesktopWindow({
+      windowId: "weatherWindow",
+      dragHandleId: "weatherDragHandle",
+      resizeHandleId: "weatherResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "weatherWindow",
+      // openTriggerId: "openWeatherBtn",
+      closeButtonId: "closeweatherBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  }
+  catch (error) {
+    console.error("Failed to initialize 'weatherWindow':", error);
+  }
+
   // --- Stats Window ---
 
   try {
@@ -309,7 +330,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   setupLogoutForm(logoutWindow);
 
-  setupInfoWindow(infoWindow);
+  setupInfoWindow(weatherWindow);
 
 });
 

@@ -7,6 +7,9 @@ import dotenv from 'dotenv';
 import pino from 'pino';
 import fs from 'fs';
 
+dotenv.config();
+
+console.log("Loaded API KEY:", process.env.OPENWEATHER_API_KEY);
 import { initializeDB, getDB } from './db.js';
 import { initializeRedisClients, getRedisPublisher, getRedisSubscriber } from './redis.js';
 import authRoutes from './auth.js';
@@ -17,7 +20,6 @@ import weatherRoutes from './weather.js';
 
 console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
 
-dotenv.config();
 
 const logStream = fs.createWriteStream('/logs/backend.log', { flags: 'a' });
 const logger = pino({
