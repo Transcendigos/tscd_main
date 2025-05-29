@@ -7,6 +7,8 @@ import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
 import { initializeChatSystem } from "./chatClient.js";
 import { setupInfoWindow } from "./infowindow.ts";
+import { settingUserProfile } from "./profile.ts";
+
 // import { startWebcamFeed } from "./webcam.js";
 
 // Top of the file
@@ -47,6 +49,9 @@ async function updateUIBasedOnAuth() {
 
   if (isSignedIn) {
     assignOpenTrigger(profileWindow, "profileBtn");
+    document.getElementById("profileBtn")?.addEventListener("click", () => {
+      settingUserProfile();
+    });
     assignOpenTrigger(settingWindow, "settingTab");
     assignOpenTrigger(logoutWindow, "logoutTab");
     assignOpenTrigger(pongWindow, "clickMeBtn");
@@ -331,6 +336,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   setupLogoutForm(logoutWindow);
 
   setupInfoWindow(weatherWindow);
+
+  settingUserProfile();
 
 });
 
