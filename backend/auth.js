@@ -160,7 +160,8 @@ export default async function authRoutes(server, options) {
       } else {
         userIdToSign = dbUser.id;
         finalUsername = dbUser.username;
-        finalPicture = dbUser.picture || picture;
+        server.log.info({picture, dbuser: dbUser.picture }, "all photo");
+        finalPicture = picture || dbUser.picture;
         if (finalPicture !== dbUser.picture) {
           db.run('UPDATE users SET picture = ? WHERE id = ?', [finalPicture, userIdToSign], (err) => {
             if (err) server.log.error({ err, userId: userIdToSign }, "Error updating user picture during Google Sign-In");

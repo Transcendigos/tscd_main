@@ -5,7 +5,12 @@ import { initGoogleSignIn } from "./google_auth.js";
 import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
+import { setupInfoWindow } from "./infowindow.ts";
+import { settingUserProfile } from "./profile.ts";
+import { setupAIWindow } from "./aiassistant.ts";
+import { setupSpotifySearch } from './music.ts';
 import { initializeChatSystem, resetChatSystem } from "./chatClient.js";
+
 
 // import { startWebcamFeed } from "./webcam.js";
 
@@ -16,6 +21,12 @@ let logoutWindow: DesktopWindow;
 let profileWindow: DesktopWindow;
 let settingWindow: DesktopWindow;
 let pongWindow: DesktopWindow;
+let chatWindow: DesktopWindow;
+let statsWindow: DesktopWindow;
+let infoWindow: DesktopWindow;
+let weatherWindow: DesktopWindow;
+let aiWindow: DesktopWindow;
+let musicWindow: DesktopWindow;
 
 // Utility functions
 function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string) {
@@ -43,10 +54,18 @@ async function updateUIBasedOnAuth() {
 
   if (isSignedIn) {
     assignOpenTrigger(profileWindow, "profileBtn");
+    document.getElementById("profileBtn")?.addEventListener("click", () => {
+      settingUserProfile();
+    });
     assignOpenTrigger(settingWindow, "settingTab");
     assignOpenTrigger(logoutWindow, "logoutTab");
     assignOpenTrigger(pongWindow, "clickMeBtn");
+    assignOpenTrigger(chatWindow, "chatBtn");
+    assignOpenTrigger(infoWindow, "infoTab");
+    assignOpenTrigger(statsWindow, "statsTab");
     initializeChatSystem();
+    assignOpenTrigger(aiWindow, "aiBtn");
+    assignOpenTrigger(musicWindow, "musicBtn");
 
     disableTrigger("signinTab");
     disableTrigger("signupTab");
@@ -61,7 +80,21 @@ async function updateUIBasedOnAuth() {
     disableTrigger("settingTab");
     disableTrigger("logoutTab");
     disableTrigger("clickMeBtn");
-
+    disableTrigger("chatBtn");
+    disableTrigger("infoTab");
+    disableTrigger("statsTab");
+    disableTrigger("aiBtn");
+    disableTrigger("musicBtn");
+    weatherWindow.close();
+    settingWindow.close();
+    infoWindow.close();
+    profileWindow.close();
+    logoutWindow.close();
+    statsWindow.close();
+    chatWindow.close();
+    pongWindow.close();
+    aiWindow.close();
+    musicWindow.close();
     if (typeof resetChatSystem === 'function') {
         resetChatSystem();
     }
@@ -163,6 +196,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       visibilityToggleId: "settingWindow",
       // openTriggerId: "settingTab",
       closeButtonId: "closesettingBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
     });
   } catch (error) {
     console.error("Failed to initialize 'settingWindow':", error);
@@ -180,10 +215,69 @@ window.addEventListener("DOMContentLoaded", async () => {
       visibilityToggleId: "profileWindow",
       // openTriggerId: "profileBtn",
       closeButtonId: "closeprofileBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
     });
   } catch (error) {
     console.error("Failed to initialize 'profileWindow':", error);
   }
+
+  // --- Info Window ---
+
+  try {
+    infoWindow = new DesktopWindow({
+      windowId: "infoWindow",
+      dragHandleId: "infoDragHandle",
+      resizeHandleId: "infoResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "infoWindow",
+      // openTriggerId: "infoTab",
+      closeButtonId: "closeinfoBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  } catch (error) {
+    console.error("Failed to initialize 'infoWindow':", error);
+  }
+
+
+  // --- Weather Window ---
+
+  try {
+    weatherWindow = new DesktopWindow({
+      windowId: "weatherWindow",
+      dragHandleId: "weatherDragHandle",
+      resizeHandleId: "weatherResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "weatherWindow",
+      // openTriggerId: "openWeatherBtn",
+      closeButtonId: "closeweatherBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  }
+  catch (error) {
+    console.error("Failed to initialize 'weatherWindow':", error);
+  }
+
+  // --- Stats Window ---
+
+  try {
+    statsWindow = new DesktopWindow({
+      windowId: "statsWindow",
+      dragHandleId: "statsDragHandle",
+      resizeHandleId: "statsResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "statsWindow",
+      // openTriggerId: "spawner",
+      closeButtonId: "closestatsBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  } catch (error) {
+    console.error("Failed to initialize 'statsWindow':", error);
+  }
+
 
   // --- Pong Window ---
 
@@ -196,20 +290,22 @@ window.addEventListener("DOMContentLoaded", async () => {
       visibilityToggleId: "pongWindow",
       // openTriggerId: "clickMeBtn",
       closeButtonId: "closepongBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
     });
   } catch (error) {
-    console.error("Failed to initialize 'PREFIXWindow':", error);
+    console.error("Failed to initialize 'pongWindow':", error);
   }
 
   // --- Chat Window ---
   try {
-    const chatWindow = new DesktopWindow({
+    chatWindow = new DesktopWindow({
       windowId: "chatWindow",
       dragHandleId: "chatDragHandle",
       resizeHandleId: "chatResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "chatWindow", // The window itself is the toggle target
-      openTriggerId: "chatBtn", // ID of the "Chat" link we added to the menu
+      // openTriggerId: "chatBtn", // ID of the "Chat" link we added to the menu
       closeButtonId: "closeChatBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -217,6 +313,41 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("Failed to initialize the chat window:", error);
   }
+
+  // --- AI Window ---
+  try {
+    aiWindow = new DesktopWindow({
+      windowId: "aiWindow",
+      dragHandleId: "aiDragHandle",
+      resizeHandleId: "aiResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "aiWindow", // The window itself is the toggle target
+      // openTriggerId: "aiBtn", // ID of the "ai" link we added to the menu
+      closeButtonId: "closeaiBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  } catch (error) {
+    console.error("Failed to initialize the ai window:", error);
+  }
+
+    // --- Music Window ---
+  try {
+    musicWindow = new DesktopWindow({
+      windowId: "musicWindow",
+      dragHandleId: "musicDragHandle",
+      resizeHandleId: "musicResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "musicWindow", // The window itself is the toggle target
+      // openTriggerId: "musicBtn", // ID of the "music" link we added to the menu
+      closeButtonId: "closemusicBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  } catch (error) {
+    console.error("Failed to initialize the music window:", error);
+  }
+
 
   // WEBCAM FUNCTION TO BE TESTED LATER
   // const startTestWebcamButton = document.getElementById('startTestWebcamBtn'); // Assuming this ID exists
@@ -233,20 +364,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   //       });
   //     }
 
-  await updateUIBasedOnAuth();
-
-  window.addEventListener("auth:updated", updateUIBasedOnAuth);
-
-  setupSignupForm(signupWindow);
-
-  initGoogleSignIn();
-  
-  setupSigninForm(signinWindow);
-  
-  setupSettingForm(settingWindow);
-
-  setupLogoutForm(logoutWindow);
-
   // --- Pong Game Specific Logic ---
   const gameContainer = document.getElementById("gameContainer")!;
   const clickBtn = document.getElementById("clickMeBtn")!;
@@ -259,6 +376,29 @@ window.addEventListener("DOMContentLoaded", async () => {
   } else {
     console.error("One or more elements for Pong game setup are missing.");
   }
+
+  await updateUIBasedOnAuth();
+
+  window.addEventListener("auth:updated", updateUIBasedOnAuth);
+
+  setupSignupForm(signupWindow);
+
+  initGoogleSignIn();
+
+  setupSigninForm(signinWindow);
+
+  setupSettingForm(settingWindow);
+
+  setupLogoutForm(logoutWindow);
+
+  setupInfoWindow(weatherWindow);
+
+  settingUserProfile();
+
+  setupAIWindow(musicWindow);
+
+  setupSpotifySearch();
+
 });
 
 // ----------------WINDOW TEMPLATE----------------
