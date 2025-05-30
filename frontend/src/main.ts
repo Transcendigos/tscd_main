@@ -5,13 +5,11 @@ import { initGoogleSignIn } from "./google_auth.js";
 import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
-import { initializeChatSystem } from "./chatClient.js";
 import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
 import { setupSpotifySearch } from './music.ts';
-
-
+import { initializeChatSystem, resetChatSystem } from "./chatClient.js";
 
 
 // import { startWebcamFeed } from "./webcam.js";
@@ -97,7 +95,9 @@ async function updateUIBasedOnAuth() {
     pongWindow.close();
     aiWindow.close();
     musicWindow.close();
-
+    if (typeof resetChatSystem === 'function') {
+        resetChatSystem();
+    }
   }
 }
 

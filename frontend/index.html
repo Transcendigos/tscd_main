@@ -80,7 +80,7 @@
 
       <div id="dragWindow"
         class="border-2 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
-               bg-slate-900/60
+               bg-slate-900/60 drop-shadow-xl/30 backdrop-blur-xs
                absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
@@ -192,8 +192,8 @@
       <!-- --------------SIGN IN WINDOW-------------- -->
 
       <div id="signinWindow"
-        class="border-2 bg-slate-900/80 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
-               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+        class="border-2 bg-slate-900/60 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 drop-shadow-xl/30 backdrop-blur-xs
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
         style="min-width: 320px; min-height: 350px;">
@@ -259,34 +259,34 @@
             Authentication</p>
           <input type="text" id="codeInput" maxlength="6" inputmode="numeric"
             placeholder="Enter 6-digit TOTP code"
-            class="w-60 p-2 text-center bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]" />
+            class="w-60 p-2 text-center bg-slate-900 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]" />
           <button id="submit2FA"
-            class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
+            class="bg-[#4cb4e7] text-slate-900 font-bold px-4 py-1 hover:bg-[#8be076] transition-all">
             Verify 2FA
           </button>
           <p id="twofaError" class="text-sm text-[#D4535B] font-semibold"></p>
         </div>
 
       </div>
-
+      
       <!-- --------------SIGN UP WINDOW-------------- -->
-
       <div id="signupWindow"
-        class="border-2 bg-slate-900 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
-               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+        class="border-2 bg-slate-900/60 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 drop-shadow-xl/30 backdrop-blur-xs
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
-        style="min-width: 290px; min-height: 350px; max-height: 350px;">
+        style="min-width: 320px; min-height: 390px;">
 
         <div id="signupDragHandle"
-          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
+          class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
           <div class="flex items-center space-x-1.5">
-            <svg class="bi bi-gear" aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-              fill="currentColor" viewBox="0 0 24 24">
+            <svg class="bi bi-person-plus-fill text-[#4cb4e7]"
+              aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16"
+              height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path
+                d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
               <path fill-rule="evenodd"
-                d="M9 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4H7Zm8-1a1 1 0 0 1 1-1h1v-1a1 1 0 1 1 2 0v1h1a1 1 0 1 1 0 2h-1v1a1 1 0 1 1-2 0v-1h-1a1 1 0 0 1-1-1Z"
-                clip-rule="evenodd" />
+                d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z" />
             </svg>
             <span class="font-bold">Sign-Up</span>
           </div>
@@ -311,22 +311,28 @@
           </div>
         </div>
 
-        <form id="signupForm" class="p-4 flex flex-col space-y-3">
-          <input type="text" name="username" placeholder="Username" required
-            class="bg-slate-800 p-2" />
-          <input type="email" name="email" placeholder="Email" required
-            class="bg-slate-800 p-2" />
-          <input type="password" name="password" placeholder="Password" required
-            class="bg-slate-800 p-2" />
+        <div id="signupStatus"
+          class="transition-opacity duration-300 opacity-0 text-[#f8aab6] font-inter font-extrabold text-center text-base mt-3">
+        </div>
+
+        <form id="signupForm" class="p-4 flex flex-col space-y-5">
+          <input type="text" name="username" placeholder="Username..." required
+            class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+          <input type="email" name="email" placeholder="Email..." required
+            class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+          <input type="password" name="password" placeholder="Password..."
+            required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
           <button type="submit"
-            class="bg-[#4cb4e7] text-black font-bold py-2 hover:bg-[#f8aab6] transition-all">
+            class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] transition-all">
             Sign Up
           </button>
         </form>
-        <div class="mt-3 text-center">
-          <p class="mb-2 text-sm">Or sign in with Google</p>
+
+        <div id="signupGOOGLE" class="text-center">
+          <p class="mb-3 font-bold">Or</p>
           <div id="google-signin-signup" class="flex justify-center"></div>
         </div>
+
         <div id="signupResizeHandle"
           class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"></div>
       </div>
@@ -519,8 +525,7 @@
 
           <div id="qrContainer"
             class="mt-3 hidden flex flex-col items-center text-center space-y-2">
-            <p class="text-sm font-semibold text-[#4cb4e7]">Scan this QR code
-              in
+            <p class="text-sm font-semibold text-[#4cb4e7]">Scan this QR code in
               your authenticator app:</p>
             <img id="qrCodeImage" src alt="QR Code"
               class="w-40 h-40 border border-[#4cb4e7] rounded-lg" />
@@ -544,13 +549,13 @@
       <!-- Logout WINDOW-->
       <div id="logoutWindow"
         class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
-            bg-slate-900
+            bg-slate-900/60 drop-shadow-xl/30 backdrop-blur-xs
             absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
             transition-all duration-300 ease-in-out
             opacity-0 scale-95 invisible pointer-events-none"
         style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
         <div id="logoutDragHandle"
-          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
           <div class="flex items-center space-x-1.5">
             <svg class="bi bi-sign-in text-[#4cb4e7]" aria-hidden="true"
               xmlns="http://www.w3.org/2000/svg" width="16"
@@ -600,18 +605,18 @@
           class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
       </div>
+        
       <!-- -------------- CHAT WINDOW -------------- -->
-
       <div id="chatWindow"
         class="border-2 border-[#4cb4e7] w-[600px] text-[#4cb4e7] text-sm flex flex-col
-               bg-slate-900
+               bg-slate-900/60 drop-shadow-xl/30 backdrop-blur-xs
                absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
         style="min-width: 350px; min-height: 400px; max-width: 700px; max-height: 90vh;">
 
         <div id="chatDragHandle"
-          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          class=" bg-slate-900/60 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
           <div class="flex items-center space-x-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor"
               stroke-width="1.5" viewBox="0 0 24 24"
@@ -630,43 +635,41 @@
 
         <div class="flex flex-grow overflow-hidden">
           <div id="chatUserListPanel"
-            class="w-1/3 border-r-2 border-[#4cb4e7] bg-slate-900 overflow-y-auto p-2">
+            class="w-1/3 border-r-2 border-[#4cb4e7] overflow-y-auto p-2">
             <h3
-              class="text-xs font-bold mb-2 sticky top-0 bg-slate-900 py-1 backdrop-blur-sm">Users</h3>
+              class="text-xs font-bold mb-2 sticky top-0 py-1">Users</h3>
             <ul id="chatUserList" class="space-y-1">
             </ul>
           </div>
 
-          <div class="w-2/3 flex flex-col bg-slate-900">
+          <div class="w-2/3 flex flex-col">
             <div id="chatConversationHeader"
-              class="p-2 border-b border-[#4cb4e7] text-center">
-              <span id="chatWithUser" class="font-bold">Select a user to
-                chat</span>
-            </div>
+              class="p-2 border-b border-[#4cb4e7]/50 text-center">
+              <span id="chatWithUser" class="font-semibold">General Chat (Coming
+                Soon)</span> </div>
             <div id="chatMessagesArea"
               class="flex-grow p-2 overflow-y-auto space-y-2">
+              <div class="text-center text-xs p-4">General chat
+                is not yet implemented.</div>
             </div>
-            <div class="p-2 border-t border-[#4cb4e7]/50">
-              <div class="flex space-x-2">
-                <input type="text" id="chatMessageInput"
-                  placeholder="Type a message..."
-                  class="flex-grow p-1.5 bg-slate-900 text-[#8be076] border border-[#4cb4e7] focus:ring-1 focus:ring-[#8be076] focus:border-[#8be076] outline-none"
-                  disabled />
-                <button id="chatSendBtn"
-                  class="px-3 py-1.5 border-1 border-[#4cb4e7] text-[#4cb4e7] font-semibold rounded hover:bg-[#8be076] hover:text-slate-900 transition-colors"
-                  disabled>
+            <div class="p-2 border-t border-[#4cb4e7]"
+              id="mainChatWindowInputArea" style="display: none;"> <div
+                class="flex space-x-2">
+                <input type="text" id="generalChatMessageInput"
+                  placeholder="Type a message in General Chat..."
+                  class="flex-grow p-1.5 bg-slate-700 border border-[#4cb4e7]/50 rounded text-xs focus:ring-1 focus:ring-[#f8aab6] focus:border-[#f8aab6] outline-none text-slate-50" />
+                <button id="generalChatSendBtn"
+                  class="px-3 py-1.5 bg-[#4cb4e7] text-slate-900 font-semibold rounded hover:bg-[#f8aab6] transition-colors text-xs">
                   Send
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="chatResizeHandle"
+                      <div id="chatResizeHandle"
           class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
       </div>
 
+              
+              
+              
       <!-- INFO WINDOW -->
       <div id="infoWindow"
         class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
@@ -845,6 +848,7 @@
                 <span id="weatherTemp" class="text-lg"></span>
                 <p id="weatherFeels_Like" class="italic text-base">feels like:
                   ...</p>
+
               </div>
             </div>
           </div>
@@ -867,7 +871,6 @@
         <div id="weatherResizeHandle"
           class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
-      </div>
 
       <!-- AI Window -->
       <div id="aiWindow"
