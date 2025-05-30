@@ -63,10 +63,12 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(chatWindow, "chatBtn");
     assignOpenTrigger(infoWindow, "infoTab");
     assignOpenTrigger(statsWindow, "statsTab");
-    initializeChatSystem();
     assignOpenTrigger(aiWindow, "aiBtn");
     assignOpenTrigger(musicWindow, "musicBtn");
+    assignOpenTrigger(weatherWindow, "openWeatherBtn");
 
+    initializeChatSystem();
+    
     disableTrigger("signinTab");
     disableTrigger("signupTab");
   }

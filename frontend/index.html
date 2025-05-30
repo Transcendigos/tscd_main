@@ -175,7 +175,6 @@
               class="border font-extrabold hover-important border-[#4cb4e7] px-2">AI-bot</button>
             <button id="musicBtn"
               class="border font-extrabold hover-important border-[#4cb4e7] px-2">Music</button>
-
           </div>
           <div class="flex space-x-2 mr-2">
             <div id="infoTab"
@@ -268,7 +267,7 @@
         </div>
 
       </div>
-      
+
       <!-- --------------SIGN UP WINDOW-------------- -->
       <div id="signupWindow"
         class="border-2 bg-slate-900/60 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
@@ -605,7 +604,7 @@
           class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
       </div>
-        
+
       <!-- -------------- CHAT WINDOW -------------- -->
       <div id="chatWindow"
         class="border-2 border-[#4cb4e7] w-[600px] text-[#4cb4e7] text-sm flex flex-col
@@ -662,14 +661,15 @@
                   class="px-3 py-1.5 bg-[#4cb4e7] text-slate-900 font-semibold rounded hover:bg-[#f8aab6] transition-colors text-xs">
                   Send
                 </button>
-                      <div id="chatResizeHandle"
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="chatResizeHandle"
           class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
       </div>
-
-              
-              
-              
       <!-- INFO WINDOW -->
       <div id="infoWindow"
         class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
@@ -871,6 +871,7 @@
         <div id="weatherResizeHandle"
           class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
         </div>
+      </div>
 
       <!-- AI Window -->
       <div id="aiWindow"
@@ -883,7 +884,8 @@
         <div id="aiDragHandle"
           class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
           <div class="flex items-center space-x-1.5">
-            <svg class="w-5 h-5 align-middle" xmlns="http://www.w3.org/2000/svg"
+            <svg class="w-5 h-5 align-middle"
+              xmlns="http://www.w3.org/2000/svg"
               shape-rendering="geometricPrecision"
               text-rendering="geometricPrecision"
               image-rendering="optimizeQuality" fill-rule="evenodd"
@@ -915,7 +917,8 @@
           </div>
         </div>
 
-        <div class="flex-grow p-2 overflow-auto bg-slate-800/50 flex flex-col">
+        <div
+          class="flex-grow p-2 overflow-auto bg-slate-800/50 flex flex-col">
           <div id="chatMessages"
             class="flex-grow overflow-y-auto space-y-2 p-1"></div>
           <form id="chatForm" class="mt-2 flex space-x-2">
@@ -980,7 +983,8 @@
 
         <div class="flex-grow p-3 bg-slate-800/50">
           <iframe id="spotifyIframe"
-            style="border-radius:12px" width="100%" height="80" frameBorder="0"
+            style="border-radius:12px" width="100%" height="80"
+            frameBorder="0"
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
             loading="lazy"
             src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator">
