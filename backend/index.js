@@ -16,6 +16,10 @@ import twoFASettingRoutes from './setting_2fa.js';
 import twofaRoutes from './signin_twofa.js';
 import weatherRoutes from './weather.js';
 import profileRoute from './profile.js';
+import openaiRoute from './openai.js';
+import spotifyRoute from './music.js';
+
+
 
 
 console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
@@ -52,6 +56,8 @@ server.register(twofaRoutes);
 server.register(twoFASettingRoutes);
 server.register(weatherRoutes);
 server.register(profileRoute);
+server.register(openaiRoute);
+server.register(spotifyRoute);
 
 
 // Start server

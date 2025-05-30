@@ -16,7 +16,7 @@ export async function settingUserProfile() {
             console.warn("Profile elements not found in DOM.");
             return;
         }
-
+        console.log('image is ', profile.image);
         const fallbackImage = '/favicon.jpg';
         const resolvedSrc = profile.picture || fallbackImage;
         const absoluteResolvedSrc = resolvedSrc.startsWith('http')

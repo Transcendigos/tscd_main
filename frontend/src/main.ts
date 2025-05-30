@@ -8,6 +8,11 @@ import { setupSettingForm } from "./setting.js";
 import { initializeChatSystem } from "./chatClient.js";
 import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile } from "./profile.ts";
+import { setupAIWindow } from "./aiassistant.ts";
+import { setupSpotifySearch } from './music.ts';
+
+
+
 
 // import { startWebcamFeed } from "./webcam.js";
 
@@ -22,6 +27,8 @@ let chatWindow: DesktopWindow;
 let statsWindow: DesktopWindow;
 let infoWindow: DesktopWindow;
 let weatherWindow: DesktopWindow;
+let aiWindow: DesktopWindow;
+let musicWindow: DesktopWindow;
 
 // Utility functions
 function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string) {
@@ -59,6 +66,8 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(infoWindow, "infoTab");
     assignOpenTrigger(statsWindow, "statsTab");
     initializeChatSystem();
+    assignOpenTrigger(aiWindow, "aiBtn");
+    assignOpenTrigger(musicWindow, "musicBtn");
 
     disableTrigger("signinTab");
     disableTrigger("signupTab");
@@ -76,6 +85,18 @@ async function updateUIBasedOnAuth() {
     disableTrigger("chatBtn");
     disableTrigger("infoTab");
     disableTrigger("statsTab");
+    disableTrigger("aiBtn");
+    disableTrigger("musicBtn");
+    weatherWindow.close();
+    settingWindow.close();
+    infoWindow.close();
+    profileWindow.close();
+    logoutWindow.close();
+    statsWindow.close();
+    chatWindow.close();
+    pongWindow.close();
+    aiWindow.close();
+    musicWindow.close();
 
   }
 }
@@ -293,6 +314,41 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the chat window:", error);
   }
 
+  // --- AI Window ---
+  try {
+    aiWindow = new DesktopWindow({
+      windowId: "aiWindow",
+      dragHandleId: "aiDragHandle",
+      resizeHandleId: "aiResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "aiWindow", // The window itself is the toggle target
+      // openTriggerId: "aiBtn", // ID of the "ai" link we added to the menu
+      closeButtonId: "closeaiBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  } catch (error) {
+    console.error("Failed to initialize the ai window:", error);
+  }
+
+    // --- Music Window ---
+  try {
+    musicWindow = new DesktopWindow({
+      windowId: "musicWindow",
+      dragHandleId: "musicDragHandle",
+      resizeHandleId: "musicResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "musicWindow", // The window itself is the toggle target
+      // openTriggerId: "musicBtn", // ID of the "music" link we added to the menu
+      closeButtonId: "closemusicBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  } catch (error) {
+    console.error("Failed to initialize the music window:", error);
+  }
+
+
   // WEBCAM FUNCTION TO BE TESTED LATER
   // const startTestWebcamButton = document.getElementById('startTestWebcamBtn'); // Assuming this ID exists
   //   if (startTestWebcamButton) {
@@ -338,6 +394,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   setupInfoWindow(weatherWindow);
 
   settingUserProfile();
+
+  setupAIWindow(musicWindow);
+
+  setupSpotifySearch();
 
 });
 
