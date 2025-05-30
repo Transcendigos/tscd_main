@@ -19,7 +19,7 @@ import weatherRoutes from './weather.js';
 import profileRoute from './profile.js';
 import openaiRoute from './openai.js';
 import spotifyRoute from './music.js';
-
+import scoreRoutes from './score.js';
 
 
 
@@ -77,6 +77,7 @@ server.register(weatherRoutes);
 server.register(profileRoute);
 server.register(openaiRoute);
 server.register(spotifyRoute);
+server.register(scoreRoutes);
 
 
 // Start server
