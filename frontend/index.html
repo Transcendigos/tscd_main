@@ -10,20 +10,16 @@
   <style>
     body {
       background-color: #1b3f72;
-    background-image:
-      repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.15),
-        rgba(0, 0, 0, 0.15) 2px,
-        transparent 2px,
-        transparent 4px
-      ),
-      linear-gradient(
-        to bottom,
-        #1e293b 0%,
-        #1b3f72 50%,
-        #1e293b 100%
-      );
+      background-image:
+        repeating-linear-gradient(0deg,
+          rgba(0, 0, 0, 0.15),
+          rgba(0, 0, 0, 0.15) 2px,
+          transparent 2px,
+          transparent 4px),
+        linear-gradient(to bottom,
+          #1e293b 0%,
+          #1b3f72 50%,
+          #1e293b 100%);
       font-family: 'Inter', sans-serif;
     }
 
@@ -151,7 +147,8 @@
         </div>
       </div>
 
-      <div class="bg-slate-900/50 px-1.5 py-1 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7] select-none">
+      <div
+        class="bg-slate-900/50 px-1.5 py-1 flex justify-between items-center border-t-2 border-[#4cb4e7] text-[#4cb4e7] select-none">
         <button id="chatBtn" class="border font-extrabold hover-important border-[#4cb4e7] px-2">Chat</button>
         <div class="flex space-x-2 mr-2">
           <div class="border font-extrabold border-[#4cb4e7] px-2">INFO</div>
@@ -203,9 +200,12 @@
       </div>
 
       <form id="signinForm" class="p-4 flex flex-col space-y-5">
-        <input type="email" name="email" placeholder="Email..." required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
-        <input type="password" name="password" placeholder="Password..." required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
-        <button type="submit" class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] transition-all">
+        <input type="email" name="email" placeholder="Email..." required
+          class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+        <input type="password" name="password" placeholder="Password..." required
+          class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+        <button type="submit"
+          class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] transition-all">
           Sign In
         </button>
       </form>
@@ -229,18 +229,19 @@
     </div>
 
     <!-- --------------SIGN UP WINDOW-------------- -->
-<div id="signupWindow" class="border-2 bg-slate-900/80 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+    <div id="signupWindow" class="border-2 bg-slate-900/80 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
                absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                transition-all duration-300 ease-in-out
-               opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 320px; min-height: 390px;">
+               opacity-0 scale-95 invisible pointer-events-none" style="min-width: 320px; min-height: 390px;">
 
       <div id="signupDragHandle"
         class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
         <div class="flex items-center space-x-1.5">
-          <svg class="bi bi-person-plus-fill text-[#4cb4e7]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-            <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+          <svg class="bi bi-person-plus-fill text-[#4cb4e7]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+            width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+            <path fill-rule="evenodd"
+              d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z" />
           </svg>
           <span class="font-bold">Sign-Up</span>
         </div>
@@ -268,10 +269,14 @@
       </div>
 
       <form id="signupForm" class="p-4 flex flex-col space-y-5">
-        <input type="text" name="username" placeholder="Username..." required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
-        <input type="email" name="email" placeholder="Email..." required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
-        <input type="password" name="password" placeholder="Password..." required class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
-        <button type="submit" class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] transition-all">
+        <input type="text" name="username" placeholder="Username..." required
+          class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+        <input type="email" name="email" placeholder="Email..." required
+          class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+        <input type="password" name="password" placeholder="Password..." required
+          class="bg-slate-900 border-2 border-[#4cb4e7] p-2" />
+        <button type="submit"
+          class="bg-[#4cb4e7] text-slate-900 font-bold pt-2 mt-5 py-2 hover:bg-[#8be076] transition-all">
           Sign Up
         </button>
       </form>
@@ -334,7 +339,21 @@
           class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
       </div>
 
+      <div id="avatarPreview" class="my-4 flex flex-col items-center">
+        <h3 class="text-lg font-bold mb-2">Avatar actuel</h3>
+        <img id="profileAvatarImg" src="http://localhost:3000/uploads/avatars/42.png" alt="Mon avatar"
+          class="w-32 h-32 border-2 border-[#4cb4e7] rounded-lg bg-white object-cover" />
+      </div>
+
       <div id="profileResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+      </div>
+      <div id="avatarSection" class="mt-4 flex flex-col items-center">
+        <h3 class="text-lg font-bold mb-2">Avatar personnalisé</h3>
+        <canvas id="avatarCanvas" width="256" height="256" class="border border-[#4cb4e7] bg-white"></canvas>
+        <div class="mt-2 flex space-x-4">
+          <button id="clearAvatarBtn" class="px-3 py-1 bg-red-500 text-white font-bold rounded">Effacer</button>
+          <button id="saveAvatarBtn" class="px-3 py-1 bg-green-500 text-white font-bold rounded">Enregistrer</button>
+        </div>
       </div>
     </div>
 
