@@ -30,6 +30,7 @@ interface ChatMessage {
 
 let socket: WebSocket | null = null;
 let currentUserId: number | null = null;
+let currentUsername: string | null = null;
 
 let chatUserListEl: HTMLElement | null;
 let chatWithUserEl: HTMLElement | null; // Main chat window's header (for "General Chat" title)
@@ -84,6 +85,7 @@ function connectWebSocket() {
 
             if (message.type === 'auth_success' && message.user) {
                 currentUserId = message.user.userId;
+                currentUsername = message.user.username;
                 console.log(`Chat: Authenticated successfully as ${message.user.username} (ID: ${currentUserId})`);
                 if (currentUserId) {
                     loadUserList();
@@ -187,7 +189,7 @@ async function loadUserList() {
         const users: User[] = await response.json();
         chatUserListEl.innerHTML = '';
         if (users.length === 0) {
-            chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs p-1.5">No other users available.</li>';
+            chatUserListEl.innerHTML = '<li class=" text-xs p-1.5">No other users available.</li>';
         } else {
             users.forEach(user => {
                 const li = document.createElement('li');
@@ -232,11 +234,11 @@ function createPrivateChatWindowHtml(peerUser: User): string {
     return `
         <div id="privateChatWindow_${peerId}"
              class="border-2 w-[450px] text-sm flex flex-col
-                    bg-slate-900/80 
+                    bg-slate-900/60 
                     absolute left-1/3 top-1/3 transform -translate-x-1/2 -translate-y-1/2 
-                    transition-all duration-300 ease-in-out
-                    opacity-0 scale-95 invisible pointer-events-none shadow-2xl"
-             style="min-width: 300px; min-height: 350px; max-width: 600px; max-height: 80vh;">
+                    transition-all duration-300 ease-in-out backdrop-blur-xs
+                    opacity-0 scale-95 invisible pointer-events-none drop-shadow-xl/30"
+             style="width: 300px; height: 350px; min-width: 300px; min-height: 350px; max-width: 600px; max-height: 80vh;">
 
             <div id="privateChatDragHandle_${peerId}"
                  class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 cursor-grab active:cursor-grabbing select-none">
@@ -252,7 +254,7 @@ function createPrivateChatWindowHtml(peerUser: User): string {
                 </button>
             </div>
 
-            <div class="flex-grow p-2 overflow-y-auto space-y-2 backdrop-blur-xs" id="privateMessagesArea_${peerId}">
+            <div class="flex-grow p-2 overflow-y-auto space-y-2 divide-y divide-slate-600/60" id="privateMessagesArea_${peerId}">
             </div>
 
             <div class="p-2 border-t">
@@ -433,6 +435,7 @@ async function loadChatHistoryForWindow(peerUser: User, messagesArea: HTMLElemen
     }
 }
 
+
 function sendMessageToPeer(peerUser: User, content: string) {
     content = content.trim();
     if (content === '' || !socket || socket.readyState !== WebSocket.OPEN || !currentUserId) {
@@ -452,7 +455,7 @@ function sendMessageToPeer(peerUser: User, content: string) {
     if (chatInfo) {
         displayMessageInWindow({
             fromUserId: currentUserId,
-            fromUsername: "You",
+            fromUsername: currentUsername || "You",
             toUserId: peerUser.id,
             content: content,
             timestamp: new Date().toISOString()
@@ -461,32 +464,39 @@ function sendMessageToPeer(peerUser: User, content: string) {
 }
 
 function displayMessageInWindow(msg: ChatMessage, messagesArea: HTMLElement, peerIdOfThisWindow: number) {
-    console.log(`%c[DisplayMessage] msg.fromUserId: ${msg.fromUserId}, currentUserId: ${currentUserId}, peerIdOfThisWindow: ${peerIdOfThisWindow}`, "color: cyan");
+    console.log(`%c[DisplayMessage] msg.fromUserId: ${msg.fromUserId}, currentUserId: ${currentUserId}, peerIdOfThisWindow: ${peerIdOfThisWindow}, fromUsername: ${msg.fromUsername}`, "color: teal");
 
     if (!messagesArea) {
         console.error("displayMessageInWindow: messagesArea is not valid!");
         return;
     }
-    const messageDiv = document.createElement('div');
-    const messageBubble = document.createElement('div');
-    messageBubble.textContent = msg.content;
-    messageBubble.className = 'px-3 py-1.5 text-xs inline-block max-w-[80%] break-words shadow'; 
+
+    const messageContainerDiv = document.createElement('div');
+    const senderInfoDiv = document.createElement('div');
+    const messageContentDiv = document.createElement('div');
+
+    senderInfoDiv.textContent = `${msg.fromUsername || 'User'} says:`;
+    senderInfoDiv.classList.add('text-xs', 'font-bold', 'underline');
+
+    messageContentDiv.textContent = msg.content;
+    messageContentDiv.className = 'px-3 py-1.5 text-xs break-all break-words';
 
     if (msg.fromUserId === currentUserId) {
-        messageDiv.className = 'flex justify-end my-1.5';
-        messageBubble.classList.add('text-[#8be076]', 'font-bold', 'border-b', 'border-[#8be076]');
+        messageContainerDiv.className = 'text-[#FFE2BF] flex flex-col items-start my-2';
+        senderInfoDiv.style.color = '#FFE2BF';
     } else if (msg.fromUserId === peerIdOfThisWindow) {
-        messageDiv.className = 'flex justify-start my-1.5';
-        messageBubble.classList.add('text-[#4cb4e7]', 'border-b', 'font-bold', 'border-[#4cb4e7]');
+        messageContainerDiv.className = 'flex flex-col items-start my-2';
     } else {
         console.warn("displayMessageInWindow: Message doesn't match current context.", { msg, peerIdOfThisWindow });
         return; 
     }
     
-    messageDiv.appendChild(messageBubble);
-    messagesArea.appendChild(messageDiv);
+    messageContainerDiv.appendChild(senderInfoDiv);
+    messageContainerDiv.appendChild(messageContentDiv);
+    messagesArea.appendChild(messageContainerDiv);
     messagesArea.scrollTop = messagesArea.scrollHeight;
 }
+
 
 export function resetChatSystem() {
     console.log("Chat: Resetting chat system due to logout or auth change.");

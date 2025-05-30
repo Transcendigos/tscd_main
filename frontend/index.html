@@ -84,7 +84,7 @@
 
       <div id="dragWindow"
         class="border-2 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
-               bg-slate-900/80
+               bg-slate-900/60 drop-shadow-xl/30 backdrop-blur-xs
                absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
@@ -187,8 +187,8 @@
       <!-- --------------SIGN IN WINDOW-------------- -->
 
       <div id="signinWindow"
-        class="border-2 bg-slate-900/80 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
-               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+        class="border-2 bg-slate-900/60 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 drop-shadow-xl/30 backdrop-blur-xs
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
         style="min-width: 320px; min-height: 350px;">
@@ -265,8 +265,8 @@
 
       <!-- --------------SIGN UP WINDOW-------------- -->
       <div id="signupWindow"
-        class="border-2 bg-slate-900/80 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
-               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+        class="border-2 bg-slate-900/60 border-[#4cb4e7] w-[400px] max-w-full text-[#4cb4e7] text-sm flex flex-col
+               absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 drop-shadow-xl/30 backdrop-blur-xs
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
         style="min-width: 320px; min-height: 390px;">
@@ -529,7 +529,7 @@
       <!-- Logout WINDOW-->
       <div id="logoutWindow"
         class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
-            bg-slate-900/80
+            bg-slate-900/60 drop-shadow-xl/30 backdrop-blur-xs
             absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
             transition-all duration-300 ease-in-out
             opacity-0 scale-95 invisible pointer-events-none"
@@ -588,14 +588,14 @@
       <!-- -------------- CHAT WINDOW -------------- -->
       <div id="chatWindow"
         class="border-2 border-[#4cb4e7] w-[600px] text-[#4cb4e7] text-sm flex flex-col
-               bg-slate-900
+               bg-slate-900/60 drop-shadow-xl/30 backdrop-blur-xs
                absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
         style="min-width: 350px; min-height: 400px; max-width: 700px; max-height: 90vh;">
 
         <div id="chatDragHandle"
-          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+          class=" bg-slate-900/60 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
           <div class="flex items-center space-x-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor"
               stroke-width="1.5" viewBox="0 0 24 24"
@@ -614,24 +614,24 @@
 
         <div class="flex flex-grow overflow-hidden">
           <div id="chatUserListPanel"
-            class="w-1/3 border-r-2 border-[#4cb4e7] bg-slate-900 overflow-y-auto p-2">
+            class="w-1/3 border-r-2 border-[#4cb4e7] overflow-y-auto p-2">
             <h3
-              class="text-xs font-bold mb-2 sticky top-0 bg-slate-900 py-1 backdrop-blur-sm">Users</h3>
+              class="text-xs font-bold mb-2 sticky top-0 py-1">Users</h3>
             <ul id="chatUserList" class="space-y-1">
             </ul>
           </div>
 
-          <div class="w-2/3 flex flex-col bg-slate-900">
+          <div class="w-2/3 flex flex-col">
             <div id="chatConversationHeader"
               class="p-2 border-b border-[#4cb4e7]/50 text-center">
               <span id="chatWithUser" class="font-semibold">General Chat (Coming
                 Soon)</span> </div>
             <div id="chatMessagesArea"
               class="flex-grow p-2 overflow-y-auto space-y-2">
-              <div class="text-center text-slate-400 text-xs p-4">General chat
+              <div class="text-center text-xs p-4">General chat
                 is not yet implemented.</div>
             </div>
-            <div class="p-2 border-t border-[#4cb4e7]/50"
+            <div class="p-2 border-t border-[#4cb4e7]"
               id="mainChatWindowInputArea" style="display: none;"> <div
                 class="flex space-x-2">
                 <input type="text" id="generalChatMessageInput"
