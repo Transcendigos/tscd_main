@@ -27,9 +27,64 @@ interface Ball {
   color: string;
 }
 
+interface UserInfo {
+  signedIn: boolean;
+  userId?: number;
+}
+
+let currentUser: UserInfo = { signedIn: false };
+
+async function fetchCurrentUser() {
+  try {
+    const response = await fetch('http://localhost:3000/api/me', {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      console.log('User not signed in.');
+      currentUser = { signedIn: false };
+      return;
+    }
+
+    const data = await response.json();
+    console.log('User info:', data);
+
+    currentUser = {
+      signedIn: data.signedIn,
+      userId: data.user?.userId,
+    };
+  } catch (err) {
+    console.error('Error fetching user info:', err);
+    currentUser = { signedIn: false };
+  }
+}
+
+async function postScore(tournamentId: number, userId: number, score: number) {
+  try {
+    const response = await fetch('http://localhost:3000/api/scores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tournament_id: tournamentId,
+        user_id: userId,
+        score: score,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save score');
+    }
+
+    const data = await response.json();
+    console.log('Score saved!', data);
+  } catch (err) {
+    console.error('Error saving score:', err);
+  }
+}
+
 let leftPaddle: Paddle, rightPaddle: Paddle, ball: Ball;
 let leftScore = 0;
 let rightScore = 0;
+let waitingForRestart = false;
 
 let ballStartX: number, ballStartY: number;
 let leftPaddleStart: number, rightPaddleStart: number;
@@ -54,6 +109,16 @@ let flickerPhase = 0;
 const keyPress: Record<string, boolean> = {};
 document.addEventListener("keydown", (event) => {
   keyPress[event.key] = true;
+});
+document.addEventListener("keydown", (event) => {
+  if (waitingForRestart && event.key === "Enter") {
+    waitingForRestart = false;
+    leftScore = 0;
+    rightScore = 0;
+    resetPos();
+    lastTime = performance.now();
+    requestAnimationFrame(gameLoop);
+  }
 });
 document.addEventListener("keyup", (event) => {
   keyPress[event.key] = false;
@@ -337,12 +402,47 @@ function update(dt: number): void {
 function gameLoop(currentTime: number): void {
   const delta = (currentTime - lastTime) / 1000;
   lastTime = currentTime;
-  draw();
   update(delta);
-  requestAnimationFrame(gameLoop);
+  draw();
+
+	const winningScore = 1;
+
+	if (leftScore >= winningScore || rightScore >= winningScore) {
+		const winnerId = leftScore >= winningScore ? 1 : 2;
+		const loserId = leftScore >= winningScore ? 2 : 1;
+		const finalScore = Math.max(leftScore, rightScore);
+		// Let the score draw for one frame, then end game
+		requestAnimationFrame(() => {
+		endGame(winnerId, loserId, finalScore);
+		});
+		return;
+	}
+	requestAnimationFrame(gameLoop);
 }
 
-export function startPongGame(): void {
+async function endGame(winnerId: number, loserId: number, finalScore: number) {
+  console.log(`Game Over! Winner: ${winnerId}, Score: ${finalScore}`);
+
+  if (currentUser.signedIn && currentUser.userId == winnerId) {
+    try {
+      await postScore(1, currentUser.userId, finalScore);
+    } catch (err) {
+      console.error('Error saving score:', err);
+    }
+  } else {
+    console.log("Not the winner or not signed in; skipping score saving.");
+  }
+
+  pongCtx.font = "32px 'Press Start 2P'";
+  pongCtx.fillStyle = "#d6ecff";
+  pongCtx.textAlign = "center";
+  pongCtx.fillText("Press Enter to play a new match", canvas.width / 2, canvas.height / 2);
+
+  waitingForRestart = true;
+}
+
+export async function startPongGame(): Promise<void> {
+  await fetchCurrentUser(); // Wait for user info before starting
   initGameObjects();
   lastTime = performance.now();
   requestAnimationFrame(gameLoop);

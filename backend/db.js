@@ -76,6 +76,29 @@ export function initializeDB(logger) {
     });
     chatMessagesTable.finalize();
 
+	// Create scores table
+	const scoresTable = db.prepare(`
+	CREATE TABLE IF NOT EXISTS scores (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		tournament_id INTEGER,
+		user_id INTEGER NOT NULL,
+		score INTEGER NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users(id)
+	)
+	`);
+	scoresTable.run((err) => {
+	if (err) {
+		console.error("Error creating scores table:", err.message);
+		if (logger) logger.error({ err }, "Error creating scores table");
+	} else {
+		console.log("scores table checked/created successfully.");
+		if (logger) logger.info("scores table checked/created successfully.");
+	}
+	});
+	scoresTable.finalize();
+
     dbInstance = db;
     return dbInstance;
 }
