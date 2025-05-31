@@ -27,9 +27,40 @@ interface Ball {
   color: string;
 }
 
+interface UserInfo {
+  signedIn: boolean;
+  userId?: number;
+}
+
+let currentUser: UserInfo = { signedIn: false };
+
+async function fetchCurrentUser() {
+  try {
+    const response = await fetch('http://localhost:3000/api/me', {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      console.log('User not signed in.');
+      currentUser = { signedIn: false };
+      return;
+    }
+
+    const data = await response.json();
+    console.log('User info:', data);
+
+    currentUser = {
+      signedIn: data.signedIn,
+      userId: data.user?.userId,
+    };
+  } catch (err) {
+    console.error('Error fetching user info:', err);
+    currentUser = { signedIn: false };
+  }
+}
+
 async function postScore(tournamentId: number, userId: number, score: number) {
   try {
-    const response = await fetch('http://localhost:3000/scores', {
+    const response = await fetch('http://localhost:3000/api/scores', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -374,7 +405,7 @@ function gameLoop(currentTime: number): void {
   update(delta);
   draw();
 
-	const winningScore = 2;
+	const winningScore = 1;
 
 	if (leftScore >= winningScore || rightScore >= winningScore) {
 		const winnerId = leftScore >= winningScore ? 1 : 2;
@@ -390,24 +421,28 @@ function gameLoop(currentTime: number): void {
 }
 
 async function endGame(winnerId: number, loserId: number, finalScore: number) {
-	console.log(`Game Over! Winner: ${winnerId}, Score: ${finalScore}`);
+  console.log(`Game Over! Winner: ${winnerId}, Score: ${finalScore}`);
 
-	try {
-		await postScore(1, winnerId, finalScore);
-		await postScore(1, loserId, 0);
-	} catch (err) {
-		console.error('Erreur lors de la sauvegarde du score:', err);
-	}
+  if (currentUser.signedIn && currentUser.userId == winnerId) {
+    try {
+      await postScore(1, currentUser.userId, finalScore);
+    } catch (err) {
+      console.error('Error saving score:', err);
+    }
+  } else {
+    console.log("Not the winner or not signed in; skipping score saving.");
+  }
 
-	pongCtx.font = "32px 'Press Start 2P'";
-	pongCtx.fillStyle = "#d6ecff";
-	pongCtx.textAlign = "center";
-	pongCtx.fillText("Press Enter to play a new match", canvas.width / 2, canvas.height / 2);
+  pongCtx.font = "32px 'Press Start 2P'";
+  pongCtx.fillStyle = "#d6ecff";
+  pongCtx.textAlign = "center";
+  pongCtx.fillText("Press Enter to play a new match", canvas.width / 2, canvas.height / 2);
 
-	waitingForRestart = true;
+  waitingForRestart = true;
 }
 
-export function startPongGame(): void {
+export async function startPongGame(): Promise<void> {
+  await fetchCurrentUser(); // Wait for user info before starting
   initGameObjects();
   lastTime = performance.now();
   requestAnimationFrame(gameLoop);

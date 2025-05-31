@@ -80,7 +80,7 @@ export function initializeDB(logger) {
 	const scoresTable = db.prepare(`
 	CREATE TABLE IF NOT EXISTS scores (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		tournament_id INTEGER NOT NULL,
+		tournament_id INTEGER,
 		user_id INTEGER NOT NULL,
 		score INTEGER NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
