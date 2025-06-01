@@ -68,7 +68,7 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(weatherWindow, "openWeatherBtn");
 
     initializeChatSystem();
-    
+
     disableTrigger("signinTab");
     disableTrigger("signupTab");
   }
@@ -98,7 +98,7 @@ async function updateUIBasedOnAuth() {
     aiWindow.close();
     musicWindow.close();
     if (typeof resetChatSystem === 'function') {
-        resetChatSystem();
+      resetChatSystem();
     }
   }
 }
@@ -333,7 +333,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the ai window:", error);
   }
 
-    // --- Music Window ---
+  // --- Music Window ---
   try {
     musicWindow = new DesktopWindow({
       windowId: "musicWindow",
@@ -397,7 +397,16 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   settingUserProfile();
 
-  setupAIWindow(musicWindow);
+  fetch("/ai_prompt.txt")
+    .then(res => res.text())
+    .then(text => {
+      console.log("✅ Loaded system message");
+      setupAIWindow(musicWindow, text);
+    })
+    .catch(err => {
+      console.error("❌ Failed to load system message:", err);
+      setupAIWindow(musicWindow, "You are a helpful assistant.");
+    });
 
   setupSpotifySearch();
 

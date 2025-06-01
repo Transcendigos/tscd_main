@@ -932,106 +932,105 @@
               type="submit"
               class="bg-[#4cb4e7] text-slate-900 font-bold px-3 rounded hover:bg-[#8be076]">
               Send
-            </button>
-          </form>
+            </form>
+          </div>
+
+          <div id="aiResizeHandle"
+            class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+          </div>
         </div>
 
-        <div id="aiResizeHandle"
-          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-        </div>
-      </div>
-
-      <!-- Music window -->
-      <div id="musicWindow"
-        class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+        <!-- Music window -->
+        <div id="musicWindow"
+          class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
             bg-slate-900
             absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
             transition-all duration-300 ease-in-out
             opacity-0 scale-95 invisible pointer-events-none"
-        style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
-        <div id="musicDragHandle"
-          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-          <div class="flex items-center space-x-1.5">
-            <svg class="w-6 h-6 text-gray-800 dark:text-white"
-              aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-              height="24" fill="currentColor" viewBox="0 0 24 24">
-              <path fill-rule="evenodd"
-                d="M17.316 4.052a.99.99 0 0 0-.9.14c-.262.19-.416.495-.416.82v8.566a4.573 4.573 0 0 0-2-.464c-1.99 0-4 1.342-4 3.443 0 2.1 2.01 3.443 4 3.443 1.99 0 4-1.342 4-3.443V6.801c.538.5 1 1.219 1 2.262 0 .56.448 1.013 1 1.013s1-.453 1-1.013c0-1.905-.956-3.18-1.86-3.942a6.391 6.391 0 0 0-1.636-.998 4 4 0 0 0-.166-.063l-.013-.005-.005-.002h-.002l-.002-.001ZM4 5.012c-.552 0-1 .454-1 1.013 0 .56.448 1.013 1 1.013h9c.552 0 1-.453 1-1.013 0-.559-.448-1.012-1-1.012H4Zm0 4.051c-.552 0-1 .454-1 1.013 0 .56.448 1.013 1 1.013h9c.552 0 1-.454 1-1.013 0-.56-.448-1.013-1-1.013H4Zm0 4.05c-.552 0-1 .454-1 1.014 0 .559.448 1.012 1 1.012h4c.552 0 1-.453 1-1.012 0-.56-.448-1.013-1-1.013H4Z"
-                clip-rule="evenodd" />
-            </svg>
-            <span class="font-bold">Spotify</span> </div>
-          <div class="flex items-center space-x-1">
-            <button aria-label="Minimize" disabled
-              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
-                xmlns="http://www.w3.org/2000/svg"><rect width="8"
-                  height="2" /></svg>
-            </button>
-            <button aria-label="Maximize" disabled
-              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
-                stroke="#4cb4e7" stroke-width="1"
-                xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5"
-                  width="8" height="8" /></svg>
-            </button>
-            <button aria-label="Close" id="closemusicBtn"
-              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-              X
-            </button>
+          style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+          <div id="musicDragHandle"
+            class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+            <div class="flex items-center space-x-1.5">
+              <svg class="w-6 h-6 text-gray-800 dark:text-white"
+                aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                height="24" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd"
+                  d="M17.316 4.052a.99.99 0 0 0-.9.14c-.262.19-.416.495-.416.82v8.566a4.573 4.573 0 0 0-2-.464c-1.99 0-4 1.342-4 3.443 0 2.1 2.01 3.443 4 3.443 1.99 0 4-1.342 4-3.443V6.801c.538.5 1 1.219 1 2.262 0 .56.448 1.013 1 1.013s1-.453 1-1.013c0-1.905-.956-3.18-1.86-3.942a6.391 6.391 0 0 0-1.636-.998 4 4 0 0 0-.166-.063l-.013-.005-.005-.002h-.002l-.002-.001ZM4 5.012c-.552 0-1 .454-1 1.013 0 .56.448 1.013 1 1.013h9c.552 0 1-.453 1-1.013 0-.559-.448-1.012-1-1.012H4Zm0 4.051c-.552 0-1 .454-1 1.013 0 .56.448 1.013 1 1.013h9c.552 0 1-.454 1-1.013 0-.56-.448-1.013-1-1.013H4Zm0 4.05c-.552 0-1 .454-1 1.014 0 .559.448 1.012 1 1.012h4c.552 0 1-.453 1-1.012 0-.56-.448-1.013-1-1.013H4Z"
+                  clip-rule="evenodd" />
+              </svg>
+              <span class="font-bold">Spotify</span> </div>
+            <div class="flex items-center space-x-1">
+              <button aria-label="Minimize" disabled
+                class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+                <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
+                  xmlns="http://www.w3.org/2000/svg"><rect width="8"
+                    height="2" /></svg>
+              </button>
+              <button aria-label="Maximize" disabled
+                class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+                <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
+                  stroke="#4cb4e7" stroke-width="1"
+                  xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5"
+                    width="8" height="8" /></svg>
+              </button>
+              <button aria-label="Close" id="closemusicBtn"
+                class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+                X
+              </button>
+            </div>
+          </div>
+
+          <div class="flex-grow p-3 bg-slate-800/50">
+            <iframe id="spotifyIframe"
+              style="border-radius:12px" width="100%" height="80"
+              frameBorder="0"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"
+              src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator">
+            </iframe>
+          </div>
+          <div class="mb-2">
+            <input id="spotifySearchInput"
+              type="text"
+              placeholder="Search a mood or playlist... Press Enter to search"
+              class="w-full p-1 rounded bg-slate-700 text-[#4cb4e7] border border-[#4cb4e7]/50" />
+          </div>
+
+          <div id="musicResizeHandle"
+            class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
           </div>
         </div>
 
-        <div class="flex-grow p-3 bg-slate-800/50">
-          <iframe id="spotifyIframe"
-            style="border-radius:12px" width="100%" height="80"
-            frameBorder="0"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy"
-            src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator">
-          </iframe>
+        <!-- --------------PUT NEW WINDOW BELOW -------------- -->
+
+      </main>
+
+      <footer class="flex items-center text-center justify-center py-auto mb-5">
+        <div id="menuShortcut"
+          class="flex flex-col items-center cursor-pointer text-center group p-2 rounded transition-colors duration-150">
+          <svg class="w-11 h-11 text-[#4cb4e7] mb-1 group-hover:text-[#f8aab6]"
+            fill="none" stroke="currentColor"
+            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-width="1"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+            </path>
+          </svg>
+          <span
+            class="text-xs text-[#4cb4e7] break-words group-hover:text-[#f8aab6]">
+            menu.txt
+          </span>
         </div>
-        <div class="mb-2">
-          <input id="spotifySearchInput"
-            type="text"
-            placeholder="Search a mood or playlist... Press Enter to search"
-            class="w-full p-1 rounded bg-slate-700 text-[#4cb4e7] border border-[#4cb4e7]/50" />
-        </div>
+      </footer>
+      <script type="module" src="src/DesktopWindow.js"></script>
+      <script type="module" src="src/main.js"></script>
 
-        <div id="musicResizeHandle"
-          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-        </div>
-      </div>
+    </body>
 
-      <!-- --------------PUT NEW WINDOW BELOW -------------- -->
+  </html>
 
-    </main>
+  <!-- ------------------------WINDOW TEMPLATE------------------------ -->
 
-    <footer class="flex items-center text-center justify-center py-auto mb-5">
-      <div id="menuShortcut"
-        class="flex flex-col items-center cursor-pointer text-center group p-2 rounded transition-colors duration-150">
-        <svg class="w-11 h-11 text-[#4cb4e7] mb-1 group-hover:text-[#f8aab6]"
-          fill="none" stroke="currentColor"
-          viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-width="1"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-          </path>
-        </svg>
-        <span
-          class="text-xs text-[#4cb4e7] break-words group-hover:text-[#f8aab6]">
-          menu.txt
-        </span>
-      </div>
-    </footer>
-    <script type="module" src="src/DesktopWindow.js"></script>
-    <script type="module" src="src/main.js"></script>
-
-  </body>
-
-</html>
-
-<!-- ------------------------WINDOW TEMPLATE------------------------ -->
-
-<!-- 
+  <!-- 
 
 <div id="PREFIXWindow"
   class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col

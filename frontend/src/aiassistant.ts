@@ -1,11 +1,109 @@
 import { DesktopWindow } from "./DesktopWindow.js";
 
-export function setupAIWindow(musicWindow: DesktopWindow) {
+async function detectLanguage(text: string): Promise<string> {
+  const res = await fetch("https://libretranslate.de/detect", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ q: text }),
+  });
+  const data = await res.json();
+  return data[0]?.language || "en";
+}
+
+async function translateText(text: string, sourceLang: string, targetLang: string): Promise<string> {
+  const res = await fetch("https://libretranslate.de/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      q: text,
+      source: sourceLang,
+      target: targetLang,
+      format: "text"
+    }),
+  });
+  const data = await res.json();
+  return data.translatedText;
+}
+
+function speak(text: string, lang = "en") {
+  const synth = window.speechSynthesis;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = lang;
+  synth.speak(utter);
+}
+
+function setupUnifiedMic(inputEl: HTMLInputElement) {
+  const micBtn = document.createElement("button");
+  micBtn.type = "button";
+  micBtn.textContent = "🎤";
+  micBtn.className = "ml-2 bg-[#4cb4e7] text-black px-2 py-1 rounded font-bold";
+  inputEl.parentElement?.appendChild(micBtn);
+
+  const recognition = new (window as any).webkitSpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  let isRecording = false;
+
+  const voiceCommands: Record<string, () => void> = {
+    "open music": () => (window as any).musicWindow?.open?.(),
+    "play pong": () => (window as any).pongWindow?.open?.(),
+    "show weather": () => (window as any).weatherWindow?.open?.(),
+    "start tournament": () => alert("Tournament feature is coming soon!"),
+    "open settings": () => (window as any).settingWindow?.open?.(),
+    "open profile": () => (window as any).profileWindow?.open?.(),
+  };
+
+  micBtn.onclick = () => {
+    if (isRecording) {
+      console.warn("Already recording");
+      return;
+    }
+    isRecording = true;
+    micBtn.textContent = "🎙️";
+    recognition.start();
+  };
+
+  recognition.onresult = (event: any) => {
+    const transcript = event.results[0][0].transcript.toLowerCase().trim();
+    console.log("🎤 Recognized:", transcript);
+
+    if (voiceCommands[transcript]) {
+      voiceCommands[transcript]();
+    } else {
+      inputEl.value = transcript;
+      inputEl.form?.requestSubmit();
+    }
+
+    isRecording = false;
+    micBtn.textContent = "🎤";
+  };
+
+  recognition.onerror = (event: any) => {
+    console.error("Speech recognition error:", event.error);
+    micBtn.textContent = "❌";
+    isRecording = false;
+    setTimeout(() => {
+      micBtn.textContent = "🎤";
+    }, 1500);
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    if (micBtn.textContent !== "❌") {
+      micBtn.textContent = "🎤";
+    }
+  };
+}
+
+export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string) {
   const form = document.getElementById("chatForm") as HTMLFormElement;
   const input = document.getElementById("chatInput") as HTMLInputElement;
   const messages = document.getElementById("chatMessages");
 
   if (!form || !input || !messages) return;
+
+  setupUnifiedMic(input);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -25,53 +123,48 @@ export function setupAIWindow(musicWindow: DesktopWindow) {
     messages.appendChild(botDiv);
 
     try {
+      const userLang = "en";
+      const translatedInput = userMsg;
+
       const res = await fetch("http://localhost:3000/api/gpt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg }),
+        body: JSON.stringify({ system: systemMessage, message: translatedInput }),
       });
 
       const data = await res.json();
       let fullText = data.reply || "[no response]";
 
-      // Detect mood in reply
-      const gptReply = fullText.toLowerCase();
-      const possibleKeywords = ["chill", "sad", "happy", "focus", "jazz", "epic", "lofi", "gaming", "romantic"];
-      let mood_index = -1;
-      let playlistEmbed: string | null = null;
-
-      for (let i = 0; i < possibleKeywords.length; i++) {
-        if (gptReply.includes(possibleKeywords[i])) {
-          mood_index = i;
-          const mood = possibleKeywords[i];
-          const musicRes = await fetch(`http://localhost:3000/api/spotify/search?q=${encodeURIComponent(mood)}`);
-          const musicData = await musicRes.json();
-          playlistEmbed = musicData.embed;
-          break;
-        }
+      if (userLang !== "en") {
+        fullText = await translateText(fullText, "en", userLang);
       }
 
-      // Special slow typing if mood_index is matched (but not 0)
-      if (mood_index !== -1 && mood_index !== 0) {
-        fullText = "Opening the music player with a playlist that fit your mood !";
-      }
+      const moodKeywords = ["chill", "sad", "happy", "focus", "jazz", "epic", "lofi", "gaming", "romantic"];
+      const matchedMood = moodKeywords.find(mood => fullText.toLowerCase().includes(mood));
 
       let index = 0;
-      function typeNextChar() {
-        if (index < fullText.length) {
-          botDiv.textContent += fullText[index];
+      function typeCharByChar(text: string, callback: () => void) {
+        if (index < text.length) {
+          botDiv.textContent += text[index];
           index++;
           messages.scrollTop = messages.scrollHeight;
-          setTimeout(typeNextChar, 20);
+          setTimeout(() => typeCharByChar(text, callback), 20);
+        } else {
+          callback();
         }
       }
-      typeNextChar();
 
-      // Play music if matched
-      if (playlistEmbed) {
-        const iframe = document.getElementById("spotifyIframe") as HTMLIFrameElement;
-        if (iframe) iframe.src = playlistEmbed;
-        musicWindow.open();
+      const finalText = matchedMood ? "Opening the music player with a fitted playlist..." : fullText;
+      typeCharByChar(finalText, () => speak(finalText, userLang));
+
+      if (matchedMood) {
+        const musicRes = await fetch(`http://localhost:3000/api/spotify/search?q=${encodeURIComponent(matchedMood)}`);
+        const musicData = await musicRes.json();
+        if (musicData.embed) {
+          const iframe = document.getElementById("spotifyIframe") as HTMLIFrameElement;
+          iframe.src = musicData.embed;
+          musicWindow.open();
+        }
       }
 
     } catch (err) {
