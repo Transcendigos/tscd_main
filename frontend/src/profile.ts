@@ -1,6 +1,6 @@
 export async function settingUserProfile() {
     try {
-        const res = await fetch('/api/profile', { credentials: 'include' });
+        const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
         if (!res.ok) {
             console.error('Failed to fetch profile');
             return;

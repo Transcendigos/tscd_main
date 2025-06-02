@@ -406,75 +406,125 @@
       </div>
     </div>
 
-    <!-- SETTING WINDOW-->
+    <!-- SETTING WINDOW -->
     <div id="settingWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
-                  bg-slate-900
-                  absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
-                  transition-all duration-300 ease-in-out
-                  opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+  bg-slate-900 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+  transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none"
+      style="min-width: 250px; min-height: 200px">
+      <!-- Header -->
       <div id="settingDragHandle"
         class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
         <div class="flex items-center space-x-1.5">
-          <!-- Settings Gear Icon -->
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear"
             viewBox="0 0 16 16">
             <path
               d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0" />
-            <path
-              d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z" />
+            <path d="..." />
           </svg>
           <span class="font-bold">Setting</span>
         </div>
         <div class="flex items-center space-x-1">
           <button aria-label="Minimize" disabled
             class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
+            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7">
               <rect width="8" height="2" />
             </svg>
           </button>
           <button aria-label="Maximize" disabled
             class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
-              xmlns="http://www.w3.org/2000/svg">
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1">
               <rect x="0.5" y="0.5" width="8" height="8" />
             </svg>
           </button>
           <button aria-label="Close" id="closesettingBtn"
-            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-            X
-          </button>
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">X</button>
         </div>
       </div>
 
-      <div id="profileSection" class="px-4 py-2 border-b border-[#4cb4e7]">
-        <h2 class="text-sm font-semibold mb-2">Profile Settings</h2>
-        <div class="space-y-2">
-          <input id="profileUsername" type="text" placeholder="Username"
-            class="w-full p-2 bg-slate-800 border border-[#4cb4e7] rounded text-[#4cb4e7]" />
-          <input id="profileEmail" type="email" placeholder="Email"
-            class="w-full p-2 bg-slate-800 border border-[#4cb4e7] rounded text-[#4cb4e7]" />
-          <input id="profilePassword" type="password" placeholder="New Password"
-            class="w-full p-2 bg-slate-800 border border-[#4cb4e7] rounded text-[#4cb4e7]" />
-          <input id="profilePicture" type="url" placeholder="Profile picture URL"
-            class="w-full p-2 bg-slate-800 border border-[#4cb4e7] rounded text-[#4cb4e7]" />
-          <button id="saveProfileChanges"
-            class="w-full bg-[#4cb4e7] text-black font-bold py-2 rounded hover:bg-[#8be076] transition-all">
-            Save Changes
-          </button>
+      <!-- Profile Settings -->
+      <div id="profileSection" class="px-4 py-3 space-y-6">
+        <h2 class="text-sm font-bold">Profile Settings</h2>
+        <!-- Username -->
+        <div class="pl-4">
+          <div class="flex justify-between items-center">
+            <span><strong>Username:</strong> <span id="currentUsername">loading...</span></span>
+            <button id="changeUsernameBtn" class="text-[#8be076] hover:underline text-xs">Change</button>
+          </div>
+          <div id="usernameForm" class="mt-2 space-y-2 hidden">
+            <input id="newUsername" type="text" placeholder="New username"
+              class="w-full p-2 bg-slate-800 border border-[#4cb4e7] rounded text-[#4cb4e7]" />
+            <button id="saveUsernameBtn"
+              class="bg-[#4cb4e7] text-black font-bold py-1 px-4 rounded hover:bg-[#8be076] transition-all">Save</button>
+            <span id="UsernameUpdateStatus"></span>
+          </div>
+        </div>
+        <!-- Email -->
+        <div class="pl-4">
+          <div class="flex justify-between items-center">
+            <span><strong>Email:</strong> <span id="currentEmail">loading...</span></span>
+            <button id="changeEmailBtn" class="text-[#8be076] hover:underline text-xs">Change</button>
+          </div>
+          <div id="emailForm" class="mt-2 space-y-2 hidden">
+            <input id="newEmail" type="email" placeholder="New email"
+              class="w-full p-2 bg-slate-800 border border-[#4cb4e7] rounded text-[#4cb4e7]" />
+            <button id="saveEmailBtn"
+              class="bg-[#4cb4e7] text-black font-bold py-1 px-4 rounded hover:bg-[#8be076] transition-all">Save</button>
+            <span id="emailUpdateStatus"></span>
+          </div>
+        </div>
+        <!-- Password -->
+        <div class="pl-4">
+          <div class="flex justify-between items-center">
+            <span><strong>Password:</strong> ***************</span>
+            <button id="changePasswordBtn" class="text-[#8be076] hover:underline text-xs">Change</button>
+          </div>
+          <div id="passwordForm" class="mt-2 space-y-2 hidden">
+            <input id="newPassword" type="password" placeholder="New password"
+              class="w-full p-2 bg-slate-800 border border-[#4cb4e7] rounded text-[#4cb4e7]" />
+            <button id="savePasswordBtn"
+              class="bg-[#4cb4e7] text-black font-bold py-1 px-4 rounded hover:bg-[#8be076] transition-all">Save</button>
+            <span id="passwordUpdateStatus"></span>
+
+          </div>
+        </div>
+        <!-- Profile Picture -->
+        <div class="pl-4">
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <span class="whitespace-nowrap"><strong>Picture:</strong></span>
+              <img id="profileImageSetting" src="/favicon.jpg"
+                class="w-16 h-16 rounded-full object-cover border border-[#4cb4e7]" alt="User profile" />
+            </div>
+
+            <div class="flex flex-col space-y-1 hidden" id="pictureForm">
+              <input type="file" id="profilePicInput" accept="image/*"
+                class="w-48 p-1 bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] rounded text-xs" />
+              <button id="uploadPicBtn"
+                class="w-fit px-2 py-1 bg-[#4cb4e7] text-black text-xs rounded hover:bg-[#8be076]">Upload</button>
+                <span id="pictureUpdateStatus"></span>
+            </div>
+            <button id="changePictureBtn" class="text-[#8be076] hover:underline text-xs">Change</button>
+          </div>
+        </div>
+
+        <!-- Delete Account -->
+        <div class="pl-4 pt-2">
           <button id="deleteAccount"
             class="w-full bg-[#D4535B] text-white font-bold py-2 rounded hover:bg-red-700 transition-all">
             Delete My Account
           </button>
+          <span id="deleteUpdateStatus"></span>
+
         </div>
-        <p id="profileUpdateStatus" class="mt-2 text-sm font-semibold"></p>
+
       </div>
 
-      <div id="twofaSection" class="mt-4">
-        <h2 class="text-sm font-semibold mb-1 px-1">Two-Factor
-          Authentication</h2>
+      <!-- TOTP Section -->
+      <div id="twofaSection" class="px-4 py-3 space-y-2">
+        <h2 class="text-sm font-bold">Two-Factor Authentication</h2>
 
-        <div class="pl-12">
+        <div class="pl-4">
           <label class="flex items-center space-x-2">
             <input type="checkbox" id="totp2faCheckbox" class="accent-[#4cb4e7]" />
             <span>Enable TOTP (Google Authenticator)</span>
@@ -482,21 +532,17 @@
         </div>
 
         <div id="qrContainer" class="mt-3 hidden flex flex-col items-center text-center space-y-2">
-          <p class="text-sm font-semibold text-[#4cb4e7]">Scan this QR code in
-            your authenticator app:</p>
-          <img id="qrCodeImage" src alt="QR Code" class="w-40 h-40 border border-[#4cb4e7] rounded-lg" />
+          <p class="text-sm font-semibold text-[#4cb4e7]">Scan this QR code in your authenticator app:</p>
+          <img id="qrCodeImage" alt="QR Code" class="w-40 h-40 border border-[#4cb4e7] rounded-lg" />
           <input id="verifyTotpInput"
             class="w-48 p-2 bg-slate-800 border border-[#4cb4e7] text-[#4cb4e7] placeholder-[#4cb4e7] rounded focus:outline-none focus:ring-2 focus:ring-[#4cb4e7]"
             placeholder="Enter 6-digit code" />
           <button id="confirmTotpButton"
-            class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">
-            Confirm TOTP
-          </button>
+            class="bg-[#4cb4e7] text-black font-bold px-4 py-1 rounded hover:bg-[#f8aab6] transition-all">Confirm
+            TOTP</button>
           <p id="totpStatus" class="text-sm mt-1 text-red-500 font-semibold"></p>
-
-          <div id="settingResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-          </div>
         </div>
+        <div id="settingResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
       </div>
     </div>
 
