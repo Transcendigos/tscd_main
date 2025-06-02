@@ -20,6 +20,7 @@ import profileRoute from './profile.js';
 import openaiRoute from './openai.js';
 import spotifyRoute from './music.js';
 import scoreRoutes from './score.js';
+import pongRoutes from './pong_routes.js';
 
 
 
@@ -78,6 +79,7 @@ server.register(profileRoute);
 server.register(openaiRoute);
 server.register(spotifyRoute);
 server.register(scoreRoutes);
+server.register(pongRoutes);  
 
 
 // Start server
@@ -108,6 +110,18 @@ GSignals.forEach((signal) => {
     }
 
     await server.close(); // Close Fastify server (this also closes WebSocket connections)
+
+
+    const { activeGames: currentActivePongGames } = await import('./pong_game.js'); // Dynamically import to get the live map
+    if (currentActivePongGames) {
+        server.log.info(`Cleaning up ${currentActivePongGames.size} active Pong game intervals.`);
+        currentActivePongGames.forEach(game => {
+            if (game.loopInterval) {
+                clearInterval(game.loopInterval);
+            }
+        });
+        currentActivePongGames.clear();
+    }
 
     const publisher = getRedisPublisher();
     const subscriber = getRedisSubscriber(); // This is the general one
