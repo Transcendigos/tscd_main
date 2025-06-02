@@ -1,5 +1,22 @@
 import { DesktopWindow } from "./DesktopWindow.js";
 
+export function resetAIWindow() {
+  const input = document.getElementById("chatInput") as HTMLInputElement;
+  const messages = document.getElementById("chatMessages");
+
+  if (input) {
+    input.value = "";
+    input.disabled = false;
+  }
+
+  if (messages) {
+    messages.innerHTML = ""; // Clear all previous messages
+  }
+
+  window.speechSynthesis.cancel(); // Stop any ongoing speech
+}
+
+
 async function detectLanguage(text: string): Promise<string> {
   const res = await fetch("https://libretranslate.de/detect", {
     method: "POST",
@@ -96,10 +113,12 @@ function setupUnifiedMic(inputEl: HTMLInputElement) {
   };
 }
 
+
 export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string) {
   const form = document.getElementById("chatForm") as HTMLFormElement;
   const input = document.getElementById("chatInput") as HTMLInputElement;
   const messages = document.getElementById("chatMessages");
+
 
   if (!form || !input || !messages) return;
 
@@ -122,9 +141,26 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
     botDiv.className = "text-left text-[#4cb4e7]";
     messages.appendChild(botDiv);
 
+    const normalized = userMsg.toLowerCase();
+
+    const phraseTriggers: Record<string, () => void> = {
+      "weather in paris": () => {
+        (window as any).infoWindow?.open?.();
+        document.getElementById("openWeatherBtn")?.click()},
+      "play pong": () => { (window as any).pongWindow?.open?.(); document.getElementById("clickMeBtn")?.click()},
+      "open profile": () =>{(window as any).profileWindow?.open?.()},
+      "open settings": () => {(window as any).settingWindow?.open?.()},
+      "start tournament": () => {alert("Tournament feature is coming soon!")},
+    };
+    for (const phrase in phraseTriggers) {
+      if (normalized.includes(phrase)) {
+        phraseTriggers[phrase]();
+      }
+    }
+
     try {
-      const userLang = "en";
-      const translatedInput = userMsg;
+      const userLang = "en" //await detectLanguage(userMsg);
+      const translatedInput = userMsg; //userLang !== "en" ? await translateText(userMsg, userLang, "en") : userMsg;
 
       const res = await fetch("http://localhost:3000/api/gpt", {
         method: "POST",
@@ -154,7 +190,11 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
         }
       }
 
-      const finalText = matchedMood ? "Opening the music player with a fitted playlist..." : fullText;
+      const websiteKeywords = ["pong", "play", "setting", "2fa", "password", "email", "user", "chat", "info", "weather", "paris"];
+      const matchedWebsite = websiteKeywords.find(web => fullText.toLowerCase().includes(web));      
+      let finalText = matchedMood ? "Opening the music player with a fitted playlist..." : fullText;
+      finalText = matchedWebsite ? "Opening the proper window - See ya soon" : fullText;
+
       typeCharByChar(finalText, () => speak(finalText, userLang));
 
       if (matchedMood) {

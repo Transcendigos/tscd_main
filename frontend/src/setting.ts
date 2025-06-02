@@ -10,22 +10,47 @@ export function setupSettingForm(settingWindow: DesktopWindow) {
 
 
   function disableTrigger(triggerId: string) {
-  const el = document.getElementById(triggerId);
-  if (el) {
-    el.classList.add("opacity-50", "cursor-not-allowed", "select-none");
-    el.classList.remove("hover-important", "cursor-default");
-    const clone = el.cloneNode(true);
-    el.parentNode?.replaceChild(clone, el);
+    const el = document.getElementById(triggerId);
+    if (el) {
+      el.classList.add("opacity-50", "cursor-not-allowed", "select-none");
+      el.classList.remove("hover-important", "cursor-default");
+
+      // Désactiver tous les <input> enfants
+      const inputs = el.querySelectorAll("input");
+      inputs.forEach((input) => {
+        (input as HTMLInputElement).disabled = true;
+        (input as HTMLInputElement).style.pointerEvents = 'none'; // pour être sûr
+      });
+    }
   }
-}
+
+  function enableTrigger(triggerId: string) {
+    const el = document.getElementById(triggerId);
+    if (el) {
+      el.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
+      el.classList.add("hover-important", "cursor-default");
+
+      // Désactiver tous les <input> enfants
+      const inputs = el.querySelectorAll("input");
+      inputs.forEach((input) => {
+        (input as HTMLInputElement).disabled = false;
+        (input as HTMLInputElement).style.pointerEvents = 'auto'; // pour être sûr
+      });
+    }
+  }
+
   async function refreshTotpState() {
     console.log("Refreshing TOTP state");
     qrContainer.classList.add('hidden');
     try {
+      enableTrigger("twofaSection");
       const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
       const data = await res.json();
       if (data.signedIn && data.user) {
         totp2faCheckbox.checked = data.user.totp_enabled;
+      }
+      if (data.user && data.user.method_sign == "google") {
+        disableTrigger("twofaSection");
       }
     } catch (err) {
       console.error("Failed to refresh TOTP state:", err);
@@ -33,15 +58,6 @@ export function setupSettingForm(settingWindow: DesktopWindow) {
     }
   }
 
-// `  async function disabletopCheckbox(){
-//     try{
-//       const res = await fetch("http://localhost:3000/api/me", {credentials: "include" });
-//       const data = await res.json();
-//       if (data.user && data.user.method_sign == "method"){
-//         disableTrigger("twofaSection");
-//       }
-//     }
-//   }`
 
   // Patch the open method to always update TOTP checkbox
   const originalOpen = settingWindow.open.bind(settingWindow);
