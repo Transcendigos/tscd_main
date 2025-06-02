@@ -171,31 +171,32 @@ export default fp(async function profileRoute(server, options) {
         return reply.send({ message: 'Picture uploaded', url: filePath });
     });
 
+    // Delete Account
+    server.post('/api/profile/delete-account', async (req, reply) => {
+        const token = req.cookies.auth_token;
+        if (!token) return reply.code(401).send({ error: 'Not authenticated' });
 
+        let user;
+        try {
+            user = jwt.verify(token, JWT_SECRET);
+        } catch {
+            return reply.code(401).send({ error: 'Invalid token' });
+        }
 
+        try {
+            // Delete from related tables first if needed (e.g., stats, matches, etc.)
+            await new Promise((resolve, reject) => {
+                db.run('DELETE FROM users WHERE id = ?', [user.userId], (err) =>
+                    err ? reject(err) : resolve()
+                );
+            });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            reply.clearCookie('auth_token', { path: '/' });
+            return reply.send({ message: 'Account successfully deleted' });
+        } catch (err) {
+            console.error("❌ Failed to delete user:", err);
+            return reply.code(500).send({ error: "Failed to delete account" });
+        }
+    });
 
 });

@@ -191,7 +191,7 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
       }
 
       const websiteKeywords = ["pong", "play", "setting", "2fa", "password", "email", "user", "chat", "info", "weather", "paris"];
-      const matchedWebsite = websiteKeywords.find(web => fullText.toLowerCase().includes(web));      
+      const matchedWebsite = websiteKeywords.find(web => translatedInput.toLowerCase().includes(web));      
       let finalText = matchedMood ? "Opening the music player with a fitted playlist..." : fullText;
       finalText = matchedWebsite ? "Opening the proper window - See ya soon" : fullText;
 

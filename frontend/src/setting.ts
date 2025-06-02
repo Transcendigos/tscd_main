@@ -15,45 +15,48 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
   document.getElementById("changeEmailBtn")?.addEventListener("click", () => show("emailForm"));
   document.getElementById("changePasswordBtn")?.addEventListener("click", () => show("passwordForm"));
   document.getElementById("changePictureBtn")?.addEventListener("click", () => show("pictureForm"));
-
-  const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
-  if (!res.ok) {
-    console.error('Failed to fetch profile');
-    return;
-  }
-  const { profile } = await res.json();
-
   const profileImage = document.getElementById('profileImageSetting') as HTMLImageElement | null;
   const currentUsername = document.getElementById('currentUsername');
   const currentEmail = document.getElementById('currentEmail');
-
-  if (!profileImage || !currentUsername || !currentEmail) {
-    console.warn("Profile elements not found in DOM.");
-    return;
-  }
-  console.log('image is ', profile.image);
-  const fallbackImage = '/favicon.jpg';
-  const resolvedSrc = profile.picture || fallbackImage;
-  const absoluteResolvedSrc = resolvedSrc.startsWith('http')
-    ? resolvedSrc
-    : new URL(resolvedSrc, window.location.origin).href;
-
-  // Avoid flickering
-  if (profileImage.src !== absoluteResolvedSrc) {
-    profileImage.src = resolvedSrc;
-  }
-
-  console.log(profileImage);
-  profileImage.alt = `${profile.username}'s profile picture`;
-
-  profileImage.onerror = () => {
-    if (!profileImage.src.includes(fallbackImage)) {
-      profileImage.src = fallbackImage;
+  
+  try {
+    const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
+    if (!res.ok) {
+      console.error('Failed to fetch profile');
+      return;
     }
-  };
-  currentUsername.textContent = profile.username;
-  currentEmail.textContent = profile.email;
-  profileImage.src = profile.picture;
+    const { profile } = await res.json();
+    console.log(profile);
+    if (!profileImage || !currentUsername || !currentEmail) {
+      console.warn("Profile elements not found in DOM.");
+      return;
+    }
+    console.log('image is ', profile.image);
+    const fallbackImage = '/favicon.jpg';
+    const resolvedSrc = profile.picture || fallbackImage;
+    const absoluteResolvedSrc = resolvedSrc.startsWith('http')
+      ? resolvedSrc
+      : new URL(resolvedSrc, window.location.origin).href;
+
+    // Avoid flickering
+    if (profileImage.src !== absoluteResolvedSrc) {
+      profileImage.src = resolvedSrc;
+    }
+
+    console.log(profileImage);
+    profileImage.alt = `${profile.username}'s profile picture`;
+
+    profileImage.onerror = () => {
+      if (!profileImage.src.includes(fallbackImage)) {
+        profileImage.src = fallbackImage;
+      }
+    };
+    currentUsername.textContent = profile.username;
+    currentEmail.textContent = profile.email;
+    profileImage.src = profile.picture;
+  } catch (error) {
+    console.error("Error loading user profile:", error);
+  }
 
 
   // Username
@@ -99,7 +102,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
   // Password
   document.getElementById("savePasswordBtn")?.addEventListener("click", async () => {
     const newPassword = (document.getElementById("newPassword") as HTMLInputElement).value;
-    const res = await fetch("/api/profile/update-password", {
+    const res = await fetch("http://localhost:3000//api/profile/update-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -124,7 +127,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     const formData = new FormData();
     formData.append("profilePic", file);
 
-    const res = await fetch("/api/profile/upload-picture", {
+    const res = await fetch("http://localhost:3000//api/profile/upload-picture", {
       method: "POST",
       credentials: "include",
       body: formData,
@@ -140,9 +143,38 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     }
   });
 
+  // DELETE ACCOUNT
+
+  document.getElementById("deleteAccount")?.addEventListener("click", async () => {
+    const confirmDelete = confirm("⚠️ Are you sure you want to delete your account? This action is irreversible.");
+    if (!confirmDelete) return;
+
+    deleteMsg.textContent = "⏳ Deleting your account...";
+
+    try {
+      const res = await fetch("http://localhost:3000/api/profile/delete-account", {
+        method: "POST",
+        credentials: "include"
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        deleteMsg.textContent = "✅ Account deleted. Redirecting...";
+        setTimeout(() => {
+          window.location.href = "/"; // Redirect to homepage or login
+        }, 1500);
+      } else {
+        deleteMsg.textContent = `❌ ${data.error || "Failed to delete account"}`;
+      }
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      deleteMsg.textContent = "❌ Unexpected error occurred.";
+    }
+  });
 
 
-
+  // 2FA SECTION
   const totp2faCheckbox = document.getElementById('totp2faCheckbox') as HTMLInputElement;
   const qrContainer = document.getElementById('qrContainer') as HTMLDivElement;
   const qrCodeImage = document.getElementById('qrCodeImage') as HTMLImageElement;

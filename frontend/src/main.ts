@@ -58,6 +58,9 @@ async function updateUIBasedOnAuth() {
       settingUserProfile();
     });
     assignOpenTrigger(settingWindow, "settingTab");
+    document.getElementById("settingTab")?.addEventListener("click", () => {
+      setupSettingForm(settingWindow);
+    });
     assignOpenTrigger(logoutWindow, "logoutTab");
     assignOpenTrigger(pongWindow, "clickMeBtn");
     assignOpenTrigger(chatWindow, "chatBtn");
@@ -149,6 +152,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupSigninForm(signinWindow);
   } catch (error) {
     console.error("Failed to initialize the signin window:", error);
   }
@@ -166,6 +170,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupSignupForm(signupWindow);
   } catch (error) {
     console.error("Failed to initialize the signup window:", error);
   }
@@ -183,6 +188,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupLogoutForm(logoutWindow);
+
   } catch (error) {
     console.error("Failed to initialize 'logoutWindow':", error);
   }
@@ -201,6 +208,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    // setupSettingForm(settingWindow);
+
   } catch (error) {
     console.error("Failed to initialize 'settingWindow':", error);
   }
@@ -220,6 +229,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    settingUserProfile();
   } catch (error) {
     console.error("Failed to initialize 'profileWindow':", error);
   }
@@ -238,6 +248,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupInfoWindow(weatherWindow);
   } catch (error) {
     console.error("Failed to initialize 'infoWindow':", error);
   }
@@ -329,6 +340,16 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    fetch("/ai_prompt.txt")
+      .then(res => res.text())
+      .then(text => {
+        console.log("✅ Loaded system message");
+        setupAIWindow(musicWindow, text);
+      })
+      .catch(err => {
+        console.error("❌ Failed to load system message:", err);
+        setupAIWindow(musicWindow, "You are a helpful assistant.");
+      });
   } catch (error) {
     console.error("Failed to initialize the ai window:", error);
   }
@@ -346,6 +367,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupSpotifySearch();
   } catch (error) {
     console.error("Failed to initialize the music window:", error);
   }
@@ -379,36 +401,16 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("One or more elements for Pong game setup are missing.");
   }
 
+
+  initGoogleSignIn();
+
   await updateUIBasedOnAuth();
 
   window.addEventListener("auth:updated", updateUIBasedOnAuth);
 
-  setupSignupForm(signupWindow);
 
-  initGoogleSignIn();
 
-  setupSigninForm(signinWindow);
 
-  setupSettingForm(settingWindow);
-
-  setupLogoutForm(logoutWindow);
-
-  setupInfoWindow(weatherWindow);
-
-  settingUserProfile();
-
-  fetch("/ai_prompt.txt")
-    .then(res => res.text())
-    .then(text => {
-      console.log("✅ Loaded system message");
-      setupAIWindow(musicWindow, text);
-    })
-    .catch(err => {
-      console.error("❌ Failed to load system message:", err);
-      setupAIWindow(musicWindow, "You are a helpful assistant.");
-    });
-
-  setupSpotifySearch();
 
 });
 
