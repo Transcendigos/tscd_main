@@ -28,6 +28,19 @@ interface ChatMessage {
     messageId?: number;
 }
 
+
+const userPlaceholderColors: string[] = [
+    'bg-red-500',
+    'bg-blue-500',
+    'bg-green-500',
+    'bg-yellow-500',
+    'bg-purple-500',
+    'bg-pink-500',
+    'bg-indigo-500',
+    'bg-teal-500',
+    'bg-orange-500'
+];
+
 let socket: WebSocket | null = null;
 let currentUserId: number | null = null;
 let currentUsername: string | null = null;
@@ -199,18 +212,34 @@ async function loadUserList() {
                 
                 li.className = 'p-1.5 hover:bg-slate-700 cursor-pointer text-xs flex items-center space-x-2';
                 
-                if (user.picture) {
-                    const img = document.createElement('img');
-                    img.src = user.picture;
-                    img.alt = user.username;
-                    img.className = 'w-5 h-5 object-cover pointer-events-none';
-                    li.appendChild(img);
-                } else {
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'w-5 h-5 bg-slate-500 flex items-center justify-center text-xs text-slate-300 pointer-events-none';
-                    placeholder.textContent = user.username.substring(0,1).toUpperCase();
-                    li.appendChild(placeholder);
-                }
+
+                // -------- REMOVED FROM NOW DUE TO ISSUE WITH GOOGLE PP --------
+                // if (user.picture) {
+                //     const img = document.createElement('img');
+                //     img.src = user.picture;
+                //     img.alt = user.username;
+                //     img.className = 'w-5 h-5 object-cover pointer-events-none';
+                //     li.appendChild(img);
+                // } else {
+                //     const placeholder = document.createElement('div');
+                //     placeholder.className = 'w-5 h-5 bg-slate-500 flex items-center justify-center text-xs text-slate-300 pointer-events-none';
+                //     placeholder.textContent = user.username.substring(0,1).toUpperCase();
+                //     li.appendChild(placeholder);
+                // }
+
+
+
+                const colorIndex = user.id % userPlaceholderColors.length;
+                const selectedBgColor = userPlaceholderColors[colorIndex];
+
+                const placeholder = document.createElement('div');
+                placeholder.className = `w-5 h-5 flex items-center justify-center text-xs text-slate-900 pointer-events-none flex-shrink-0 ${selectedBgColor}`;
+                placeholder.textContent = user.username.substring(0,1).toUpperCase();
+                li.appendChild(placeholder);
+
+
+
+
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = user.username;
                 nameSpan.className = 'pointer-events-none';
@@ -262,8 +291,8 @@ function createPrivateChatWindowHtml(peerUser: User): string {
                     <input type="text" id="privateMessageInput_${peerId}" placeholder="Message ${peerUsername}..."
                            class="flex-grow p-1.5 bg-slate-900 border text-xs focus:ring-1 focus:ring-[#4cb4e7] focus:border-[#4cb4e7] outline-none" />
                     <button id="privateSendBtn_${peerId}"
-                            class="border px-3 py-1.5 font-semibold hover:bg-[#8be076] hover:text-slate-900 transition-colors text-xs">
-                        Send
+                            class="border px-3 py-1.5 font-bold tracking-wider hover:bg-[#8be076] hover:text-slate-900 transition-colors text-xs">
+                        SEND
                     </button>
                 </div>
             </div>
@@ -475,17 +504,17 @@ function displayMessageInWindow(msg: ChatMessage, messagesArea: HTMLElement, pee
     const senderInfoDiv = document.createElement('div');
     const messageContentDiv = document.createElement('div');
 
-    senderInfoDiv.textContent = `${msg.fromUsername || 'User'} says:`;
+    senderInfoDiv.textContent = `${msg.fromUsername || 'User'}:`;
     senderInfoDiv.classList.add('text-xs', 'font-bold', 'underline');
 
     messageContentDiv.textContent = msg.content;
-    messageContentDiv.className = 'px-3 py-1.5 text-xs break-all break-words';
+    messageContentDiv.className = 'px-3 text-xs break-all break-words';
 
     if (msg.fromUserId === currentUserId) {
-        messageContainerDiv.className = 'text-[#FFE2BF] flex flex-col items-start my-2';
+        messageContainerDiv.className = 'text-[#FFE2BF] flex flex-row items-start my-2 py-2';
         senderInfoDiv.style.color = '#FFE2BF';
     } else if (msg.fromUserId === peerIdOfThisWindow) {
-        messageContainerDiv.className = 'flex flex-col items-start my-2';
+        messageContainerDiv.className = 'flex flex-row items-start my-2 py-2';
     } else {
         console.warn("displayMessageInWindow: Message doesn't match current context.", { msg, peerIdOfThisWindow });
         return; 

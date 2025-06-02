@@ -36,33 +36,33 @@ let currentUser: UserInfo = { signedIn: false };
 
 async function fetchCurrentUser() {
   try {
-    const response = await fetch('http://localhost:3000/api/me', {
-      credentials: 'include',
+    const response = await fetch("http://localhost:3000/api/me", {
+      credentials: "include",
     });
     if (!response.ok) {
-      console.log('User not signed in.');
+      console.log("User not signed in.");
       currentUser = { signedIn: false };
       return;
     }
 
     const data = await response.json();
-    console.log('User info:', data);
+    console.log("User info:", data);
 
     currentUser = {
       signedIn: data.signedIn,
       userId: data.user?.userId,
     };
   } catch (err) {
-    console.error('Error fetching user info:', err);
+    console.error("Error fetching user info:", err);
     currentUser = { signedIn: false };
   }
 }
 
 async function postScore(tournamentId: number, userId: number, score: number) {
   try {
-    const response = await fetch('http://localhost:3000/api/scores', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("http://localhost:3000/api/scores", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         tournament_id: tournamentId,
         user_id: userId,
@@ -71,13 +71,13 @@ async function postScore(tournamentId: number, userId: number, score: number) {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to save score');
+      throw new Error("Failed to save score");
     }
 
     const data = await response.json();
-    console.log('Score saved!', data);
+    console.log("Score saved!", data);
   } catch (err) {
-    console.error('Error saving score:', err);
+    console.error("Error saving score:", err);
   }
 }
 
@@ -104,6 +104,10 @@ let lastTime: number;
 let aiMode = true;
 const AI_RATE = 1000;
 
+let animationFrameId: number | null = null;
+let aiIntervalId: number | null = null;
+let gameIsRunning = false;
+
 let flickerPhase = 0;
 
 const keyPress: Record<string, boolean> = {};
@@ -112,12 +116,13 @@ document.addEventListener("keydown", (event) => {
 });
 document.addEventListener("keydown", (event) => {
   if (waitingForRestart && event.key === "Enter") {
-    waitingForRestart = false;
-    leftScore = 0;
-    rightScore = 0;
-    resetPos();
-    lastTime = performance.now();
-    requestAnimationFrame(gameLoop);
+    // waitingForRestart = false;
+    // leftScore = 0;
+    // rightScore = 0;
+    // resetPos();
+    // lastTime = performance.now();
+    // requestAnimationFrame(gameLoop);
+    startPongGame();
   }
 });
 document.addEventListener("keyup", (event) => {
@@ -126,7 +131,7 @@ document.addEventListener("keyup", (event) => {
 
 export function setCanvas(c: HTMLCanvasElement): void {
   canvas = c;
-  pongCtx = canvas.getContext("2d")!;
+  if (canvas) pongCtx = canvas.getContext("2d")!;
 }
 
 function initGameObjects(): void {
@@ -171,9 +176,16 @@ function initGameObjects(): void {
 
   leftPaddleStart = canvas.height / 2 - paddleHeight / 2;
   rightPaddleStart = canvas.height / 2 - paddleHeight / 2;
+
+  resetPos();
 }
 
 function resetPos(): void {
+  if (!leftPaddle || !rightPaddle || !ball) {
+    console.warn("Game objects not initialized before resetPos");
+    return;
+  }
+
   leftPaddle.y = leftPaddleStart;
   rightPaddle.y = rightPaddleStart;
 
@@ -202,7 +214,11 @@ function drawMidline(): void {
 function drawScore(): void {
   pongCtx.font = "64px 'Press Start 2P'";
   pongCtx.textAlign = "center";
-  pongCtx.fillText(`${leftScore}  ${rightScore}`, canvas.width / 2, canvas.height / 6);
+  pongCtx.fillText(
+    `${leftScore}  ${rightScore}`,
+    canvas.width / 2,
+    canvas.height / 6
+  );
 }
 
 function drawVerticalCRTLines(): void {
@@ -240,7 +256,14 @@ function drawPaddle(paddle: Paddle): void {
   pongCtx.fill();
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number): void {
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+): void {
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
   ctx.lineTo(x + width - radius, y);
@@ -328,7 +351,10 @@ function updateAi(paddleSpeed: number): void {
   if (ball.predictY <= paddleCenter && rightPaddle.y > 0) {
     rightPaddle.y -= paddleSpeed;
   }
-  if (ball.predictY >= paddleCenter && rightPaddle.y + rightPaddle.height < canvas.height) {
+  if (
+    ball.predictY >= paddleCenter &&
+    rightPaddle.y + rightPaddle.height < canvas.height
+  ) {
     rightPaddle.y += paddleSpeed;
   }
 }
@@ -358,7 +384,8 @@ function update(dt: number): void {
   const paddleSpeed = 500 * dt;
 
   if (keyPress["w"] && leftPaddle.y > 0) leftPaddle.y -= paddleSpeed;
-  if (keyPress["s"] && leftPaddle.y + leftPaddle.height < canvas.height) leftPaddle.y += paddleSpeed;
+  if (keyPress["s"] && leftPaddle.y + leftPaddle.height < canvas.height)
+    leftPaddle.y += paddleSpeed;
 
   if (aiMode) updateAi(paddleSpeed);
 
@@ -400,63 +427,124 @@ function update(dt: number): void {
 }
 
 function gameLoop(currentTime: number): void {
+  if (!gameIsRunning) return;
+
   const delta = (currentTime - lastTime) / 1000;
   lastTime = currentTime;
   update(delta);
   draw();
 
-	const winningScore = 1;
+  const winningScore = 1;
 
-	if (leftScore >= winningScore || rightScore >= winningScore) {
-		const winnerId = leftScore >= winningScore ? 1 : 2;
-		const loserId = leftScore >= winningScore ? 2 : 1;
-		const finalScore = Math.max(leftScore, rightScore);
-		// Let the score draw for one frame, then end game
-		requestAnimationFrame(() => {
-		endGame(winnerId, loserId, finalScore);
-		});
-		return;
-	}
-	requestAnimationFrame(gameLoop);
+  if (leftScore >= winningScore || rightScore >= winningScore) {
+    const winnerId = leftScore >= winningScore ? 1 : 2;
+    const loserId = leftScore >= winningScore ? 2 : 1;
+    const finalScore = Math.max(leftScore, rightScore);
+
+    gameIsRunning = false;
+
+    animationFrameId = requestAnimationFrame(() => {
+      endGame(winnerId, loserId, finalScore);
+    });
+    return;
+  }
+  animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 async function endGame(winnerId: number, loserId: number, finalScore: number) {
   console.log(`Game Over! Winner: ${winnerId}, Score: ${finalScore}`);
 
-  if (currentUser.signedIn && currentUser.userId == winnerId) {
+  if (currentUser.signedIn && currentUser.userId === winnerId) {
     try {
       await postScore(1, currentUser.userId, finalScore);
     } catch (err) {
-      console.error('Error saving score:', err);
+      console.error("Error saving score:", err);
     }
   } else {
     console.log("Not the winner or not signed in; skipping score saving.");
   }
 
-  pongCtx.font = "32px 'Press Start 2P'";
-  pongCtx.fillStyle = "#d6ecff";
-  pongCtx.textAlign = "center";
-  pongCtx.fillText("Press Enter to play a new match", canvas.width / 2, canvas.height / 2);
-
+  if (pongCtx && canvas) {
+    pongCtx.font = "32px 'Press Start 2P'";
+    pongCtx.fillStyle = "#d6ecff";
+    pongCtx.textAlign = "center";
+    pongCtx.fillText(
+      "Press Enter to play a new match",
+      canvas.width / 2,
+      canvas.height / 2
+    );
+  }
   waitingForRestart = true;
 }
 
 export async function startPongGame(): Promise<void> {
-  await fetchCurrentUser(); // Wait for user info before starting
-  initGameObjects();
-  lastTime = performance.now();
-  requestAnimationFrame(gameLoop);
+  if (gameIsRunning) {
+    console.log("Pong game is already running. Stopping previous instance.");
+    stopPongGame();
+  }
+  if (!canvas || !pongCtx) {
+    console.error("Canvas or context not initialized. Cannot start Pong game.");
+    const localCanvas = document.getElementById(
+      "pongCanvas"
+    ) as HTMLCanvasElement;
+    if (localCanvas) setCanvas(localCanvas);
+    else return;
+    if (!pongCtx) return;
+  }
 
-  setInterval(() => {
-    if (!aiMode) return;
+  console.log("Starting Pong game...");
+  await fetchCurrentUser();
+
+  initGameObjects();
+  leftScore = 0;
+  rightScore = 0;
+  waitingForRestart = false;
+  gameIsRunning = true;
+
+  lastTime = performance.now();
+
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+  }
+  animationFrameId = requestAnimationFrame(gameLoop);
+
+  if (aiIntervalId !== null) {
+    clearInterval(aiIntervalId);
+  }
+  aiIntervalId = setInterval(() => {
+    if (!gameIsRunning || !aiMode || !ball || !rightPaddle || !canvas) return;
     if (ball.vx < 0) {
       ball.predictY = canvas.height / 2;
+    } else {
+      predictBall(ball, rightPaddle.x);
     }
-    predictBall(ball, rightPaddle.x);
     ball.paddleCenter = Math.random() * paddleHeight;
 
     const baseDelay = { 1: 60, 2: 120, 3: 220 }[aiDifficulty] || 120;
     const reactionDelay = baseDelay + Math.random() * 50;
-    setTimeout(() => updateAi(500 * 0.016), reactionDelay);
   }, AI_RATE);
+}
+
+export function stopPongGame(): void {
+  console.log("Stopping Pong game...");
+  gameIsRunning = false;
+
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+  if (aiIntervalId !== null) {
+    clearInterval(aiIntervalId);
+    aiIntervalId = null;
+  }
+
+  leftScore = 0;
+  rightScore = 0;
+  waitingForRestart = false;
+
+  
+  if (pongCtx && canvas) {
+    pongCtx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  console.log("Pong game stopped and resources cleaned.");
 }
