@@ -18,7 +18,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
   const profileImage = document.getElementById('profileImageSetting') as HTMLImageElement | null;
   const currentUsername = document.getElementById('currentUsername');
   const currentEmail = document.getElementById('currentEmail');
-  
+
   try {
     const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
     if (!res.ok) {
@@ -31,7 +31,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
       console.warn("Profile elements not found in DOM.");
       return;
     }
-    console.log('image is ', profile.image);
+    console.log('image is ', profile.picture);
     const fallbackImage = '/favicon.jpg';
     const resolvedSrc = profile.picture || fallbackImage;
     const absoluteResolvedSrc = resolvedSrc.startsWith('http')
@@ -73,7 +73,10 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     if (res.ok) {
       currentUsername.textContent = newUsername;
       usernameMsg.textContent = "✅ Username updated!";
-      hide("usernameForm");
+      setTimeout(() => {
+        hide("usernameForm"); // Redirect to homepage or login
+      }, 1000);;
+      console.log("ALL GOOD");
     } else {
       usernameMsg.textContent = `❌ ${data.error || "Failed to update username"}`;
     }
@@ -93,7 +96,10 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     if (res.ok) {
       currentEmail.textContent = newEmail;
       emailMsg.textContent = "✅ Email updated!";
-      hide("emailForm");
+      setTimeout(() => {
+        hide("emailForm"); // Redirect to homepage or login
+      }, 1000);;
+      console.log("ALL GOOD");
     } else {
       emailMsg.textContent = `❌ ${data.error || "Failed to update email"}`;
     }
@@ -102,7 +108,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
   // Password
   document.getElementById("savePasswordBtn")?.addEventListener("click", async () => {
     const newPassword = (document.getElementById("newPassword") as HTMLInputElement).value;
-    const res = await fetch("http://localhost:3000//api/profile/update-password", {
+    const res = await fetch("http://localhost:3000/api/profile/update-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -112,7 +118,10 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     const data = await res.json();
     if (res.ok) {
       passwordMsg.textContent = "✅ Password updated!";
-      hide("passwordForm");
+      setTimeout(() => {
+        hide("passwordForm"); // Redirect to homepage or login
+      }, 1000);;
+      console.log("ALL GOOD");
     } else {
       passwordMsg.textContent = `❌ ${data.error || "Failed to update password"}`;
     }
@@ -127,7 +136,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     const formData = new FormData();
     formData.append("profilePic", file);
 
-    const res = await fetch("http://localhost:3000//api/profile/upload-picture", {
+    const res = await fetch("http://localhost:3000/api/profile/upload-picture", {
       method: "POST",
       credentials: "include",
       body: formData,

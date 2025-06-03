@@ -53,14 +53,14 @@ async function updateUIBasedOnAuth() {
   const isSignedIn = await checkSignedIn();
 
   if (isSignedIn) {
-    assignOpenTrigger(profileWindow, "profileBtn");
     document.getElementById("profileBtn")?.addEventListener("click", () => {
       settingUserProfile();
     });
-    assignOpenTrigger(settingWindow, "settingTab");
+    assignOpenTrigger(profileWindow, "profileBtn");
     document.getElementById("settingTab")?.addEventListener("click", () => {
       setupSettingForm(settingWindow);
     });
+    assignOpenTrigger(settingWindow, "settingTab");
     assignOpenTrigger(logoutWindow, "logoutTab");
     assignOpenTrigger(pongWindow, "clickMeBtn");
     assignOpenTrigger(chatWindow, "chatBtn");
@@ -229,7 +229,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
-    settingUserProfile();
+    // settingUserProfile();
   } catch (error) {
     console.error("Failed to initialize 'profileWindow':", error);
   }
@@ -248,14 +248,13 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
-    setupInfoWindow(weatherWindow);
   } catch (error) {
     console.error("Failed to initialize 'infoWindow':", error);
   }
-
+  
 
   // --- Weather Window ---
-
+  
   try {
     weatherWindow = new DesktopWindow({
       windowId: "weatherWindow",
@@ -268,13 +267,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupInfoWindow(weatherWindow);
   }
   catch (error) {
     console.error("Failed to initialize 'weatherWindow':", error);
   }
-
+  
   // --- Stats Window ---
-
+  
   try {
     statsWindow = new DesktopWindow({
       windowId: "statsWindow",
@@ -290,10 +290,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("Failed to initialize 'statsWindow':", error);
   }
-
-
+  
+  
   // --- Pong Window ---
-
+  
   try {
     pongWindow = new DesktopWindow({
       windowId: "pongWindow",
@@ -309,7 +309,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("Failed to initialize 'pongWindow':", error);
   }
-
+  
   // --- Chat Window ---
   try {
     chatWindow = new DesktopWindow({
@@ -326,7 +326,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("Failed to initialize the chat window:", error);
   }
-
+  
   // --- AI Window ---
   try {
     aiWindow = new DesktopWindow({
@@ -341,19 +341,19 @@ window.addEventListener("DOMContentLoaded", async () => {
       hideClasses: defaultHideClasses,
     });
     fetch("/ai_prompt.txt")
-      .then(res => res.text())
-      .then(text => {
-        console.log("✅ Loaded system message");
-        setupAIWindow(musicWindow, text);
-      })
-      .catch(err => {
-        console.error("❌ Failed to load system message:", err);
-        setupAIWindow(musicWindow, "You are a helpful assistant.");
-      });
+    .then(res => res.text())
+    .then(text => {
+      console.log("✅ Loaded system message");
+      setupAIWindow(musicWindow, text);
+    })
+    .catch(err => {
+      console.error("❌ Failed to load system message:", err);
+      setupAIWindow(musicWindow, "You are a helpful assistant.");
+    });
   } catch (error) {
     console.error("Failed to initialize the ai window:", error);
   }
-
+  
   // --- Music Window ---
   try {
     musicWindow = new DesktopWindow({

@@ -6,8 +6,9 @@ import fastifyWebsocket from '@fastify/websocket';
 import dotenv from 'dotenv';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import fs from 'fs';
-
+import fastifyStatic from '@fastify/static';
+import path from 'path';
+import multipart from '@fastify/multipart';
 
 import { initializeDB, getDB } from './db.js';
 import { initializeRedisClients, getRedisPublisher, getRedisSubscriber } from './redis.js';
@@ -29,13 +30,13 @@ dotenv.config();
 console.log("Loaded API KEY:", process.env.OPENWEATHER_API_KEY);
 
 const server = Fastify({
-  logger: { 
-	transport: {
-		targets: [
-			{ level: 'info', target: 'pino/file', options: { destination: '/logs/backend.log' } }
-			]
-		}
-	}
+  logger: {
+    transport: {
+      targets: [
+        { level: 'info', target: 'pino/file', options: { destination: '/logs/backend.log' } }
+      ]
+    }
+  }
 });
 
 // Setup Swagger (API visualizer tool)
@@ -48,12 +49,24 @@ await server.register(swagger, {
     }
   }
 });
+
 await server.register(swaggerUi, {
   routePrefix: '/docs',
 });
 
+// Register multipart BEFORE routes
+await server.register(multipart, {
+  limits: { fileSize: 5 * 1024 * 1024 }, // optional limit
+});
+
+// Optional: serve static files like profile pictures
+await server.register(fastifyStatic, {
+  root: path.join(process.cwd(), 'public'),
+  prefix: '/',
+});
+
 server.get('/', async (request, reply) => {
-	reply.send({ hello: 'world' });
+  reply.send({ hello: 'world' });
 });
 
 // Initialize DB and Redis

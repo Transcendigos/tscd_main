@@ -2,10 +2,12 @@ import speakeasy from 'speakeasy';
 import { setAuthCookie } from './auth.js';
 import jwt from 'jsonwebtoken';
 import { getDB } from './db.js';
+import fp from 'fastify-plugin';
+
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
-export default async function twofaRoutes(server, options) {
+export default fp(async function twofaRoutes(server, options) {
   let db = getDB();
   // VERIFY SIGN IN ///////////
   server.post('/api/2fa/verify', async (req, reply) => {
@@ -65,4 +67,4 @@ export default async function twofaRoutes(server, options) {
     }
   });
 
-}
+});

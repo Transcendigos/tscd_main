@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { getDB } from './db.js'; // Assuming db.js is in the same directory
+import fp from 'fastify-plugin';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
@@ -17,7 +18,7 @@ export const setAuthCookie = (reply, token) => {
   });
 };
 
-export default async function authRoutes(server, options) {
+export default fp(async function authRoutes(server, options) {
   const db = getDB();
   const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   if (process.env.GOOGLE_CLIENT_ID) {
@@ -65,7 +66,7 @@ export default async function authRoutes(server, options) {
         );
       });
 
-      const tokenPayload = { userId: insertedUserId, username, email, method_sign: 'local', picture: null};
+      const tokenPayload = { userId: insertedUserId, username, email, method_sign: 'local', picture: null };
       const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
 
       reply.clearCookie('session_token', { path: '/' }); // cleanup legacy
@@ -160,7 +161,7 @@ export default async function authRoutes(server, options) {
       } else {
         userIdToSign = dbUser.id;
         finalUsername = dbUser.username;
-        server.log.info({picture, dbuser: dbUser.picture }, "all photo");
+        server.log.info({ picture, dbuser: dbUser.picture }, "all photo");
         finalPicture = picture || dbUser.picture;
         if (finalPicture !== dbUser.picture) {
           db.run('UPDATE users SET picture = ? WHERE id = ?', [finalPicture, userIdToSign], (err) => {
@@ -169,7 +170,7 @@ export default async function authRoutes(server, options) {
         }
         server.log.info({ email, username: finalUsername, userId: userIdToSign }, "Existing user signed in via Google");
       }
-      const tokenPayload = { userId: userIdToSign, username: finalUsername, email, method_sign: 'google', picture: finalPicture};
+      const tokenPayload = { userId: userIdToSign, username: finalUsername, email, method_sign: 'google', picture: finalPicture };
       const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
       setAuthCookie(reply, token);
 
@@ -240,7 +241,6 @@ export default async function authRoutes(server, options) {
 
   ////////////////////END SIGN IN//////////////////////////////
 
-
   // SECTION VERIFY IF LOG IN
   server.get('/api/me', async (req, reply) => {
     const token = req.cookies.auth_token;
@@ -265,7 +265,7 @@ export default async function authRoutes(server, options) {
     // 🔍 Fetch user’s 2FA status from DB
     const userRow = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT totp_secret, method_sign FROM users WHERE id = ?',
+        'SELECT * FROM users WHERE id = ?',
         [payload.userId],
         (err, row) => {
           if (err) return reject(err);
@@ -277,7 +277,10 @@ export default async function authRoutes(server, options) {
     reply.send({
       signedIn: true,
       user: {
-        ...payload,
+        userId: userRow?.id, 
+        username: userRow?.username, 
+        email: userRow?.email, 
+        picture: userRow?.picture,
         totp_enabled: Boolean(userRow?.totp_secret),
         method_sign: userRow?.method_sign,
       },
@@ -309,37 +312,39 @@ export default async function authRoutes(server, options) {
     }
   });
 
+
+  //METHOD OF SIGNING
   server.get('/api/auth/methods', async (req, reply) => {
-  const { email } = req.query;
+    const { email } = req.query;
 
-  if (!email) {
-    return reply.code(400).send({ error: "Missing email query parameter." });
-  }
+    if (!email) {
+      return reply.code(400).send({ error: "Missing email query parameter." });
+    }
 
-  try {
-    const user = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT method_sign FROM users WHERE email = ?',
-        [email],
-        (err, row) => {
-          if (err) return reject(err);
-          resolve(row);
-        }
-      );
-    });
+    try {
+      const user = await new Promise((resolve, reject) => {
+        db.get(
+          'SELECT method_sign FROM users WHERE email = ?',
+          [email],
+          (err, row) => {
+            if (err) return reject(err);
+            resolve(row);
+          }
+        );
+      });
 
-    if (!user) return reply.send({ methods: [] });
+      if (!user) return reply.send({ methods: [] });
 
-    const methods = [];
+      const methods = [];
 
-    if (user.method_sign === 'local') methods.push('local');
-    if (user.method_sign === 'google') methods.push('google');
+      if (user.method_sign === 'local') methods.push('local');
+      if (user.method_sign === 'google') methods.push('google');
 
-    return reply.send({ methods });
-  } catch (err) {
-    server.log.error({ err }, 'Error fetching login method');
-    return reply.code(500).send({ error: "Server error" });
-  }
+      return reply.send({ methods });
+    } catch (err) {
+      server.log.error({ err }, 'Error fetching login method');
+      return reply.code(500).send({ error: "Server error" });
+    }
+  });
+
 });
-
-}

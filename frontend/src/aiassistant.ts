@@ -146,11 +146,12 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
     const phraseTriggers: Record<string, () => void> = {
       "weather in paris": () => {
         (window as any).infoWindow?.open?.();
-        document.getElementById("openWeatherBtn")?.click()},
-      "play pong": () => { (window as any).pongWindow?.open?.(); document.getElementById("clickMeBtn")?.click()},
-      "open profile": () =>{(window as any).profileWindow?.open?.()},
-      "open settings": () => {(window as any).settingWindow?.open?.()},
-      "start tournament": () => {alert("Tournament feature is coming soon!")},
+        document.getElementById("openWeatherBtn")?.click()
+      },
+      "play pong": () => { (window as any).pongWindow?.open?.(); document.getElementById("clickMeBtn")?.click() },
+      "open profile": () => { (window as any).profileWindow?.open?.() },
+      "open settings": () => { (window as any).settingWindow?.open?.() },
+      "start tournament": () => { alert("Tournament feature is coming soon!") },
     };
     for (const phrase in phraseTriggers) {
       if (normalized.includes(phrase)) {
@@ -162,21 +163,41 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
       const userLang = "en" //await detectLanguage(userMsg);
       const translatedInput = userMsg; //userLang !== "en" ? await translateText(userMsg, userLang, "en") : userMsg;
 
-      const res = await fetch("http://localhost:3000/api/gpt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ system: systemMessage, message: translatedInput }),
-      });
-
-      const data = await res.json();
-      let fullText = data.reply || "[no response]";
-
-      if (userLang !== "en") {
-        fullText = await translateText(fullText, "en", userLang);
-      }
 
       const moodKeywords = ["chill", "sad", "happy", "focus", "jazz", "epic", "lofi", "gaming", "romantic"];
-      const matchedMood = moodKeywords.find(mood => fullText.toLowerCase().includes(mood));
+      const websiteKeywords = ["pong", "play", "setting", "2fa", "password", "email", "user", "chat", "info", "weather", "paris"];
+
+      const matchedMood = moodKeywords.find(mood => translatedInput.toLowerCase().includes(mood));
+      const matchedWebsite = websiteKeywords.find(web => translatedInput.toLowerCase().includes(web));
+      let finalText = matchedMood ? "Opening the music player with a fitted playlist..." : "waiting AI bot";
+      finalText = matchedWebsite ? "Opening the proper window - See ya soon" : "waiting AI bot";
+
+
+      if (matchedMood) {
+        const musicRes = await fetch(`http://localhost:3000/api/spotify/search?q=${encodeURIComponent(matchedMood)}`);
+        const musicData = await musicRes.json();
+        if (musicData.embed) {
+          const iframe = document.getElementById("spotifyIframe") as HTMLIFrameElement;
+          iframe.src = musicData.embed;
+          musicWindow.open();
+        }
+      }
+      else if (matchedWebsite) {
+      }
+      else {
+        const res = await fetch("http://localhost:3000/api/gpt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ system: systemMessage, message: translatedInput }),
+        });
+
+        const data = await res.json();
+        finalText = data.reply || "[no response]";
+
+        if (userLang !== "en") {
+          finalText = await translateText(finalText, "en", userLang);
+        }
+      }
 
       let index = 0;
       function typeCharByChar(text: string, callback: () => void) {
@@ -190,22 +211,8 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
         }
       }
 
-      const websiteKeywords = ["pong", "play", "setting", "2fa", "password", "email", "user", "chat", "info", "weather", "paris"];
-      const matchedWebsite = websiteKeywords.find(web => translatedInput.toLowerCase().includes(web));      
-      let finalText = matchedMood ? "Opening the music player with a fitted playlist..." : fullText;
-      finalText = matchedWebsite ? "Opening the proper window - See ya soon" : fullText;
-
       typeCharByChar(finalText, () => speak(finalText, userLang));
 
-      if (matchedMood) {
-        const musicRes = await fetch(`http://localhost:3000/api/spotify/search?q=${encodeURIComponent(matchedMood)}`);
-        const musicData = await musicRes.json();
-        if (musicData.embed) {
-          const iframe = document.getElementById("spotifyIframe") as HTMLIFrameElement;
-          iframe.src = musicData.embed;
-          musicWindow.open();
-        }
-      }
 
     } catch (err) {
       const errorDiv = document.createElement("div");
