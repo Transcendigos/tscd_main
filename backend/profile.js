@@ -2,7 +2,7 @@ import { getDB } from './db.js';
 import jwt from 'jsonwebtoken';
 import fp from 'fastify-plugin';
 import bcrypt from 'bcrypt';
-import setAuthCookie from './auth.js';
+import { setAuthCookie } from './utils.js';
 import path from 'path';
 import fs from 'fs';
 import multipart from '@fastify/multipart';

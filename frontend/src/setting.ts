@@ -2,6 +2,28 @@ import { DesktopWindow } from "./DesktopWindow.js";
 
 export async function setupSettingForm(settingWindow: DesktopWindow) {
 
+  async function resetAllForms() {
+    (document.getElementById("newUsername") as HTMLInputElement).value = '';
+    (document.getElementById("newEmail") as HTMLInputElement).value = '';
+    (document.getElementById("newPassword") as HTMLInputElement).value = '';
+    (document.getElementById("profilePicInput") as HTMLInputElement).value = '';
+    (document.getElementById("verifyTotpInput") as HTMLInputElement).value = '';
+    hide("usernameForm");
+    hide("emailForm");
+    hide("passwordForm");
+    hide("pictureForm");
+    const usernameMsg = document.getElementById("UsernameUpdateStatus")!;
+    const emailMsg = document.getElementById("emailUpdateStatus")!;
+    const passwordMsg = document.getElementById("passwordUpdateStatus")!;
+    const pictureMsg = document.getElementById("pictureUpdateStatus")!;
+    const deleteMsg = document.getElementById("deleteUpdateStatus")!;
+    usernameMsg.textContent = "";
+    emailMsg.textContent = "";
+    passwordMsg.textContent = "";
+    pictureMsg.textContent = "";
+    deleteMsg.textContent = "";
+  }
+
   const usernameMsg = document.getElementById("UsernameUpdateStatus")!;
   const emailMsg = document.getElementById("emailUpdateStatus")!;
   const passwordMsg = document.getElementById("passwordUpdateStatus")!;
@@ -15,48 +37,8 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
   document.getElementById("changeEmailBtn")?.addEventListener("click", () => show("emailForm"));
   document.getElementById("changePasswordBtn")?.addEventListener("click", () => show("passwordForm"));
   document.getElementById("changePictureBtn")?.addEventListener("click", () => show("pictureForm"));
-  const profileImage = document.getElementById('profileImageSetting') as HTMLImageElement | null;
   const currentUsername = document.getElementById('currentUsername');
   const currentEmail = document.getElementById('currentEmail');
-
-  try {
-    const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
-    if (!res.ok) {
-      console.error('Failed to fetch profile');
-      return;
-    }
-    const { profile } = await res.json();
-    console.log(profile);
-    if (!profileImage || !currentUsername || !currentEmail) {
-      console.warn("Profile elements not found in DOM.");
-      return;
-    }
-    console.log('image is ', profile.picture);
-    const fallbackImage = '/favicon.jpg';
-    const resolvedSrc = profile.picture || fallbackImage;
-    const absoluteResolvedSrc = resolvedSrc.startsWith('http')
-      ? resolvedSrc
-      : new URL(resolvedSrc, window.location.origin).href;
-
-    // Avoid flickering
-    if (profileImage.src !== absoluteResolvedSrc) {
-      profileImage.src = resolvedSrc;
-    }
-
-    console.log(profileImage);
-    profileImage.alt = `${profile.username}'s profile picture`;
-
-    profileImage.onerror = () => {
-      if (!profileImage.src.includes(fallbackImage)) {
-        profileImage.src = fallbackImage;
-      }
-    };
-    currentUsername.textContent = profile.username;
-    currentEmail.textContent = profile.email;
-    profileImage.src = profile.picture;
-  } catch (error) {
-    console.error("Error loading user profile:", error);
-  }
 
 
   // Username
@@ -72,10 +54,15 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     const data = await res.json();
     if (res.ok) {
       currentUsername.textContent = newUsername;
+      const logoutUsername = document.getElementById("logoutUsername") as HTMLDivElement;
+      logoutUsername.textContent = newUsername;
+      const usernameProfile = document.getElementById('profileUsername');
+      usernameProfile.textContent = newUsername;
       usernameMsg.textContent = "✅ Username updated!";
       setTimeout(() => {
-        hide("usernameForm"); // Redirect to homepage or login
-      }, 1000);;
+        hide("usernameForm"); resetAllForms()
+      }, 1500);
+      ;
       console.log("ALL GOOD");
     } else {
       usernameMsg.textContent = `❌ ${data.error || "Failed to update username"}`;
@@ -95,10 +82,13 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     const data = await res.json();
     if (res.ok) {
       currentEmail.textContent = newEmail;
+      const emailProfile = document.getElementById('profileEmail');
+      emailProfile.textContent = newEmail;
       emailMsg.textContent = "✅ Email updated!";
       setTimeout(() => {
         hide("emailForm"); // Redirect to homepage or login
-      }, 1000);;
+      }, 1000);
+      resetAllForms();
       console.log("ALL GOOD");
     } else {
       emailMsg.textContent = `❌ ${data.error || "Failed to update email"}`;
@@ -120,19 +110,19 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
       passwordMsg.textContent = "✅ Password updated!";
       setTimeout(() => {
         hide("passwordForm"); // Redirect to homepage or login
-      }, 1000);;
+      }, 1000);
+      resetAllForms();
       console.log("ALL GOOD");
     } else {
       passwordMsg.textContent = `❌ ${data.error || "Failed to update password"}`;
     }
   });
 
-  // Picture Upload
+  // Picture Upload profileImageSetting
   document.getElementById("uploadPicBtn")?.addEventListener("click", async () => {
     const fileInput = document.getElementById("profilePicInput") as HTMLInputElement;
     const file = fileInput.files?.[0];
     if (!file) return;
-
     const formData = new FormData();
     formData.append("profilePic", file);
 
@@ -144,9 +134,16 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
 
     const data = await res.json();
     if (res.ok) {
-      const img = document.getElementById("profileImage") as HTMLImageElement;
-      img.src = data.url || URL.createObjectURL(file); // temporary preview
+      const img_profile = document.getElementById("profileImage") as HTMLImageElement;
+      img_profile.src = data.url || URL.createObjectURL(file); // temporary preview
+      const img_setting = document.getElementById("profileImageSetting") as HTMLImageElement;
+      img_setting.src = data.url || URL.createObjectURL(file); // temporary preview
       pictureMsg.textContent = "✅ Picture updated!";
+      setTimeout(() => {
+        hide("pictureForm"); // Redirect to homepage or login
+      }, 1000);
+      resetAllForms();
+      console.log("ALL GOOD");
     } else {
       pictureMsg.textContent = `❌ ${data.error || "Failed to upload picture"}`;
     }
@@ -173,6 +170,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
         setTimeout(() => {
           window.location.href = "/"; // Redirect to homepage or login
         }, 1500);
+        resetAllForms();
       } else {
         deleteMsg.textContent = `❌ ${data.error || "Failed to delete account"}`;
       }
@@ -182,71 +180,13 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     }
   });
 
-
   // 2FA SECTION
   const totp2faCheckbox = document.getElementById('totp2faCheckbox') as HTMLInputElement;
   const qrContainer = document.getElementById('qrContainer') as HTMLDivElement;
   const qrCodeImage = document.getElementById('qrCodeImage') as HTMLImageElement;
   const verifyTotpInput = document.getElementById('verifyTotpInput') as HTMLInputElement;
   const confirmTotpButton = document.getElementById('confirmTotpButton') as HTMLButtonElement;
-  const totpMsg = document.getElementById('totp') as HTMLParagraphElement;
-
-
-  function disableTrigger(triggerId: string) {
-    const el = document.getElementById(triggerId);
-    if (el) {
-      el.classList.add("opacity-50", "cursor-not-allowed", "select-none");
-      el.classList.remove("hover-important", "cursor-default");
-      const inputs = el.querySelectorAll("input");
-      inputs.forEach((input) => {
-        (input as HTMLInputElement).disabled = true;
-        (input as HTMLInputElement).style.pointerEvents = 'none'; // pour être sûr
-      });
-    }
-  }
-
-  function enableTrigger(triggerId: string) {
-    const el = document.getElementById(triggerId);
-    if (el) {
-      el.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
-      const inputs = el.querySelectorAll("input");
-      inputs.forEach((input) => {
-        (input as HTMLInputElement).disabled = false;
-        (input as HTMLInputElement).style.pointerEvents = 'auto'; // pour être sûr
-      });
-    }
-  }
-
-  async function refreshTotpState() {
-    console.log("Refreshing TOTP state");
-    qrContainer.classList.add('hidden');
-    try {
-      enableTrigger("twofaSection");
-      const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
-      const data = await res.json();
-      if (data.signedIn && data.user) {
-        totp2faCheckbox.checked = data.user.totp_enabled;
-      }
-      if (data.user && data.user.method_sign == "google") {
-        disableTrigger("twofaSection");
-      }
-    } catch (err) {
-      console.error("Failed to refresh TOTP state:", err);
-      totp2faCheckbox.checked = false;
-    }
-  }
-
-
-  // Patch the open method to always update TOTP checkbox
-  const originalOpen = settingWindow.open.bind(settingWindow);
-  settingWindow.open = async () => {
-    await refreshTotpState();
-    originalOpen();
-  };
-
-  // Call once during init just in case
-  refreshTotpState();
-
+  const totpMsg = document.getElementById('totpStatus') as HTMLParagraphElement;
 
   // ✅ Enable/Disable TOTP 2FA
   totp2faCheckbox.addEventListener('change', async () => {

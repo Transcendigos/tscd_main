@@ -465,7 +465,7 @@
         </div>
         <!-- Email -->
         <div class="pl-4">
-          <div class="flex justify-between items-center">
+          <div id="emailsetting" class="flex justify-between items-center">
             <span><strong>Email:</strong> <span id="currentEmail">loading...</span></span>
             <button id="changeEmailBtn" class="text-[#8be076] hover:underline text-xs">Change</button>
           </div>
@@ -479,7 +479,7 @@
         </div>
         <!-- Password -->
         <div class="pl-4">
-          <div class="flex justify-between items-center">
+          <div id="passwordsetting" class="flex justify-between items-center">
             <span><strong>Password:</strong> ***************</span>
             <button id="changePasswordBtn" class="text-[#8be076] hover:underline text-xs">Change</button>
           </div>
@@ -529,10 +529,10 @@
       <div id="twofaSection" class="px-4 py-3 space-y-2">
         <h2 class="text-sm font-bold">Two-Factor Authentication</h2>
 
-        <div class="pl-4">
+        <div class="pl-4" id="totp2faoption">
           <label class="flex items-center space-x-2">
             <input type="checkbox" id="totp2faCheckbox" class="accent-[#4cb4e7]" />
-            <span>Enable TOTP (Google Authenticator)</span>
+            <span>Enable TOTP (Google Authenticator) </span>
           </label>
         </div>
 

@@ -4,19 +4,11 @@ import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { getDB } from './db.js'; // Assuming db.js is in the same directory
 import fp from 'fastify-plugin';
+import { setAuthCookie } from './utils.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
-// Helper function to set auth cookie
-export const setAuthCookie = (reply, token) => {
-  return reply.setCookie('auth_token', token, {
-    httpOnly: true,
-    sameSite: 'Lax',
-    path: '/',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 7 * 24 * 60 * 60 // 7 days
-  });
-};
+
 
 export default fp(async function authRoutes(server, options) {
   const db = getDB();
@@ -162,7 +154,7 @@ export default fp(async function authRoutes(server, options) {
         userIdToSign = dbUser.id;
         finalUsername = dbUser.username;
         server.log.info({ picture, dbuser: dbUser.picture }, "all photo");
-        finalPicture = picture || dbUser.picture;
+        finalPicture = dbUser.picture || picture;
         if (finalPicture !== dbUser.picture) {
           db.run('UPDATE users SET picture = ? WHERE id = ?', [finalPicture, userIdToSign], (err) => {
             if (err) server.log.error({ err, userId: userIdToSign }, "Error updating user picture during Google Sign-In");

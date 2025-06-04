@@ -1,5 +1,5 @@
 import speakeasy from 'speakeasy';
-import { setAuthCookie } from './auth.js';
+import { setAuthCookie } from './utils.js';
 import jwt from 'jsonwebtoken';
 import { getDB } from './db.js';
 import fp from 'fastify-plugin';
