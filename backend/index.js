@@ -20,6 +20,7 @@ import profileRoute from './profile.js';
 import openaiRoute from './openai.js';
 import spotifyRoute from './music.js';
 import scoreRoutes from './score.js';
+import pongWsRoutes from './server_pong.js';
 
 
 
@@ -78,6 +79,7 @@ server.register(profileRoute);
 server.register(openaiRoute);
 server.register(spotifyRoute);
 server.register(scoreRoutes);
+server.register(pongWsRoutes);
 
 
 // Start server
