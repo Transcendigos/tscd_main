@@ -34,125 +34,103 @@ export async function settingUserSetting() {
             console.error('Failed to fetch profile');
             return;
         }
+
         const { profile } = await res.json();
-        console.log(profile);
         if (!profileImage || !currentUsername || !currentEmail) {
             console.warn("Profile elements not found in DOM.");
             return;
         }
-        console.log('image is ', profile.picture);
+
         const fallbackImage = '/favicon.jpg';
         const resolvedSrc = profile.picture || fallbackImage;
         const absoluteResolvedSrc = resolvedSrc.startsWith('http')
             ? resolvedSrc
             : new URL(resolvedSrc, window.location.origin).href;
 
-        // Avoid flickering
         if (profileImage.src !== absoluteResolvedSrc) {
             profileImage.src = resolvedSrc;
         }
 
-        console.log(profileImage);
         profileImage.alt = `${profile.username}'s profile picture`;
-
         profileImage.onerror = () => {
             if (!profileImage.src.includes(fallbackImage)) {
                 profileImage.src = fallbackImage;
             }
         };
+
         currentUsername.textContent = profile.username;
         currentEmail.textContent = profile.email;
         profileImage.src = profile.picture;
 
-
-
-
+        // Refresh TOTP state and UI
         console.log("Refreshing TOTP state");
         const qrContainer = document.getElementById('qrContainer') as HTMLDivElement;
-        qrContainer.classList.add('hidden');
         const totp2faCheckbox = document.getElementById('totp2faCheckbox') as HTMLInputElement;
+        const totp2faoption = document.getElementById('totp2faoption');
 
-        try {
-            const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
-            const data = await res.json();
-            if (data.signedIn && data.user) {
-                totp2faCheckbox.checked = data.user.totp_enabled;
-            }
-            if (data.user && data.user.method_sign === "google") {
-                const totp2faoption = document.getElementById('totp2faoption');
-                totp2faoption.classList.add("opacity-50", "cursor-not-allowed", "select-none");
-                totp2faoption.classList.remove("hover-important", "cursor-default");
-                totp2faoption.title = "Google sign-in users cannot enable 2FA here.";
+        qrContainer.classList.add('hidden');
 
-                totp2faCheckbox.disabled = true;
-                totp2faCheckbox.title = true
-                    ? "Google sign-in users cannot enable 2FA here."
-                    : "";
+        const resMe = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+        const data = await resMe.json();
 
-                const emailBtn = document.getElementById("changeEmailBtn");
-                const passwordBtn = document.getElementById("changePasswordBtn");
-
-                if (emailBtn?.parentNode) {
-                    const emailsetting = document.getElementById('emailsetting');
-                    emailsetting.classList.add("opacity-50", "cursor-not-allowed", "select-none");
-                    emailsetting.classList.remove("hover-important", "cursor-default");
-                    emailsetting.title = "Email cannot be changed for Google-authenticated accounts.";
-                    const newEmailBtn = emailBtn.cloneNode(true) as HTMLElement;
-                    newEmailBtn.classList.add("opacity-50", "cursor-not-allowed");
-                    newEmailBtn.title = "Email cannot be changed for Google-authenticated accounts.";
-                    emailBtn.parentNode.replaceChild(newEmailBtn, emailBtn);
-                }
-
-                if (passwordBtn?.parentNode) {
-                    const passwordsetting = document.getElementById('passwordsetting');
-                    passwordsetting.classList.add("opacity-50", "cursor-not-allowed", "select-none");
-                    passwordsetting.classList.remove("hover-important", "cursor-default");
-                    passwordsetting.title = "Password cannot be changed for Google-authenticated accounts.";
-                    const newPasswordBtn = passwordBtn.cloneNode(true) as HTMLElement;
-                    newPasswordBtn.classList.add("opacity-50", "cursor-not-allowed");
-                    newPasswordBtn.title = "Password cannot be changed for Google-authenticated accounts.";
-                    passwordBtn.parentNode.replaceChild(newPasswordBtn, passwordBtn);
-                }
-            }
-            else {
-                // ✅ Add this block to re-enable everything for local users
-                const totp2faoption = document.getElementById('totp2faoption');
-                totp2faoption?.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
-                totp2faoption?.classList.add("cursor-pointer");
-                totp2faoption!.title = "";
-
-                totp2faCheckbox.disabled = false;
-                totp2faCheckbox.title = "";
-
-                const emailBtn = document.getElementById("changeEmailBtn") as HTMLElement;
-                const passwordBtn = document.getElementById("changePasswordBtn") as HTMLElement;
-
-                document.getElementById("emailsetting")?.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
-                document.getElementById("emailsetting")?.removeAttribute("title");
-
-                document.getElementById("passwordsetting")?.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
-                document.getElementById("passwordsetting")?.removeAttribute("title");
-
-                if (emailBtn) {
-                    emailBtn.classList.remove("opacity-50", "cursor-not-allowed");
-                    emailBtn.removeAttribute("title");
-                }
-
-                if (passwordBtn) {
-                    passwordBtn.classList.remove("opacity-50", "cursor-not-allowed");
-                    passwordBtn.removeAttribute("title");
-                }
-
-            }
-        } catch (err) {
-            console.error("Failed to refresh TOTP state:", err);
-            totp2faCheckbox.checked = false;
+        if (data.signedIn && data.user) {
+            totp2faCheckbox.checked = data.user.totp_enabled;
         }
+
+        const emailBtn = document.getElementById("changeEmailBtn") as HTMLButtonElement | null;
+        const passwordBtn = document.getElementById("changePasswordBtn") as HTMLButtonElement | null;
+        const emailSetting = document.getElementById("emailsetting");
+        const passwordSetting = document.getElementById("passwordsetting");
+
+        if (data.user && data.user.method_sign === "google") {
+            // 🔒 Disable fields for Google users
+            totp2faCheckbox.disabled = true;
+            totp2faCheckbox.title = "Google sign-in users cannot enable 2FA here.";
+            totp2faoption?.classList.add("opacity-50", "cursor-not-allowed", "select-none");
+            totp2faoption?.classList.remove("hover-important");
+            totp2faoption!.title = "Google sign-in users cannot enable 2FA here.";
+
+            emailBtn?.setAttribute("disabled", "true");
+            emailBtn?.classList.add("opacity-50", "cursor-not-allowed");
+            emailBtn!.title = "Email cannot be changed for Google-authenticated accounts.";
+
+            passwordBtn?.setAttribute("disabled", "true");
+            passwordBtn?.classList.add("opacity-50", "cursor-not-allowed");
+            passwordBtn!.title = "Password cannot be changed for Google-authenticated accounts.";
+
+            emailSetting?.classList.add("opacity-50", "cursor-not-allowed", "select-none");
+            emailSetting?.removeAttribute("title");
+
+            passwordSetting?.classList.add("opacity-50", "cursor-not-allowed", "select-none");
+            passwordSetting?.removeAttribute("title");
+
+        } else {
+            // ✅ Enable fields for local users
+            totp2faCheckbox.disabled = false;
+            totp2faCheckbox.title = "";
+            totp2faoption?.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
+            totp2faoption?.classList.add("cursor-pointer");
+            totp2faoption!.title = "";
+
+            emailBtn?.removeAttribute("disabled");
+            emailBtn?.classList.remove("opacity-50", "cursor-not-allowed");
+            emailBtn!.title = "";
+
+            passwordBtn?.removeAttribute("disabled");
+            passwordBtn?.classList.remove("opacity-50", "cursor-not-allowed");
+            passwordBtn!.title = "";
+
+            emailSetting?.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
+            emailSetting?.removeAttribute("title");
+
+            passwordSetting?.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
+            passwordSetting?.removeAttribute("title");
+        }
+
     } catch (error) {
         console.error("Error loading user profile:", error);
     }
 }
-
 
 
 export async function settingUserProfile() {

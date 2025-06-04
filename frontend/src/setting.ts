@@ -71,7 +71,14 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
 
   // Email
   document.getElementById("saveEmailBtn")?.addEventListener("click", async () => {
-    const newEmail = (document.getElementById("newEmail") as HTMLInputElement).value;
+    const emailInput = document.getElementById("newEmail") as HTMLInputElement;
+    const newEmail = emailInput.value;
+
+    if (!emailInput.checkValidity()) {
+      emailInput.reportValidity(); // Trigger browser-style error popup
+      return;
+    }
+
     const res = await fetch("http://localhost:3000/api/profile/update-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -82,11 +89,11 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     const data = await res.json();
     if (res.ok) {
       currentEmail.textContent = newEmail;
-      const emailProfile = document.getElementById('profileEmail');
+      const emailProfile = document.getElementById("profileEmail");
       emailProfile.textContent = newEmail;
       emailMsg.textContent = "✅ Email updated!";
       setTimeout(() => {
-        hide("emailForm"); // Redirect to homepage or login
+        hide("emailForm");
       }, 1000);
       resetAllForms();
       console.log("ALL GOOD");
@@ -94,7 +101,6 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
       emailMsg.textContent = `❌ ${data.error || "Failed to update email"}`;
     }
   });
-
   // Password
   document.getElementById("savePasswordBtn")?.addEventListener("click", async () => {
     const newPassword = (document.getElementById("newPassword") as HTMLInputElement).value;
