@@ -1,4 +1,4 @@
-import { startPongGame, setCanvas } from "./pong.ts";
+import { startPongGame, setCanvas, stopPongGame } from "./pong.js";
 import { DesktopWindow } from "./DesktopWindow.js";
 import { checkSignedIn, setupSignupForm } from "./sign_up.js";
 import { initGoogleSignIn } from "./google_auth.js";
@@ -300,6 +300,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       closeButtonId: "closepongBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
+      onCloseCallback: () => {
+        stopPongGame();
+      }
     });
   } catch (error) {
     console.error("Failed to initialize 'pongWindow':", error);
@@ -387,8 +390,17 @@ window.addEventListener("DOMContentLoaded", async () => {
   const gameContainer = document.getElementById("gameContainer")!;
   const clickBtn = document.getElementById("clickMeBtn")!;
   const canvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
+
   if (clickBtn && gameContainer && canvas) {
+    
     clickBtn.addEventListener("click", () => {
+      if (pongWindow && pongWindow.isVisible()) {
+        return;
+      } else if (pongWindow && !pongWindow.isVisible()) {
+        pongWindow.open();
+        setCanvas(canvas);
+        startPongGame();
+      }
       setCanvas(canvas);
       startPongGame();
     });
