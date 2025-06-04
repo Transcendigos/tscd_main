@@ -1,4 +1,4 @@
-import { startGame, activeGames } from "./pong_server.js";
+import { startGame, activeGames, isPlayerInActiveGame } from "./pong_server.js";
 import { getDB } from "./db.js";
 import jwt from "jsonwebtoken";
 import { getRedisPublisher } from "./redis.js";
@@ -12,8 +12,11 @@ function generateGameId() {
 export default async function pongRoutes(server, options) {
   const db = getDB();
   const redisPublisher = getRedisPublisher();
+  
+  console.log(`--- PONG_ROUTES.JS: typeof server.broadcastPongGameState: ${typeof server.broadcastPongGameState} ---`);
 
   server.post("/api/pong/games", async (req, reply) => {
+    console.log(`--- PONG_ROUTES.JS /api/pong/games: typeof server.broadcastPongGameState: ${typeof server.broadcastPongGameState} ---`);
     const inviterToken = req.cookies.auth_token;
     if (!inviterToken) {
       return reply.code(401).send({ error: "Authentication required to create a game." });
@@ -40,6 +43,16 @@ export default async function pongRoutes(server, options) {
 
     if (inviterUserId === opponentPlayerId) {
       return reply.code(400).send({ error: "Cannot invite yourself to a game." });
+    }
+
+    if (isPlayerInActiveGame(inviterUserId)) {
+      server.log.warn({ inviterUserId }, "Inviter attempted to create game while already in an active game.");
+      return reply.code(409).send({ error: "You are already in an active game." });
+    }
+    
+    if (isPlayerInActiveGame(opponentPlayerId)) {
+      server.log.warn({ opponentPlayerId }, "Attempted to invite player who is already in an active game.");
+      return reply.code(409).send({ error: "Opponent is currently in another game." });
     }
 
     let opponentRawId;

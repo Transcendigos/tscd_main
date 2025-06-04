@@ -1,9 +1,11 @@
 import jwt from "jsonwebtoken";
 import { getDB } from "./db.js";
+import fp from "fastify-plugin";
 import { getRedisPublisher, createNewRedisSubscriber } from "./redis.js";
 import {
   handlePlayerInput,
   activeGames as pongActiveGames,
+  stopGame,
 } from "./pong_server.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
@@ -12,21 +14,61 @@ const activeConnections = new Map();
 const userSubscribers = new Map();
 const pongGameConnections = new Map();
 
-export default async function chatRoutes(server, options) {
+async function chatRoutes(server, options) {
   const db = getDB();
   const redisPublisher = getRedisPublisher();
 
   server.decorate("broadcastPongGameState", (gameId, statePayload) => {
     const connections = pongGameConnections.get(gameId);
     if (connections) {
+      server.log.info(
+        { gameId, connectionCount: connections.size, type: statePayload.type },
+        "Broadcasting to connections ================="
+      );
       const payloadString = JSON.stringify(statePayload);
       connections.forEach((ws) => {
         if (ws.readyState === 1) {
-          ws.send(payloadString);
+          try {
+            ws.send(payloadString);
+            server.log.info(
+              {
+                gameId,
+                userId: ws.authenticatedUserId,
+                type: statePayload.type,
+              },
+              "Message sent to client"
+            );
+          } catch (e) {
+            server.log.error(
+              { gameId, userId: ws.authenticatedUserId, err: e },
+              "Error sending message in broadcastPongGameState"
+            );
+          }
+        } else {
+          server.log.warn(
+            {
+              gameId,
+              userId: ws.authenticatedUserId,
+              readyState: ws.readyState,
+            },
+            "WebSocket not open in broadcastPongGameState, not sending."
+          );
         }
       });
+    } else {
+      server.log.warn(
+        { gameId, type: statePayload.type },
+        "No connections found in pongGameConnections to broadcast to for this gameId."
+      ); // ADD THIS LOG
     }
   });
+  console.log(
+    "--- CHAT.JS: server.broadcastPongGameState DECORATED --- Type NOW:",
+    typeof server.broadcastPongGameState
+  );
+  server.log.info(
+    "--- CHAT.JS: server.broadcastPongGameState DECORATED (via server.log) ---"
+  );
 
   server.route({
     method: "GET",
@@ -325,7 +367,20 @@ export default async function chatRoutes(server, options) {
             data.type === "PONG_JOIN_GAME"
           ) {
             const { gameId } = data;
+            server.log.info(
+              {
+                userId: ws.authenticatedUserId,
+                gameIdAttemptingToJoin: gameId,
+                type: data.type,
+              },
+              "ENTERING PONG_JOIN_GAME/ACCEPT_INVITE block"
+            );
+
             if (!gameId) {
+              server.log.warn(
+                { userId: ws.authenticatedUserId },
+                "PONG_JOIN_GAME: No gameId provided."
+              );
               ws.send(
                 JSON.stringify({
                   type: "PONG_ERROR",
@@ -334,8 +389,18 @@ export default async function chatRoutes(server, options) {
               );
               return;
             }
+
+            server.log.info(
+              { userId: ws.authenticatedUserId, gameId },
+              "PONG_JOIN_GAME: Fetching gameInstance..."
+            );
             const gameInstance = pongActiveGames.get(gameId);
+
             if (!gameInstance) {
+              server.log.warn(
+                { userId: ws.authenticatedUserId, gameId },
+                "PONG_JOIN_GAME: gameInstance not found in pongActiveGames."
+              );
               ws.send(
                 JSON.stringify({
                   type: "PONG_ERROR",
@@ -345,26 +410,76 @@ export default async function chatRoutes(server, options) {
               );
               return;
             }
-            if (
-              gameInstance.players[ws.authenticatedUserId]?.id !==
-              ws.authenticatedUserId
-            ) {
+            server.log.info(
+              {
+                userId: ws.authenticatedUserId,
+                gameId,
+                gameInstanceKeys: Object.keys(gameInstance),
+              },
+              "PONG_JOIN_GAME: gameInstance found."
+            );
+
+            if (!gameInstance.players) {
+              server.log.error(
+                { userId: ws.authenticatedUserId, gameId },
+                "PONG_JOIN_GAME: gameInstance.players is undefined or null!"
+              );
               ws.send(
                 JSON.stringify({
                   type: "PONG_ERROR",
                   gameId,
-                  message: "Not a player.",
+                  message: "Game data error (no players).",
+                })
+              );
+              return; // Critical error
+            }
+            server.log.info(
+              {
+                userId: ws.authenticatedUserId,
+                gameId,
+                playerKeysInGame: Object.keys(gameInstance.players),
+              },
+              "PONG_JOIN_GAME: Players in gameInstance."
+            );
+
+            if (
+              gameInstance.players[ws.authenticatedUserId]?.id !==
+              ws.authenticatedUserId
+            ) {
+              server.log.warn(
+                {
+                  userId: ws.authenticatedUserId,
+                  gameId,
+                  expectedPlayers: gameInstance.players,
+                },
+                "PONG_JOIN_GAME: User is not a listed player for this game."
+              );
+              ws.send(
+                JSON.stringify({
+                  type: "PONG_ERROR",
+                  gameId,
+                  message: "Not a player in this game.",
                 })
               );
               return;
             }
-            if (!pongGameConnections.has(gameId))
+            server.log.info(
+              { userId: ws.authenticatedUserId, gameId },
+              "PONG_JOIN_GAME: Player verified as part of game."
+            );
+
+            if (!pongGameConnections.has(gameId)) {
               pongGameConnections.set(gameId, new Set());
+            }
             pongGameConnections.get(gameId).add(ws);
             ws.currentGameId = gameId;
             server.log.info(
-              { userId: ws.authenticatedUserId, gameId },
-              `User joined Pong game stream.`
+              {
+                userId: ws.authenticatedUserId,
+                gameId,
+                connectionsInRoom: pongGameConnections.get(gameId).size,
+              },
+              `User joined Pong game stream. pongGameConnections updated.`
             );
             const connectedPlayersWebSockets = pongGameConnections.get(gameId);
             if (
@@ -396,6 +511,8 @@ export default async function chatRoutes(server, options) {
                     ballStartY: gameInstance.ballStartY,
                     paddleStartY: gameInstance.paddleStartY,
                     winningScore: gameInstance.winningScore,
+                    player1Id: gameInstance.player1Id,
+                    player2Id: gameInstance.player2Id,
                   };
 
                   for (const clientWs of connectedPlayersWebSockets) {
@@ -451,6 +568,146 @@ export default async function chatRoutes(server, options) {
               return;
             }
             handlePlayerInput(gameId, ws.authenticatedUserId, input);
+          } else if (data.type === "PONG_PLAYER_READY") {
+            const { gameId } = data;
+            const playerPrefixedId = ws.authenticatedUserId; // This is "user_X"
+
+            if (!gameId) {
+              server.log.warn(
+                { userId: playerPrefixedId },
+                "PONG_PLAYER_READY: No gameId provided."
+              );
+              ws.send(
+                JSON.stringify({
+                  type: "PONG_ERROR",
+                  message: "Missing gameId for ready signal.",
+                })
+              );
+              return;
+            }
+
+            const gameInstance = pongActiveGames.get(gameId);
+            if (!gameInstance) {
+              server.log.warn(
+                { userId: playerPrefixedId, gameId },
+                "PONG_PLAYER_READY: gameInstance not found."
+              );
+              ws.send(
+                JSON.stringify({
+                  type: "PONG_ERROR",
+                  gameId,
+                  message: "Game not found for ready signal.",
+                })
+              );
+              return;
+            }
+            if (gameInstance.players[playerPrefixedId]) {
+              if (gameInstance.players[playerPrefixedId].isReady) {
+                server.log.info(
+                  { userId: playerPrefixedId, gameId },
+                  "PONG_PLAYER_READY: Player already marked as ready."
+                );
+              } else {
+                gameInstance.players[playerPrefixedId].isReady = true;
+                server.log.info(
+                  {
+                    userId: playerPrefixedId,
+                    gameId,
+                    playerReadyState: gameInstance.players[playerPrefixedId],
+                  },
+                  `Player marked as ready.`
+                );
+              }
+            } else {
+              server.log.warn(
+                { userId: playerPrefixedId, gameId },
+                "PONG_PLAYER_READY: Player not found in this game instance."
+              );
+              ws.send(
+                JSON.stringify({
+                  type: "PONG_ERROR",
+                  gameId,
+                  message: "You are not a player in this game.",
+                })
+              );
+            }
+          } else if (data.type === "PONG_INVITE_DECLINED") {
+            const { gameId, inviterId } = data;
+            const declinerUsername = userJWTPayload.username;
+
+            if (!gameId || !inviterId) {
+              server.log.warn(
+                { userId: ws.authenticatedUserId, data },
+                "PONG_INVITE_DECLINED: Missing gameId or inviterId."
+              );
+              ws.send(
+                JSON.stringify({
+                  type: "PONG_ERROR",
+                  message: "Invalid decline message.",
+                })
+              );
+              return;
+            }
+
+            const gameInstance = pongActiveGames.get(gameId);
+            if (gameInstance) {
+              if (
+                gameInstance.status === "waiting_for_ready" ||
+                gameInstance.status === "initializing"
+              ) {
+                server.log.info(
+                  {
+                    gameId,
+                    decliner: ws.authenticatedUserId,
+                    inviter: inviterId,
+                  },
+                  "PONG_INVITE_DECLINED: Processing decline, stopping game."
+                );
+                stopGame(gameId);
+
+                let inviterNumericId = null;
+                if (
+                  typeof inviterId === "string" &&
+                  inviterId.startsWith("user_")
+                ) {
+                  inviterNumericId = parseInt(inviterId.substring(5), 10);
+                } else {
+                  inviterNumericId = parseInt(inviterId, 10);
+                }
+
+                if (inviterNumericId && !isNaN(inviterNumericId)) {
+                  const inviterChannel = `user:${inviterNumericId}:messages`;
+                  const declineNotification = {
+                    type: "PONG_INVITE_WAS_DECLINED",
+                    gameId: gameId,
+                    declinedByUsername: declinerUsername,
+                  };
+                  await redisPublisher.publish(
+                    inviterChannel,
+                    JSON.stringify(declineNotification)
+                  );
+                  server.log.info(
+                    { inviterChannel, payload: declineNotification },
+                    "Notified inviter of declined Pong invitation."
+                  );
+                } else {
+                  server.log.warn(
+                    { inviterIdReceived: inviterId },
+                    "Could not parse numeric ID for inviter to send decline notification."
+                  );
+                }
+              } else {
+                server.log.info(
+                  { gameId, status: gameInstance.status },
+                  "PONG_INVITE_DECLINED: Game already started or finished, decline ignored."
+                );
+              }
+            } else {
+              server.log.warn(
+                { gameId },
+                "PONG_INVITE_DECLINED: Game instance not found, perhaps already cleaned up."
+              );
+            }
           } else {
             server.log.warn(
               { userId: ws.authenticatedUserId, data },
@@ -637,6 +894,11 @@ export default async function chatRoutes(server, options) {
     }
   });
 }
+
+export default fp(chatRoutes, {
+  fastify: "^5.x",
+  name: "chat-plugin",
+});
 
 export async function cleanupChatResources(logger) {
   logger.info("Cleaning up chat resources (global)...");

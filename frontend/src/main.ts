@@ -10,7 +10,7 @@ import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
 import { setupSpotifySearch } from './music.ts';
-import { initializeChatSystem, resetChatSystem, sendPongPlayerInput } from "./chatClient.js";
+import { initializeChatSystem, resetChatSystem, sendPongPlayerInput, sendPongPlayerReady } from "./chatClient.js";
 import { 
     initMultiplayerPong, 
     updateMultiplayerGameState, 
@@ -418,8 +418,9 @@ window.addEventListener("DOMContentLoaded", async () => {
             yourPlayerId, 
             opponentId, 
             opponentUsername,
-            multiplayerPongCanvasElement, 
-            sendPongPlayerInput 
+            multiplayerPongCanvasElement,
+            sendPongPlayerInput,
+            sendPongPlayerReady
         );
     } else {
         console.error("Multiplayer Pong canvas or window not found for game start.");
