@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import fs from 'fs';
+import { ethers } from 'ethers';
 
 
 import { initializeDB, getDB } from './db.js';

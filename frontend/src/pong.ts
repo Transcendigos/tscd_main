@@ -27,46 +27,93 @@ interface Ball {
   color: string;
 }
 
-interface UserInfo {
-  signedIn: boolean;
-  userId?: number;
-}
+type UserInfo = { userId: number };
 
-let currentUser: UserInfo = { signedIn: false };
+let currentUser: UserInfo = { userId: -1 }; // TEMP invalid default, overwritten on fetch
+let matchId: number;
+let matchStartTime: number;
+let opponentId: number; // set when the game starts if in multiplayer
+let opponentAlias: string;
+let opponentScore: number;
 
 async function fetchCurrentUser() {
-  try {
-    const response = await fetch("http://localhost:3000/api/me", {
-      credentials: "include",
-    });
-    if (!response.ok) {
-      console.log("User not signed in.");
-      currentUser = { signedIn: false };
-      return;
-    }
+	try {
+		const response = await fetch("http://localhost:3000/api/me", {
+			credentials: "include",
+		});
 
-    const data = await response.json();
-    console.log("User info:", data);
+		if (!response.ok) {
+			throw new Error("User not signed in.");
+		}
 
-    currentUser = {
-      signedIn: data.signedIn,
-      userId: data.user?.userId,
-    };
-  } catch (err) {
-    console.error("Error fetching user info:", err);
-    currentUser = { signedIn: false };
-  }
+		const data = await response.json();
+		console.log("User info:", data);
+		currentUser = { userId: data.user.userId };
+	} catch (err) {
+		console.error("❌ Failed to fetch user:", err);
+		alert("You must be signed in to play.");
+		throw err; // force early failure if accessed too soon
+	}
 }
 
-async function postScore(tournamentId: number, userId: number, score: number) {
+async function postScore({
+  tournamentId,
+  matchId,
+  userId,
+  score,
+  scoreAgainst,
+  won,
+  vsAI,
+  durationSeconds,
+  opponentId,
+  opponentAlias,
+  isDisconnected,
+  rankDelta
+}: {
+  tournamentId: number | null,
+  matchId: number,
+  userId: number,
+  score: number,
+  scoreAgainst: number,
+  won: boolean,
+  vsAI: boolean,
+  durationSeconds: number,
+  opponentId: number | null,
+  opponentAlias: string | null,
+  isDisconnected: boolean,
+  rankDelta: number
+}) {
+	console.log("📤 Sending score payload:", {
+		tournament_id: tournamentId,
+		match_id: matchId,
+		user_id: userId,
+		score,
+		score_against: scoreAgainst,
+		won,
+		vs_ai: vsAI,
+		duration_seconds: durationSeconds,
+		opponent_id: opponentId,
+		opponent_alias: opponentAlias,
+		is_disconnected: isDisconnected,
+		rank_delta: rankDelta
+		});
   try {
     const response = await fetch("http://localhost:3000/api/scores", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         tournament_id: tournamentId,
+        match_id: matchId,
         user_id: userId,
-        score: score,
+        score,
+        score_against: scoreAgainst,
+        won,
+        vs_ai: vsAI,
+        duration_seconds: durationSeconds,
+        opponent_id: opponentId,
+        opponent_alias: opponentAlias,
+        is_disconnected: isDisconnected,
+        rank_delta: rankDelta
       }),
     });
 
@@ -427,54 +474,78 @@ function update(dt: number): void {
 }
 
 function gameLoop(currentTime: number): void {
-  if (!gameIsRunning) return;
+	if (!gameIsRunning) return;
 
-  const delta = (currentTime - lastTime) / 1000;
-  lastTime = currentTime;
-  update(delta);
-  draw();
+	const delta = (currentTime - lastTime) / 1000;
+	lastTime = currentTime;
+	update(delta);
+	draw();
 
-  const winningScore = 1;
+	const winningScore = 1; // hard-coded for now
 
-  if (leftScore >= winningScore || rightScore >= winningScore) {
-    const winnerId = leftScore >= winningScore ? 1 : 2;
-    const loserId = leftScore >= winningScore ? 2 : 1;
-    const finalScore = Math.max(leftScore, rightScore);
+	if (leftScore >= winningScore || rightScore >= winningScore) {
+		const finalScore = Math.max(leftScore, rightScore);
+		opponentScore = Math.min(leftScore, rightScore);
+		opponentAlias = "AI"; // hard-coded for now
 
-    gameIsRunning = false;
+		// Determine if the current user was on the left or right paddle
+		const isLeftSide = currentUser!.userId === 1;
+		const myScore = isLeftSide ? leftScore : rightScore;
 
-    animationFrameId = requestAnimationFrame(() => {
-      endGame(winnerId, loserId, finalScore);
-    });
-    return;
-  }
-  animationFrameId = requestAnimationFrame(gameLoop);
+		const won = myScore >= winningScore;
+
+		const opponentId = -1; // hard-coded for now
+		const winnerId = won ? currentUser!.userId : opponentId;
+		const loserId = won ? opponentId : currentUser!.userId;
+
+		gameIsRunning = false;
+
+		animationFrameId = requestAnimationFrame(() => {
+		endGame(winnerId, loserId, finalScore);
+		});
+		return;
+	}
+	animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 async function endGame(winnerId: number, loserId: number, finalScore: number) {
-  console.log(`Game Over! Winner: ${winnerId}, Score: ${finalScore}`);
+	console.log(`Game Over! Winner: ${winnerId}, Score: ${finalScore}`);
+	
+	const durationSeconds = Math.floor((performance.now() - matchStartTime) / 1000);
+	const isWinner = currentUser!.userId === winnerId;
+	const myScore = isWinner ? finalScore : opponentScore;
+	const theirScore = isWinner ? opponentScore : finalScore;
 
-  if (currentUser.signedIn && currentUser.userId === winnerId) {
-    try {
-      await postScore(1, currentUser.userId, finalScore);
-    } catch (err) {
-      console.error("Error saving score:", err);
-    }
-  } else {
-    console.log("Not the winner or not signed in; skipping score saving.");
-  }
+	try {
+		await postScore({
+		tournamentId: null,
+		matchId,
+		userId: currentUser!.userId,
+		score: myScore,
+		scoreAgainst: theirScore,
+		won: isWinner,
+		vsAI: false,
+		durationSeconds,
+		opponentId: null, // hard-coded for now because AI opponent only
+		opponentAlias,
+		isDisconnected: false,
+		rankDelta: 0 // hard-coded for now
+		});
+	} catch (err) {
+		console.error("❌ Error saving score:", err);
+	}
 
-  if (pongCtx && canvas) {
-    pongCtx.font = "32px 'Press Start 2P'";
-    pongCtx.fillStyle = "#d6ecff";
-    pongCtx.textAlign = "center";
-    pongCtx.fillText(
-      "Press Enter to play a new match",
-      canvas.width / 2,
-      canvas.height / 2
-    );
-  }
-  waitingForRestart = true;
+	if (pongCtx && canvas) {
+		pongCtx.font = "32px 'Press Start 2P'";
+		pongCtx.fillStyle = "#d6ecff";
+		pongCtx.textAlign = "center";
+		pongCtx.fillText(
+		"Press Enter to play a new match",
+		canvas.width / 2,
+		canvas.height / 2
+		);
+	}
+	waitingForRestart = true;
 }
 
 export async function startPongGame(): Promise<void> {
@@ -494,6 +565,8 @@ export async function startPongGame(): Promise<void> {
 
   console.log("Starting Pong game...");
   await fetchCurrentUser();
+  matchId = Date.now(); // temporary id, later use a backend-generated id
+  matchStartTime = performance.now();
 
   initGameObjects();
   leftScore = 0;

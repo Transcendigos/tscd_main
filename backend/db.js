@@ -81,12 +81,21 @@ export function initializeDB(logger) {
 	CREATE TABLE IF NOT EXISTS scores (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		tournament_id INTEGER,
-		user_id INTEGER NOT NULL,
+		match_id INTEGER NOT NULL,
+		user_id INTEGER,
 		score INTEGER NOT NULL,
+		score_against INTEGER NOT NULL,
+		won BOOLEAN NOT NULL DEFAULT 0,
+		vs_ai BOOLEAN NOT NULL DEFAULT 0,
+		duration_seconds INTEGER,
+		opponent_id INTEGER,
+		opponent_alias TEXT,
+		is_disconnected BOOLEAN DEFAULT 0,
+		rank_delta INTEGER DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (user_id) REFERENCES users(id)
-	)
+		FOREIGN KEY (user_id) REFERENCES users(id),
+		FOREIGN KEY (opponent_id) REFERENCES users(id)
+	);
 	`);
 	scoresTable.run((err) => {
 	if (err) {
