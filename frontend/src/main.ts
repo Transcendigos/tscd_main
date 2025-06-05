@@ -6,6 +6,7 @@ import { initGoogleSignIn } from "./google_auth.js";
 import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
+import { setupTournamentButtonBehavior } from "./tournamentToggle";
 import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile, settingUserSetting } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
@@ -25,6 +26,7 @@ let profileWindow: DesktopWindow;
 let settingWindow: DesktopWindow;
 let pongWindow: DesktopWindow;
 let multiplayerPongWindow: DesktopWindow;
+//let tournamentWindow: DesktopWindow;
 let chatWindow: DesktopWindow;
 let statsWindow: DesktopWindow;
 let infoWindow: DesktopWindow;
@@ -65,6 +67,7 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(settingWindow, "settingTab", settingUserSetting);
     assignOpenTrigger(logoutWindow, "logoutTab");
     assignOpenTrigger(pongWindow, "clickMeBtn");
+    //assignOpenTrigger(tournamentWindow, "tournamentBtn");
     assignOpenTrigger(chatWindow, "chatBtn");
     assignOpenTrigger(infoWindow, "infoTab");
     assignOpenTrigger(statsWindow, "statsTab");
@@ -328,7 +331,23 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the multiplayer pong window:", error);
   }
 
-  // --- Chat Window ---
+// --- Tournament Window ---
+
+  try {
+    const tournamentWindow = new DesktopWindow({
+      windowId: "tournamentWindow",
+      dragHandleId: "tournamentDragHandle",
+      resizeHandleId: "tournamentResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "tournamentWindow",
+      openTriggerId: "tournamentLocalBtn",
+      closeButtonId: "closetournamentBtn",
+    });
+  } catch (error) {
+    console.error("Failed to initialize 'tournamentWindow':", error);
+  }
+
+// --- Chat Window ---
   
   try {
     chatWindow = new DesktopWindow({
@@ -443,6 +462,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         console.error("Multiplayer Pong canvas or window not found for game start.");
     }
   });
+
+  setupTournamentButtonBehavior();
 
   window.addEventListener('pongGameStateUpdate', (event: Event) => {
       const customEvent = event as CustomEvent;
