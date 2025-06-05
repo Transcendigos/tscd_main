@@ -173,7 +173,7 @@ function connectWebSocket() {
 
     try {
       const message: ChatMessage = JSON.parse(event.data as string);
-      console.log("Chat: Received message:", message);
+      // console.log("Chat: Received message:", message);
 
       if (message.type === 'auth_success' && message.user && typeof message.user.userId !== 'undefined') {
         const userIdFromServer = message.user.userId;
@@ -300,7 +300,7 @@ function connectWebSocket() {
         const gameStartEvent = new CustomEvent("pongGameStart", { detail: { gameId, initialState, yourPlayerId, opponentId, opponentUsername } });
         window.dispatchEvent(gameStartEvent);
       } else if (message.type === 'PONG_GAME_STATE_UPDATE') {
-        console.log('[CLIENT CHAT] Received PONG_GAME_STATE_UPDATE:', JSON.parse(JSON.stringify(message))); 
+        // console.log('[CLIENT CHAT] Received PONG_GAME_STATE_UPDATE:', JSON.parse(JSON.stringify(message))); 
         const gameUpdateEvent = new CustomEvent("pongGameStateUpdate", { detail: message });
         window.dispatchEvent(gameUpdateEvent);
       } else if (message.type === 'PONG_GAME_OVER') {

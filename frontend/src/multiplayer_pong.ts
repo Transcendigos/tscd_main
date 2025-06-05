@@ -186,7 +186,7 @@ export function updateMultiplayerGameState(
     playersData: any,
     statusData: string
 ) {
-    console.log(`[MultiplayerPong] updateMultiplayerGameState called. Players:`, JSON.parse(JSON.stringify(playersData)), `Ball:`, JSON.parse(JSON.stringify(ballData)), `Status: ${statusData}`);
+    // console.log(`[MultiplayerPong] updateMultiplayerGameState called. Players:`, JSON.parse(JSON.stringify(playersData)), `Ball:`, JSON.parse(JSON.stringify(ballData)), `Status: ${statusData}`);
     
     const oldStatus = mpGameStatus;
     mpBallState = ballData;
