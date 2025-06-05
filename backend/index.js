@@ -1,4 +1,3 @@
-// tscd_main/backend/index.js
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
@@ -13,7 +12,7 @@ import multipart from '@fastify/multipart';
 import { initializeDB, getDB } from './db.js';
 import { initializeRedisClients, getRedisPublisher, getRedisSubscriber } from './redis.js';
 import authRoutes from './auth.js';
-import chatRoutes, { cleanupChatResources } from './chat.js'; // Import cleanup
+import chatRoutes, { cleanupChatResources } from './chat.js';
 import twoFASettingRoutes from './setting_2fa.js';
 import twofaRoutes from './signin_twofa.js';
 import weatherRoutes from './weather.js';
@@ -21,109 +20,134 @@ import profileRoute from './profile.js';
 import openaiRoute from './openai.js';
 import spotifyRoute from './music.js';
 import scoreRoutes from './score.js';
-
-
+import pongRoutes from './pong_routes.js';
 
 console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
 
 dotenv.config();
-console.log("Loaded API KEY:", process.env.OPENWEATHER_API_KEY);
 
 const server = Fastify({
-  logger: {
+  logger: { 
     transport: {
-      targets: [
-        { level: 'info', target: 'pino/file', options: { destination: '/logs/backend.log' } }
-      ]
+        targets: [
+            { level: 'info', target: 'pino/file', options: { destination: '/logs/backend.log' } }
+        ]
     }
   }
 });
 
-// Setup Swagger (API visualizer tool)
-await server.register(swagger, {
-  openapi: {
-    info: {
-      title: 'Transcendance API',
-      description: 'API du projet Transcendance',
-      version: '1.0.0'
-    }
-  }
-});
+function overrideConsoleMethods() {
+  const originalConsoleLog = console.log;
+  const originalConsoleInfo = console.info;
+  const originalConsoleWarn = console.warn;
+  const originalConsoleError = console.error;
+  const originalConsoleDebug = console.debug;
 
-await server.register(swaggerUi, {
-  routePrefix: '/docs',
-});
+  console.log = (...args) => server.log.info(...args);
+  console.info = (...args) => server.log.info(...args);
+  console.warn = (...args) => server.log.warn(...args);
+  console.error = (...args) => server.log.error(...args);
+  console.debug = (...args) => server.log.debug(...args);
 
-// Register multipart BEFORE routes
-await server.register(multipart, {
-  limits: { fileSize: 5 * 1024 * 1024 }, // optional limit
-});
+}
 
-// Optional: serve static files like profile pictures
-await server.register(fastifyStatic, {
-  root: path.join(process.cwd(), 'public'),
-  prefix: '/',
-});
+overrideConsoleMethods(); 
+console.log("Loaded API KEY:", process.env.OPENWEATHER_API_KEY);
 
-server.get('/', async (request, reply) => {
-  reply.send({ hello: 'world' });
-});
-
-// Initialize DB and Redis
-const db = initializeDB(server.log);
-const { redisPublisher, redisSubscriber: generalRedisSubscriber } = initializeRedisClients(server.log); // Renamed to avoid confusion
-
-// Register common plugins
-server.register(cors, {
-  origin: 'http://localhost:5173',
-  credentials: true,
-});
-server.register(cookie);
-server.register(fastifyWebsocket);
-
-// Register modular routes
-server.register(authRoutes);
-server.register(chatRoutes);
-server.register(twofaRoutes);
-server.register(twoFASettingRoutes);
-server.register(weatherRoutes);
-server.register(profileRoute);
-server.register(openaiRoute);
-server.register(spotifyRoute);
-server.register(scoreRoutes);
-
-
-// Start server
 const start = async () => {
   try {
+    await server.register(swagger, {
+      openapi: {
+        info: {
+          title: 'Transcendance API',
+          description: 'API du projet Transcendance',
+          version: '1.0.0'
+        }
+      }
+    });
+    await server.register(swaggerUi, {
+      routePrefix: '/docs',
+    });
+    
+    await server.register(multipart, {
+     limits: { fileSize: 5 * 1024 * 1024 }, // optional limit
+    });
+
+// Optional: serve static files like profile pictures
+    await server.register(fastifyStatic, {
+      root: path.join(process.cwd(), 'public'),
+      prefix: '/',
+    });
+    
+    server.get('/', async (request, reply) => {
+      reply.send({ hello: 'world' });
+    });
+
+    initializeDB(server.log);
+    initializeRedisClients(server.log);
+
+    await server.register(cors, {
+      origin: 'http://localhost:5173',
+      credentials: true,
+    });
+    await server.register(cookie);
+    await server.register(fastifyWebsocket);
+
+    await server.register(authRoutes);
+    
+    await server.register(chatRoutes);
+    
+    await server.register(twofaRoutes);
+    await server.register(twoFASettingRoutes);
+    await server.register(weatherRoutes);
+    await server.register(profileRoute);
+    await server.register(openaiRoute);
+    await server.register(spotifyRoute);
+    await server.register(scoreRoutes);
+    await server.register(pongRoutes);
+    server.log.info("!!! INDEX.JS: Registered pongRoutes.");
+
     await server.listen({ port: 3000, host: '0.0.0.0' });
-    // Fastify logger already logs this: server.log.info(`Server listening on ${server.server.address().port}`);
   } catch (err) {
-    server.log.error(err);
+    const originalConsoleError = console.error;
+    originalConsoleError("!!! INDEX.JS: SERVER START ERROR !!!", err);
+    if(server.log && typeof server.log.error === 'function') server.log.error(err);
     process.exit(1);
   }
 };
 
 start();
 
-// Graceful shutdown
 const GSignals = ['SIGINT', 'SIGTERM'];
 GSignals.forEach((signal) => {
   process.on(signal, async () => {
     server.log.info({ signal }, 'Received signal, shutting down gracefully...');
+    await cleanupChatResources(server.log);
 
-    await cleanupChatResources(server.log); // Cleanup chat-specific resources
-
-    if (server.websocketServer) { // Close WebSocket server if it exists
+    if (server.websocketServer) {
       for (const client of server.websocketServer.clients) {
         client.close(1001, 'Server shutting down');
       }
     }
+    await server.close();
 
-    await server.close(); // Close Fastify server (this also closes WebSocket connections)
+    try {
+        const { activeGames: currentActivePongGames } = await import('./pong_server.js');
+        if (currentActivePongGames) {
+            server.log.info(`Cleaning up ${currentActivePongGames.size} active Pong game intervals.`);
+            currentActivePongGames.forEach(game => {
+                if (game.loopInterval) {
+                    clearInterval(game.loopInterval);
+                }
+            });
+            currentActivePongGames.clear();
+        }
+    } catch (importError) {
+        server.log.error({err: importError}, "Error dynamically importing pong_server.js for cleanup.");
+    }
 
     const publisher = getRedisPublisher();
-    const subscriber = getRedisSubscriber(); // This is the general one
+    const subscriber = getRedisSubscriber();
     if (publisher) await publisher.quit();
     if (subscriber) await subscriber.quit();
 
@@ -135,7 +159,7 @@ GSignals.forEach((signal) => {
         } else {
           server.log.info('SQLite database closed.');
         }
-        process.exit(0);
+        process.exit(err ? 1 : 0);
       });
     } else {
       process.exit(0);

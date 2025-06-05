@@ -1,3 +1,4 @@
+// frontend/src/main.ts
 import { startPongGame, setCanvas, stopPongGame } from "./pong.js";
 import { DesktopWindow } from "./DesktopWindow.js";
 import { checkSignedIn, setupSignupForm } from "./sign_up.js";
@@ -9,18 +10,21 @@ import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile, settingUserSetting } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
 import { setupSpotifySearch } from './music.ts';
-import { initializeChatSystem, resetChatSystem } from "./chatClient.js";
+import { initializeChatSystem, resetChatSystem, sendPongPlayerInput, sendPongPlayerReady } from "./chatClient.js";
+import { 
+    initMultiplayerPong, 
+    updateMultiplayerGameState, 
+    handleMultiplayerGameOver,
+    cleanupMultiplayerPong 
+} from './multiplayer_pong.js';
 
-
-// import { startWebcamFeed } from "./webcam.js";
-
-// Top of the file
 let signinWindow: DesktopWindow;
 let signupWindow: DesktopWindow;
 let logoutWindow: DesktopWindow;
 let profileWindow: DesktopWindow;
 let settingWindow: DesktopWindow;
 let pongWindow: DesktopWindow;
+let multiplayerPongWindow: DesktopWindow;
 let chatWindow: DesktopWindow;
 let statsWindow: DesktopWindow;
 let infoWindow: DesktopWindow;
@@ -53,7 +57,6 @@ function disableTrigger(triggerId: string) {
   }
 }
 
-// Auth-aware trigger logic
 async function updateUIBasedOnAuth() {
   const isSignedIn = await checkSignedIn();
 
@@ -96,6 +99,9 @@ async function updateUIBasedOnAuth() {
     statsWindow.close();
     chatWindow.close();
     pongWindow.close();
+    if (multiplayerPongWindow && multiplayerPongWindow.isVisible()) {
+        multiplayerPongWindow.close();
+    }
     aiWindow.close();
     musicWindow.close();
     if (typeof resetChatSystem === 'function') {
@@ -118,8 +124,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     "pointer-events-none",
   ];
 
-  // Declare windows
   // --- Menu Window ---
+
   try {
     const menuWindow = new DesktopWindow({
       windowId: "dragWindow",
@@ -137,7 +143,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 
 
-  // --- Signin Window ---
+// --- Sign in Window ---
+
   try {
     signinWindow = new DesktopWindow({
       windowId: "signinWindow",
@@ -145,7 +152,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       resizeHandleId: "signinResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "signinWindow",
-      // openTriggerId: "signinTab",
       closeButtonId: "closesigninBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -155,7 +161,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the signin window:", error);
   }
 
-  // --- Signup Window ---
+// --- Sign Up Window ---
+
   try {
     signupWindow = new DesktopWindow({
       windowId: "signupWindow",
@@ -163,7 +170,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       resizeHandleId: "signupResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "signupWindow",
-      // openTriggerId: "signupTab",
       closeButtonId: "closeSignupBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -173,7 +179,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the signup window:", error);
   }
 
-  // --- Logout Window ---
+// --- Log Out Window ---
+
   try {
     logoutWindow = new DesktopWindow({
       windowId: "logoutWindow",
@@ -181,7 +188,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       resizeHandleId: "logoutResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "logoutWindow",
-      // openTriggerId: "logoutTab",
       closeButtonId: "closelogoutBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -192,7 +198,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize 'logoutWindow':", error);
   }
 
-  // --- Setting Window ---
+// --- Settings Window ---
 
   try {
     settingWindow = new DesktopWindow({
@@ -201,7 +207,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       resizeHandleId: "settingResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "settingWindow",
-      // openTriggerId: "settingTab",
       closeButtonId: "closesettingBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -211,7 +216,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 
 
-  // --- Profile Window ---
+// --- Profile Window ---
 
   try {
     profileWindow = new DesktopWindow({
@@ -220,7 +225,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       resizeHandleId: "profileResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "profileWindow",
-      // openTriggerId: "profileBtn",
       closeButtonId: "closeprofileBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -229,7 +233,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize 'profileWindow':", error);
   }
 
-  // --- Info Window ---
+
+// --- Info Window ---
 
   try {
     infoWindow = new DesktopWindow({
@@ -238,7 +243,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       resizeHandleId: "infoResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "infoWindow",
-      // openTriggerId: "infoTab",
       closeButtonId: "closeinfoBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -257,7 +261,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       resizeHandleId: "weatherResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "weatherWindow",
-      // openTriggerId: "openWeatherBtn",
       closeButtonId: "closeweatherBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -268,7 +271,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize 'weatherWindow':", error);
   }
 
-  // --- Stats Window ---
+// --- Stats Window ---
 
   try {
     statsWindow = new DesktopWindow({
@@ -277,7 +280,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       resizeHandleId: "statsResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "statsWindow",
-      // openTriggerId: "spawner",
       closeButtonId: "closestatsBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -286,8 +288,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize 'statsWindow':", error);
   }
 
-
-  // --- Pong Window ---
+// --- Pong Window ---
 
   try {
     pongWindow = new DesktopWindow({
@@ -296,27 +297,46 @@ window.addEventListener("DOMContentLoaded", async () => {
       resizeHandleId: "pongResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "pongWindow",
-      // openTriggerId: "clickMeBtn",
       closeButtonId: "closepongBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
       onCloseCallback: () => {
-        stopPongGame();
+        stopPongGame(); 
       }
     });
   } catch (error) {
-    console.error("Failed to initialize 'pongWindow':", error);
+    console.error("Failed to initialize the solo pong window:", error);
+  }
+
+// --- Pong Multi Window ---
+
+  try {
+    multiplayerPongWindow = new DesktopWindow({
+      windowId: "multiplayerPongWindow",
+      dragHandleId: "multiplayerPongDragHandle",
+      resizeHandleId: "multiplayerPongResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "multiplayerPongWindow",
+      closeButtonId: "closeMultiplayerPongBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+      onCloseCallback: () => {
+        cleanupMultiplayerPong();
+      }
+    });
+  } catch (error) {
+    console.error("Failed to initialize the multiplayer pong window:", error);
   }
 
   // --- Chat Window ---
+  
   try {
     chatWindow = new DesktopWindow({
       windowId: "chatWindow",
       dragHandleId: "chatDragHandle",
       resizeHandleId: "chatResizeHandle",
       boundaryContainerId: "main",
-      visibilityToggleId: "chatWindow", // The window itself is the toggle target
-      // openTriggerId: "chatBtn", // ID of the "Chat" link we added to the menu
+      visibilityToggleId: "chatWindow", 
       closeButtonId: "closeChatBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -325,15 +345,15 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the chat window:", error);
   }
 
-  // --- AI Window ---
+// --- AI Window ---
+
   try {
     aiWindow = new DesktopWindow({
       windowId: "aiWindow",
       dragHandleId: "aiDragHandle",
       resizeHandleId: "aiResizeHandle",
       boundaryContainerId: "main",
-      visibilityToggleId: "aiWindow", // The window itself is the toggle target
-      // openTriggerId: "aiBtn", // ID of the "ai" link we added to the menu
+      visibilityToggleId: "aiWindow", 
       closeButtonId: "closeaiBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -352,15 +372,14 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the ai window:", error);
   }
 
-  // --- Music Window ---
+// --- Music Window ---
   try {
     musicWindow = new DesktopWindow({
       windowId: "musicWindow",
       dragHandleId: "musicDragHandle",
       resizeHandleId: "musicResizeHandle",
       boundaryContainerId: "main",
-      visibilityToggleId: "musicWindow", // The window itself is the toggle target
-      // openTriggerId: "musicBtn", // ID of the "music" link we added to the menu
+      visibilityToggleId: "musicWindow", 
       closeButtonId: "closemusicBtn",
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
@@ -369,6 +388,96 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("Failed to initialize the music window:", error);
   }
+
+  const gameContainer = document.getElementById("gameContainer")!;
+  const clickMeBtn = document.getElementById("clickMeBtn")!;
+  const soloPongCanvasElement = document.getElementById("pongCanvas") as HTMLCanvasElement;
+
+  if (clickMeBtn && gameContainer && soloPongCanvasElement) {
+    clickMeBtn.addEventListener("click", () => {
+      if (multiplayerPongWindow && multiplayerPongWindow.isVisible()) {
+        multiplayerPongWindow.close(); 
+      }
+      cleanupMultiplayerPong();
+      if (pongWindow && pongWindow.isVisible()) {
+        return;
+      } else if (pongWindow && !pongWindow.isVisible()) {
+        pongWindow.open();
+        setCanvas(soloPongCanvasElement);
+        startPongGame(); 
+      } else {
+        setCanvas(soloPongCanvasElement);
+        startPongGame();
+      }
+    });
+  } else {
+    console.error("One or more elements for SOLO Pong game setup are missing.");
+  }
+
+  await updateUIBasedOnAuth();
+  window.addEventListener("auth:updated", updateUIBasedOnAuth);
+
+  const multiplayerPongCanvasElement = document.getElementById('multiplayerPongCanvas') as HTMLCanvasElement;
+
+  window.addEventListener('pongGameStart', (event: Event) => {
+    const customEvent = event as CustomEvent;
+    const { gameId, initialState, yourPlayerId, opponentId, opponentUsername } = customEvent.detail;
+    
+    if (multiplayerPongCanvasElement && multiplayerPongWindow) {
+        if (pongWindow && pongWindow.isVisible()) {
+            pongWindow.close();
+        }
+        stopPongGame(); 
+        multiplayerPongWindow.open(); 
+        initMultiplayerPong(
+            gameId, 
+            initialState, 
+            yourPlayerId, 
+            opponentId, 
+            opponentUsername,
+            multiplayerPongCanvasElement,
+            sendPongPlayerInput,
+            sendPongPlayerReady
+        );
+    } else {
+        console.error("Multiplayer Pong canvas or window not found for game start.");
+    }
+  });
+
+  window.addEventListener('pongGameStateUpdate', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { gameId, ball, players, status } = customEvent.detail;
+      updateMultiplayerGameState(ball, players, status);
+  });
+
+  window.addEventListener('pongGameOver', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { gameId, winnerId, scores } = customEvent.detail;
+      handleMultiplayerGameOver(winnerId, scores);
+  });
+
+  initGoogleSignIn();
+  settingUserProfile();
+  setupSettingForm(settingWindow);
+});
+
+
+// ----------------WINDOW TEMPLATE----------------
+
+// try {
+//   const myNewWindow = new DesktopWindow({
+//     windowId: "PREFIXWindow",
+//     dragHandleId: "PREFIXDragHandle",
+//     resizeHandleId: "PREFIXResizeHandle",
+//     boundaryContainerId: "main",
+//     visibilityToggleId: "PREFIXWindow",
+//     openTriggerId: "spawner",
+//     closeButtonId: "closePREFIXBtn",
+//   });
+// } catch (error) {
+//   console.error("Failed to initialize 'PREFIXWindow':", error);
+// }
+
 
 
   // WEBCAM FUNCTION TO BE TESTED LATER
@@ -386,54 +495,3 @@ window.addEventListener("DOMContentLoaded", async () => {
   //       });
   //     }
 
-  // --- Pong Game Specific Logic ---
-  const gameContainer = document.getElementById("gameContainer")!;
-  const clickBtn = document.getElementById("clickMeBtn")!;
-  const canvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
-
-  if (clickBtn && gameContainer && canvas) {
-    
-    clickBtn.addEventListener("click", () => {
-      if (pongWindow && pongWindow.isVisible()) {
-        return;
-      } else if (pongWindow && !pongWindow.isVisible()) {
-        pongWindow.open();
-        setCanvas(canvas);
-        startPongGame();
-      }
-      setCanvas(canvas);
-      startPongGame();
-    });
-  } else {
-    console.error("One or more elements for Pong game setup are missing.");
-  }
-
-  initGoogleSignIn();
-  settingUserProfile();
-  setupSettingForm(settingWindow);
-
-  await updateUIBasedOnAuth();
-
-  window.addEventListener("auth:updated", updateUIBasedOnAuth);
-
-
-
-
-
-});
-
-// ----------------WINDOW TEMPLATE----------------
-
-// try {
-//   const myNewWindow = new DesktopWindow({
-//     windowId: "PREFIXWindow",
-//     dragHandleId: "PREFIXDragHandle",
-//     resizeHandleId: "PREFIXResizeHandle",
-//     boundaryContainerId: "main",
-//     visibilityToggleId: "PREFIXWindow",
-//     openTriggerId: "spawner",
-//     closeButtonId: "closePREFIXBtn",
-//   });
-// } catch (error) {
-//   console.error("Failed to initialize 'PREFIXWindow':", error);
-// }

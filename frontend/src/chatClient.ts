@@ -1,544 +1,630 @@
 import { DesktopWindow } from "./DesktopWindow.js";
 
 interface User {
-    id: number;
-    username: string;
-    picture?: string | null;
+  id: number; 
+  username: string;
+  picture?: string | null;
 }
 
 interface ActiveChatWindow {
-    peer: User;
-    windowInstance: DesktopWindow;
-    messagesArea: HTMLElement;
-    inputField: HTMLInputElement;
-    sendButton: HTMLButtonElement;
+  peer: User;
+  windowInstance: DesktopWindow;
+  messagesArea: HTMLElement;
+  inputField: HTMLInputElement;
+  sendButton: HTMLButtonElement;
 }
 const activePrivateChats = new Map<number, ActiveChatWindow>();
 
 interface ChatMessage {
-    id?: number;
-    type?: 'newMessage' | 'message_sent_ack' | 'error' | 'auth_success';
-    fromUserId?: number;
-    fromUsername?: string;
-    toUserId?: number;
-    content: string;
-    timestamp?: string;
-    message?: string;
-    user?: User;
-    messageId?: number;
+  id?: number;
+  type?: string;
+  fromUserId?: number | string;
+  fromUsername?: string;
+  toUserId?: number | string;
+  content?: string;
+  timestamp?: string;
+  message?: string;
+  user?: User | { userId: number | string, username: string, picture?: string | null };
+  messageId?: number;
+  gameId?: string;
+  inviterUsername?: string;
+  inviterId?: string;
+  initialState?: any;
+  yourPlayerId?: string;
+  opponentUsername?: string;
+  opponentId?: string;
+  ball?: any;
+  players?: any;
+  status?: string;
+  winnerId?: string | null;
+  scores?: any;
+  declinedByUsername?: string;
 }
 
-
 const userPlaceholderColors: string[] = [
-    'bg-red-500',
-    'bg-blue-500',
-    'bg-green-500',
-    'bg-yellow-500',
-    'bg-purple-500',
-    'bg-pink-500',
-    'bg-indigo-500',
-    'bg-teal-500',
-    'bg-orange-500'
+  "bg-red-500", "bg-blue-500", "bg-green-500", "bg-yellow-500", 
+  "bg-purple-500", "bg-pink-500", "bg-indigo-500", "bg-teal-500", "bg-orange-500",
 ];
 
 let socket: WebSocket | null = null;
-let currentUserId: number | null = null;
+let currentUserId: number | null = null; 
 let currentUsername: string | null = null;
 
 let chatUserListEl: HTMLElement | null;
-let chatWithUserEl: HTMLElement | null; // Main chat window's header (for "General Chat" title)
+let chatWithUserEl: HTMLElement | null;
 
 export function initializeChatSystem() {
-    console.log("Initializing Chat System (for dynamic windows)...");
+  chatUserListEl = document.getElementById("chatUserList");
+  chatWithUserEl = document.getElementById("chatWithUser");
 
-    chatUserListEl = document.getElementById('chatUserList');
-    chatWithUserEl = document.getElementById('chatWithUser'); // For main window's "General Chat" title
+  if (!chatUserListEl) {
+    console.error("Main Chat User List element not found! Cannot initialize chat system.");
+    return;
+  }
+  connectWebSocket();
 
-    if (!chatUserListEl) {
-        console.error("Main Chat User List element not found! Cannot initialize chat system.");
+  chatUserListEl.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement;
+    const listItem = target.closest("li");
+    if (listItem && listItem.parentElement === chatUserListEl && listItem.dataset.userId) {
+      const userIdNumeric = parseInt(listItem.dataset.userId, 10);
+      const username = listItem.dataset.username || "User";
+      const picture = listItem.dataset.userPicture || null;
+
+      if (currentUserId && userIdNumeric === currentUserId) {
+        console.log("Chat: Cannot open a private chat with yourself.");
         return;
+      }
+      launchPrivateChatWindow({ id: userIdNumeric, username, picture });
     }
+  });
+}
 
-    connectWebSocket();
+export function sendPongPlayerInput(gameId: string, input: 'up' | 'down' | 'stop_up' | 'stop_down') {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    const payload = { type: 'PONG_PLAYER_INPUT', gameId, input };
+    socket.send(JSON.stringify(payload));
+  } else {
+    console.error('WebSocket not connected. Cannot send PONG_PLAYER_INPUT.');
+  }
+}
 
-    chatUserListEl.addEventListener('click', (event) => {
-        const target = event.target as HTMLElement;
-        const listItem = target.closest('li');
-        if (listItem && listItem.parentElement === chatUserListEl && listItem.dataset.userId) {
-            const userId = parseInt(listItem.dataset.userId, 10);
-            const username = listItem.dataset.username || "User";
-            const picture = listItem.dataset.userPicture || null;
-            
-            if (currentUserId && userId === currentUserId) {
-                console.log("Chat: Cannot open a private chat with yourself.");
-                return;
-            }
-            launchPrivateChatWindow({ id: userId, username, picture });
-        }
+export function sendPongPlayerReady(gameId: string) {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    const payload = {
+      type: 'PONG_PLAYER_READY',
+      gameId: gameId,
+    };
+    socket.send(JSON.stringify(payload));
+    console.log(`[CHATCLIENT] Sent PONG_PLAYER_READY for gameId: ${gameId}`);
+  } else {
+    console.error('[CHATCLIENT] WebSocket not connected. Cannot send PONG_PLAYER_READY.');
+  }
+}
+
+function sendPongJoinGame(gameId: string) {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    const payload = { type: "PONG_JOIN_GAME", gameId: gameId };
+    socket.send(JSON.stringify(payload));
+    console.log(`Sent PONG_JOIN_GAME for gameId: ${gameId}`);
+    // alert(`Joining Pong game: ${gameId}. Waiting for game to start...`);
+  } else {
+    console.error("WebSocket not connected. Cannot send PONG_JOIN_GAME.");
+    alert('Error: Not connected to server to join game.');
+  }
+}
+
+async function handleInvitePlayerToPong(opponent: User) {
+  if (!opponent || typeof opponent.id === 'undefined') {
+    console.error("[Frontend] Invalid opponent data for Pong invite:", opponent);
+    alert("Cannot invite player: invalid opponent data.");
+    return;
+  }
+  const opponentPlayerIdForAPI = `user_${opponent.id}`; 
+
+  console.log(`[Frontend] handleInvitePlayerToPong called for opponent:`, opponent, `API ID: ${opponentPlayerIdForAPI}`);
+  try {
+    console.log('[Frontend] Before fetch to /api/pong/games');
+    const response = await fetch('/api/pong/games', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opponentPlayerId: opponentPlayerIdForAPI })
     });
+    console.log('[Frontend] After fetch, response status:', response.status);
+    const responseData = await response.json().catch(err => {
+        console.error('[Frontend] Failed to parse response JSON:', err);
+        return { error: "Failed to parse server response.", detail: "Response was not valid JSON." };
+    });
+    console.log('[Frontend] Response data from /api/pong/games:', responseData);
+
+    if (response.ok) {
+      const gameId = responseData.gameId;
+      if (gameId) {
+        console.log(`[Frontend] Game created with ID: ${gameId}. Inviter sending PONG_JOIN_GAME.`);
+        // alert(`Pong invitation sent to ${opponent.username}! Starting game room...`);
+        sendPongJoinGame(gameId);
+      } else {
+        console.error("[Frontend] Game created, but no gameId in response:", responseData);
+        alert(`Error starting game: ${responseData.message || 'No game ID returned from server.'}`);
+      }
+    } else {
+      console.error("[Frontend] Failed to create game. API error. Status:", response.status, "Response Data:", responseData);
+      alert(`Error inviting to game: ${responseData.error || response.statusText || `Server error: ${response.status}`}`);
+    }
+  } catch (error) {
+    console.error("[Frontend] Network or unexpected error in handleInvitePlayerToPong:", error);
+    alert("Could not contact server to invite player to game. Please try again.");
+  }
 }
 
 function connectWebSocket() {
-    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
-        console.log("Chat: WebSocket already open or connecting.");
-        return;
-    }
+  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+    console.log("Chat: WebSocket already open or connecting.");
+    return;
+  }
+  console.log("Chat: Attempting to establish WebSocket connection...");
+  socket = new WebSocket("ws://localhost:3000/ws/chat");
 
-    console.log("Chat: Attempting to establish WebSocket connection...");
-    socket = new WebSocket('ws://localhost:3000/ws/chat');
+  socket.onopen = () => {
+    console.log("Chat: WebSocket Connection Opened! Waiting for server to authenticate via cookie.");
+  };
 
-    socket.onopen = () => {
-        console.log("Chat: WebSocket Connection Opened! Waiting for server to authenticate via cookie.");
-    };
+  socket.onmessage = (event) => {
 
-    socket.onmessage = (event) => {
-        try {
-            const message: ChatMessage = JSON.parse(event.data as string);
-            console.log("Chat: Received message:", message);
+    try {
+      const message: ChatMessage = JSON.parse(event.data as string);
+      // console.log("Chat: Received message:", message);
 
-            if (message.type === 'auth_success' && message.user) {
-                currentUserId = message.user.userId;
-                currentUsername = message.user.username;
-                console.log(`Chat: Authenticated successfully as ${message.user.username} (ID: ${currentUserId})`);
-                if (currentUserId) {
-                    loadUserList();
-                } else {
-                    console.error("Chat: currentUserId is not set after auth_success. Cannot load user list.");
-                }
-            } else if (message.type === 'userOnline') {
-                console.log("Chat: User came online, reloading user list:", message.user);
-                loadUserList();
-            } else if (message.type === 'userOffline') {
-                console.log("Chat: User went offline, reloading user list:", message.user);
-                loadUserList(); 
-            } else if (message.type === 'newMessage') {
-                const relevantPeerId = (message.fromUserId === currentUserId) 
-                                       ? message.toUserId 
-                                       : message.fromUserId;
-                
-                if (!relevantPeerId) {
-                    console.warn("Chat: Received newMessage without a clear peer ID.", message);
-                    return;
-                }
-
-                const chatInfo = activePrivateChats.get(relevantPeerId);
-                if (chatInfo) {
-                    displayMessageInWindow(message, chatInfo.messagesArea, relevantPeerId);
-                    if (!chatInfo.windowInstance.isVisible()) { // Check if DesktopWindow has isVisible()
-                        console.log(`Notification: New message from ${message.fromUsername || 'user ' + relevantPeerId}`);
-                        const dragHandle = document.getElementById(`privateChatDragHandle_${relevantPeerId}`);
-                        if (dragHandle) {
-                           dragHandle.style.animation = 'pulseBorder 1.5s infinite';
-                           // Add CSS for @keyframes pulseBorder if you want this visual effect
-                        }
-                    }
-                } else {
-                    console.log(`Chat: Rcvd message for user ID ${relevantPeerId}, no window open. User: ${message.fromUsername}`, message);
-                    if (message.fromUserId && message.fromUsername && message.fromUserId !== currentUserId) {
-                        alert(`New message from ${message.fromUsername || 'a user'}! Open their chat from the user list to see it.`);
-                    }
-                }
-            } else if (message.type === 'message_sent_ack') {
-                console.log("Chat: Message acknowledged by server", message);
-            } else if (message.type === 'error') {
-                console.error("Chat: Server sent an error:", message.message);
-                if (message.message && (message.message.toLowerCase().includes("authentication required") || message.message.toLowerCase().includes("authentication failed"))) {
-                    alert("Chat session could not be established or was terminated. Please ensure you are logged in.");
-                }
-            }
-        } catch (e) {
-            console.error("Chat: Error processing message from server", e, event.data);
+      if (message.type === 'auth_success' && message.user && typeof message.user.userId !== 'undefined') {
+        const userIdFromServer = message.user.userId;
+        if (typeof userIdFromServer === 'string' && userIdFromServer.startsWith('user_')) {
+          currentUserId = parseInt(userIdFromServer.substring(5), 10);
+        } else if (typeof userIdFromServer === 'number') {
+          currentUserId = userIdFromServer;
+        } else {
+            console.error("Chat: Unparseable userId in auth_success:", userIdFromServer);
+            currentUserId = null; 
         }
-    };
+        currentUsername = message.user.username || null;
+        console.log(`Chat: Authenticated successfully as ${currentUsername} (Numeric ID: ${currentUserId})`);
+        if (currentUserId) loadUserList();
+        else console.error("Chat: currentUserId not set or invalid after auth_success.");
 
-    socket.onerror = (error) => {
-        console.error("Chat: WebSocket Error:", error);
-    };
+      } else if (message.type === 'userOnline' || message.type === 'userOffline') {
+        console.log(`Chat: User ${message.type}, reloading user list:`, message.user);
+        loadUserList();
 
-    socket.onclose = (event) => {
-        console.log("Chat: WebSocket Connection Closed:", event.code, event.reason);
-        socket = null; 
-        currentUserId = null;
+      } else if (message.type === 'newMessage') {
+        let numericSenderId: number | null = null;
+        if (typeof message.fromUserId === 'string' && message.fromUserId.startsWith('user_')) {
+          numericSenderId = parseInt(message.fromUserId.substring(5), 10);
+        } else if (typeof message.fromUserId === 'number') {
+          numericSenderId = message.fromUserId;
+        }
+
+        let numericReceiverId: number | null = null;
+        if (typeof message.toUserId === 'string' && message.toUserId.startsWith('user_')) {
+          numericReceiverId = parseInt(message.toUserId.substring(5), 10);
+        } else if (typeof message.toUserId === 'number') {
+          numericReceiverId = message.toUserId;
+        }
+
+        if (numericSenderId === null || isNaN(numericSenderId)) {
+          console.warn("Chat: Received newMessage with unparseable fromUserId.", message);
+          return;
+        }
+
+        let numericPeerIdForMapLookup: number | null = null;
+        if (numericSenderId === currentUserId) {
+          numericPeerIdForMapLookup = numericReceiverId;
+        } else if (numericReceiverId === currentUserId) {
+          numericPeerIdForMapLookup = numericSenderId;
+        } else {
+          console.warn("Chat: Received newMessage not directly involving current user.", message, currentUserId);
+          return;
+        }
         
-        activePrivateChats.forEach(chatInfo => {
-            if(chatInfo.inputField) chatInfo.inputField.disabled = true;
-            if(chatInfo.sendButton) chatInfo.sendButton.disabled = true;
-            const headerSpan = chatInfo.windowInstance.element?.querySelector(`#privateChatDragHandle_${chatInfo.peer.id} span .font-bold`); // More specific selector
-            if (headerSpan) (headerSpan as HTMLElement).textContent = `Chat with ${chatInfo.peer.username} (Disconnected)`;
-        });
-        if (chatUserListEl) chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs p-1.5">Chat disconnected. Please refresh or log in.</li>';
-        if (chatWithUserEl) chatWithUserEl.textContent = "Chat Disconnected";
-    };
+        if (numericPeerIdForMapLookup === null || isNaN(numericPeerIdForMapLookup)) {
+          console.warn("Chat: Could not determine relevant numeric peer ID for newMessage.", message);
+          return;
+        }
+
+        const chatInfo = activePrivateChats.get(numericPeerIdForMapLookup);
+        if (chatInfo) {
+          displayMessageInWindow(message, chatInfo.messagesArea, numericPeerIdForMapLookup);
+          if (!chatInfo.windowInstance.isVisible()) {
+            const fromUsername = message.fromUsername || `User ${numericSenderId}`;
+            console.log(`Notification: New message from ${fromUsername}`);
+            const dragHandle = document.getElementById(`privateChatDragHandle_${numericPeerIdForMapLookup}`);
+            if (dragHandle) dragHandle.style.animation = 'pulseBorder 1.5s infinite';
+          }
+        } else {
+          const fromUsername = message.fromUsername || `User ${numericSenderId}`;
+          console.log(`Chat: Rcvd message for numeric peer ID ${numericPeerIdForMapLookup} (original sender: ${message.fromUserId}), no window open. User: ${fromUsername}`, message);
+          if (numericSenderId !== currentUserId && message.fromUsername) { 
+            alert(`New message from ${fromUsername}! Open their chat from the user list to see it.`);
+          }
+        }
+      } else if (message.type === 'message_sent_ack') {
+        console.log("Chat: Message acknowledged by server", message);
+      } else if (message.type === 'PONG_GAME_INVITE') {
+        const { gameId, inviterUsername, inviterId } = message;
+        if (gameId && inviterUsername && inviterId) {
+            console.log(`[CHATCLIENT] Received Pong game invite for game ${gameId} from ${inviterUsername} (ID: ${inviterId})`);
+            
+            let inviterNumericId: number | null = null;
+            if (typeof inviterId === 'string' && inviterId.startsWith('user_')) {
+                inviterNumericId = parseInt(inviterId.substring(5), 10);
+            } else if (typeof inviterId === 'number') {
+                inviterNumericId = inviterId;
+            }
+
+            if (inviterNumericId !== null && !isNaN(inviterNumericId)) {
+                let chatInfo = activePrivateChats.get(inviterNumericId);
+                if (chatInfo && chatInfo.messagesArea) {
+                    displayInviteInChat(chatInfo.messagesArea, gameId, inviterUsername, inviterId);
+                } else {
+                    console.warn(`Chat window with ${inviterUsername} (ID: ${inviterNumericId}) not found. Attempting to open then display invite.`);
+                    const inviterUserObject: User = {id: inviterNumericId, username: inviterUsername, picture: message.user?.picture}; 
+                    launchPrivateChatWindow(inviterUserObject).then(() => {
+                        setTimeout(() => { 
+                            chatInfo = activePrivateChats.get(inviterNumericId!);
+                            if (chatInfo && chatInfo.messagesArea) {
+                                displayInviteInChat(chatInfo.messagesArea, gameId, inviterUsername, inviterId);
+                            } else {
+                                console.error("Failed to display invite even after attempting to open chat window for", inviterUsername);
+                                alert(`${inviterUsername} invited you to Pong! Open your chat to respond (invite ID: ${gameId}).`);
+                            }
+                        }, 200);
+                    });
+                }
+            } else {
+                    console.error("Could not parse numeric ID for inviter from PONG_GAME_INVITE:", inviterId);
+                    if (confirm(`${inviterUsername || 'A player'} has invited you to a game of Pong! (ID error) Accept?`)) {
+                        sendPongJoinGame(gameId);
+                    }
+                }
+            } else {
+                console.warn("[CHATCLIENT] Received PONG_GAME_INVITE with missing data:", message);
+            }
+      } else if (message.type === 'PONG_INVITE_WAS_DECLINED') {
+
+        const { gameId, declinedByUsername } = message;
+        console.log(`[CHATCLIENT] Pong invitation for game ${gameId} was declined by ${declinedByUsername}.`);
+        alert(`Your Pong invitation was declined by ${declinedByUsername}.`);
+      } 
+      
+      else if (message.type === 'PONG_GAME_STARTED') {
+        const { gameId, initialState, yourPlayerId, opponentUsername, opponentId } = message;
+        console.log(`PONG_GAME_STARTED received for game ${gameId}. You are ${yourPlayerId}. Opponent: ${opponentUsername} (${opponentId})`, JSON.parse(JSON.stringify(initialState)));
+        const gameStartEvent = new CustomEvent("pongGameStart", { detail: { gameId, initialState, yourPlayerId, opponentId, opponentUsername } });
+        window.dispatchEvent(gameStartEvent);
+      } else if (message.type === 'PONG_GAME_STATE_UPDATE') {
+        // console.log('[CLIENT CHAT] Received PONG_GAME_STATE_UPDATE:', JSON.parse(JSON.stringify(message))); 
+        const gameUpdateEvent = new CustomEvent("pongGameStateUpdate", { detail: message });
+        window.dispatchEvent(gameUpdateEvent);
+      } else if (message.type === 'PONG_GAME_OVER') {
+        const { gameId, winnerId, scores } = message;
+        console.log(`PONG_GAME_OVER received for game ${gameId}`, message);
+        const gameOverEvent = new CustomEvent("pongGameOver", { detail: { gameId, winnerId, scores } });
+        window.dispatchEvent(gameOverEvent);
+      } else if (message.type === 'PONG_ERROR') {
+        const { gameId, message: pongErrorMessage } = message;
+        console.error(`Pong Error for game ${gameId || "N/A"}: ${pongErrorMessage}`);
+        alert(`Pong Game Error: ${pongErrorMessage}`);
+      } else if (message.type === 'error') {
+        console.error("Chat: Server sent an error:", message.message);
+        if (message.message && (message.message.toLowerCase().includes("authentication required") || message.message.toLowerCase().includes("authentication failed"))) {
+          alert("Chat session could not be established or was terminated. Please ensure you are logged in.");
+        }
+      } else {
+        console.warn("Received unhandled message type from server:", message.type, message);
+      }
+    } catch (e) {
+      console.error("Chat: Error processing message from server", e, event.data);
+    }
+  };
+
+  socket.onerror = (error) => { console.error("Chat: WebSocket Error:", error); };
+
+  socket.onclose = (event) => {
+    console.log("Chat: WebSocket Connection Closed:", event.code, event.reason);
+    socket = null;
+    currentUserId = null;
+    currentUsername = null;
+    activePrivateChats.forEach((chatInfo) => {
+      if (chatInfo.inputField) chatInfo.inputField.disabled = true;
+      if (chatInfo.sendButton) chatInfo.sendButton.disabled = true;
+      const headerSpan = chatInfo.windowInstance.element?.querySelector(`#privateChatDragHandle_${chatInfo.peer.id} span .font-bold`);
+      if (headerSpan) (headerSpan as HTMLElement).textContent = `Chat with ${chatInfo.peer.username} (Disconnected)`;
+    });
+    if (chatUserListEl) chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs p-1.5">Chat disconnected. Please refresh or log in.</li>';
+    if (chatWithUserEl) chatWithUserEl.textContent = "Chat Disconnected";
+  };
 }
 
 async function loadUserList() {
-    if (!chatUserListEl) {
-        console.error("Chat: chatUserListEl not found, cannot load users.");
-        return;
+  if (!chatUserListEl) { console.error("Chat: chatUserListEl not found."); return; }
+  if (!currentUserId) {
+    console.warn("Chat: Not authenticated (currentUserId not set). Cannot load user list.");
+    chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs p-1.5">Authentication pending...</li>';
+    return;
+  }
+  console.log("Chat: Attempting to load user list via API.");
+  try {
+    const response = await fetch("/api/chat/users", { method: "GET", credentials: "include" });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Chat: Failed to load user list", response.status, errorText);
+      if (chatUserListEl) chatUserListEl.innerHTML = `<li class="text-red-400 text-xs p-1.5">Error loading users: ${response.status}</li>`;
+      if (response.status === 401) alert("Chat: Session expired or unauthorized for user list. Please log in again.");
+      return;
     }
-    if (!currentUserId) {
-        console.warn("Chat: Not authenticated via WebSocket (currentUserId not set). Cannot load user list.");
-        chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs p-1.5">Authentication pending...</li>';
-        return;
-    }
-
-    console.log("Chat: Attempting to load user list via API.");
-    try {
-        const response = await fetch('/api/chat/users', {
-            method: 'GET',
-            credentials: 'include',
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Chat: Failed to load user list", response.status, errorText);
-            if (chatUserListEl) chatUserListEl.innerHTML = `<li class="text-red-400 text-xs p-1.5">Error loading users: ${response.status}</li>`;
-            if (response.status === 401) {
-                 alert("Chat: Session expired or unauthorized for user list. Please log in again.");
-            }
+    const usersFromServer: Array<{ id: number | string, username: string, picture?: string | null }> = await response.json();
+    chatUserListEl.innerHTML = "";
+    if (usersFromServer.length === 0) {
+      chatUserListEl.innerHTML = '<li class=" text-xs p-1.5">No other users available.</li>';
+    } else {
+      usersFromServer.forEach((user) => {
+        let numericUserId: number;
+        if (typeof user.id === 'string' && user.id.startsWith('user_')) {
+            numericUserId = parseInt(user.id.substring(5), 10);
+        } else if (typeof user.id === 'number') {
+            numericUserId = user.id;
+        } else {
+            console.warn("Skipping user with unparseable ID from /api/chat/users:", user);
+            return;
+        }
+        if (isNaN(numericUserId)) {
+             console.warn("Skipping user with NaN ID from /api/chat/users:", user);
             return;
         }
 
-        const users: User[] = await response.json();
-        chatUserListEl.innerHTML = '';
-        if (users.length === 0) {
-            chatUserListEl.innerHTML = '<li class=" text-xs p-1.5">No other users available.</li>';
-        } else {
-            users.forEach(user => {
-                const li = document.createElement('li');
-                li.dataset.username = user.username; 
-                li.dataset.userId = user.id.toString();
-                if (user.picture) li.dataset.userPicture = user.picture;
-                
-                li.className = 'p-1.5 hover:bg-slate-700 cursor-pointer text-xs flex items-center space-x-2';
-                
-
-                // -------- REMOVED FROM NOW DUE TO ISSUE WITH GOOGLE PP --------
-                // if (user.picture) {
-                //     const img = document.createElement('img');
-                //     img.src = user.picture;
-                //     img.alt = user.username;
-                //     img.className = 'w-5 h-5 object-cover pointer-events-none';
-                //     li.appendChild(img);
-                // } else {
-                //     const placeholder = document.createElement('div');
-                //     placeholder.className = 'w-5 h-5 bg-slate-500 flex items-center justify-center text-xs text-slate-300 pointer-events-none';
-                //     placeholder.textContent = user.username.substring(0,1).toUpperCase();
-                //     li.appendChild(placeholder);
-                // }
-
-
-
-                const colorIndex = user.id % userPlaceholderColors.length;
-                const selectedBgColor = userPlaceholderColors[colorIndex];
-
-                const placeholder = document.createElement('div');
-                placeholder.className = `w-5 h-5 flex items-center justify-center text-xs text-slate-900 pointer-events-none flex-shrink-0 ${selectedBgColor}`;
-                placeholder.textContent = user.username.substring(0,1).toUpperCase();
-                li.appendChild(placeholder);
-
-
-
-
-                const nameSpan = document.createElement('span');
-                nameSpan.textContent = user.username;
-                nameSpan.className = 'pointer-events-none';
-                li.appendChild(nameSpan);
-
-                chatUserListEl?.appendChild(li);
-            });
-        }
-    } catch (error) {
-        console.error("Chat: Error loading user list (exception):", error);
-        if (chatUserListEl) chatUserListEl.innerHTML = '<li class="text-red-400 text-xs p-1.5">Failed to load users.</li>';
+        const li = document.createElement("li");
+        li.dataset.username = user.username;
+        li.dataset.userId = numericUserId.toString(); 
+        if (user.picture) li.dataset.userPicture = user.picture;
+        li.className = "p-1.5 hover:bg-slate-700 cursor-pointer text-xs flex items-center space-x-2";
+        const colorIndex = numericUserId % userPlaceholderColors.length;
+        const selectedBgColor = userPlaceholderColors[colorIndex];
+        const placeholder = document.createElement("div");
+        placeholder.className = `w-5 h-5 flex items-center justify-center text-xs text-slate-900 pointer-events-none flex-shrink-0 ${selectedBgColor}`;
+        placeholder.textContent = user.username.substring(0, 1).toUpperCase();
+        li.appendChild(placeholder);
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = user.username;
+        nameSpan.className = "pointer-events-none";
+        li.appendChild(nameSpan);
+        chatUserListEl?.appendChild(li);
+      });
     }
+  } catch (error) {
+    console.error("Chat: Error loading user list (exception):", error);
+    if (chatUserListEl) chatUserListEl.innerHTML = '<li class="text-red-400 text-xs p-1.5">Failed to load users.</li>';
+  }
 }
 
-function createPrivateChatWindowHtml(peerUser: User): string {
-    const peerId = peerUser.id;
-    const peerUsername = (peerUser.username || 'User').replace(/[&<>"']/g, (match) => {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[match]!;
-    });
-
-    return `
-        <div id="privateChatWindow_${peerId}"
-             class="border-2 w-[450px] text-sm flex flex-col
-                    bg-slate-900/60 
-                    absolute left-1/3 top-1/3 transform -translate-x-1/2 -translate-y-1/2 
-                    transition-all duration-300 ease-in-out backdrop-blur-xs
-                    opacity-0 scale-95 invisible pointer-events-none drop-shadow-xl/30"
-             style="width: 300px; height: 350px; min-width: 300px; min-height: 350px; max-width: 600px; max-height: 80vh;">
-
-            <div id="privateChatDragHandle_${peerId}"
-                 class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 cursor-grab active:cursor-grabbing select-none">
-                <div class="flex items-center space-x-1.5">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span class="font-bold">Chat with ${peerUsername}</span>
+function createPrivateChatWindowHtml(peerUser: User): string { 
+  const peerIdNumeric = peerUser.id;
+  const peerUsernameSafe = (peerUser.username || "User").replace(/[&<>"']/g, (match) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[match]!));
+  return `
+        <div id="privateChatWindow_${peerIdNumeric}" class="border-2 w-[450px] text-sm flex flex-col bg-slate-900/60 absolute left-1/3 top-1/3 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out backdrop-blur-xs opacity-0 scale-95 invisible pointer-events-none drop-shadow-xl/30" style="width: 300px; height: 350px; min-width: 300px; min-height: 350px; max-width: 600px; max-height: 80vh;">
+            <div id="privateChatDragHandle_${peerIdNumeric}" class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 cursor-grab active:cursor-grabbing select-none">
+                <div class="flex items-center space-x-1.5"><span class="font-bold">Chat with ${peerUsernameSafe}</span></div>
+                <div class="flex items-center space-x-1">
+                    <button id="invitePongBtn_${peerIdNumeric}" title="Invite ${peerUsernameSafe} to Pong" class="px-2 py-0.5 border border-green-500 text-green-400 hover:bg-green-500 hover:text-slate-900 text-xs rounded transition-colors">Invite Pong</button>
+                    <button aria-label="Close private chat with ${peerUsernameSafe}" id="closePrivateChatBtn_${peerIdNumeric}" class="w-5 h-5 border flex items-center justify-center font-bold hover-important transition-colors">X</button>
                 </div>
-                <button aria-label="Close private chat with ${peerUsername}" id="closePrivateChatBtn_${peerId}"
-                        class="w-5 h-5 border flex items-center justify-center font-bold hover-important transition-colors">
-                    X
-                </button>
             </div>
-
-            <div class="flex-grow p-2 overflow-y-auto space-y-2 divide-y divide-slate-600/60" id="privateMessagesArea_${peerId}">
-            </div>
-
+            <div class="flex-grow p-2 overflow-y-auto space-y-2 divide-y divide-slate-600/60" id="privateMessagesArea_${peerIdNumeric}"></div>
             <div class="p-2 border-t">
                 <div class="flex space-x-2">
-                    <input type="text" id="privateMessageInput_${peerId}" placeholder="Message ${peerUsername}..."
-                           class="flex-grow p-1.5 bg-slate-900 border text-xs focus:ring-1 focus:ring-[#4cb4e7] focus:border-[#4cb4e7] outline-none" />
-                    <button id="privateSendBtn_${peerId}"
-                            class="border px-3 py-1.5 font-bold tracking-wider hover:bg-[#8be076] hover:text-slate-900 transition-colors text-xs">
-                        SEND
-                    </button>
+                    <input type="text" id="privateMessageInput_${peerIdNumeric}" placeholder="Message ${peerUsernameSafe}..." class="flex-grow p-1.5 bg-slate-900 border text-xs focus:ring-1 focus:ring-[#4cb4e7] focus:border-[#4cb4e7] outline-none" />
+                    <button id="privateSendBtn_${peerIdNumeric}" class="border px-3 py-1.5 font-bold tracking-wider hover:bg-[#8be076] hover:text-slate-900 transition-colors text-xs">SEND</button>
                 </div>
             </div>
-
-            <div id="privateChatResizeHandle_${peerId}" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10 opacity-50 hover:opacity-100 transition-opacity">
-            </div>
+            <div id="privateChatResizeHandle_${peerIdNumeric}" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10 opacity-50 hover:opacity-100 transition-opacity"></div>
         </div>`;
 }
 
-async function launchPrivateChatWindow(peerUser: User) {
-    console.log(`%c[LaunchWindow] Attempting for ${peerUser.username} (ID: ${peerUser.id}). Is window already in activePrivateChats? ${activePrivateChats.has(peerUser.id)}`, "color: purple; font-weight: bold;");
-
-    if (activePrivateChats.has(peerUser.id)) {
-        const existingChat = activePrivateChats.get(peerUser.id);
-        if (existingChat) {
-            existingChat.windowInstance.open();
-            console.log(`Chat: Window for ${peerUser.username} already open. Focusing.`);
-            existingChat.inputField.focus();
-        }
-        return;
+async function launchPrivateChatWindow(peerUser: User) { 
+  if (activePrivateChats.has(peerUser.id)) {
+    const existingChat = activePrivateChats.get(peerUser.id);
+    if (existingChat) {
+      existingChat.windowInstance.open();
+      existingChat.inputField.focus();
     }
+    return;
+  }
+  const windowHtml = createPrivateChatWindowHtml(peerUser);
+  const mainElement = document.getElementById("main");
+  if (!mainElement) { console.error("Main element ('main') not found to append chat window!"); return; }
+  mainElement.insertAdjacentHTML("beforeend", windowHtml);
 
-    console.log(`Chat: Launching NEW private chat window for ${peerUser.username} (ID: ${peerUser.id})`);
-
-    const windowHtml = createPrivateChatWindowHtml(peerUser);
-    const mainElement = document.getElementById('main');
-    if (!mainElement) {
-        console.error("Main element ('main') not found to append chat window!");
-        return;
-    }
-
-    mainElement.insertAdjacentHTML('beforeend', windowHtml);
-
-    requestAnimationFrame(async () => {
-        const windowId = `privateChatWindow_${peerUser.id}`;
-        const dragHandleId = `privateChatDragHandle_${peerUser.id}`;
-        const closeButtonId = `closePrivateChatBtn_${peerUser.id}`;
-        const resizeHandleId = `privateChatResizeHandle_${peerUser.id}`;
-        const messagesAreaId = `privateMessagesArea_${peerUser.id}`;
-        const inputFieldId = `privateMessageInput_${peerUser.id}`;
-        const sendButtonId = `privateSendBtn_${peerUser.id}`;
-
-        const newWindowElement = document.getElementById(windowId);
-        const dragHandleElement = document.getElementById(dragHandleId);
-        const closeButtonElement = document.getElementById(closeButtonId);
-        const resizeHandleElement = document.getElementById(resizeHandleId);
-        const visibilityToggleElementForPrivateChat = newWindowElement; 
-
-        if (!newWindowElement || !dragHandleElement || !closeButtonElement || !visibilityToggleElementForPrivateChat || !resizeHandleElement ) {
-            console.error(`[Debug] Essential elements for DesktopWindow missing for ${windowId}.`);
-            const elToRemoveOnFailure = document.getElementById(windowId);
-            if (elToRemoveOnFailure) elToRemoveOnFailure.remove();
-            return;
-        }
-
-        try {
-            const newWindowInstance = new DesktopWindow({
-                windowId: windowId,
-                dragHandleId: dragHandleId,
-                resizeHandleId: resizeHandleId, 
-                closeButtonId: closeButtonId,
-                boundaryContainerId: "main",
-                visibilityToggleId: windowId,
-                initialShow: false, 
-                onCloseCallback: () => {
-                    const chatInfo = activePrivateChats.get(peerUser.id);
-                    if (chatInfo && chatInfo.windowInstance.element) {
-                        chatInfo.windowInstance.element.remove();
-                    }
-                    activePrivateChats.delete(peerUser.id);
-                    console.log(`Chat: Closed and DOM element removed for private chat window with ${peerUser.username}`);
-                }
-            });
-            
-            newWindowInstance.open();
-
-            const messagesArea = document.getElementById(messagesAreaId) as HTMLElement;
-            const inputField = document.getElementById(inputFieldId) as HTMLInputElement;
-            const sendButton = document.getElementById(sendButtonId) as HTMLButtonElement;
-
-            if (!messagesArea || !inputField || !sendButton) {
-                console.error(`Chat: Could not find all interactive chat sub-elements for private chat window with ${peerUser.username}. WindowId: ${windowId}`);
-                newWindowElement.remove();
-                return;
-            }
-
-            activePrivateChats.set(peerUser.id, {
-                peer: peerUser,
-                windowInstance: newWindowInstance,
-                messagesArea: messagesArea,
-                inputField: inputField,
-                sendButton: sendButton
-            });
-
-            sendButton.addEventListener('click', () => {
-                sendMessageToPeer(peerUser, inputField.value);
-                inputField.value = '';
-                inputField.focus();
-            });
-            inputField.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !sendButton.disabled) {
-                    sendMessageToPeer(peerUser, inputField.value);
-                    inputField.value = '';
-                }
-            });
-            
-            await loadChatHistoryForWindow(peerUser, messagesArea); 
-            inputField.focus();
-            console.log(`%c[Debug] Successfully set up private chat window for ${peerUser.username}`, "color: green;");
-
-        } catch (error) {
-            console.error(`Error initializing DesktopWindow or setting up private chat for ${peerUser.username}:`, error);
-            const elToRemoveOnCatch = document.getElementById(windowId);
-            if (elToRemoveOnCatch) elToRemoveOnCatch.remove();
-        }
-    });
-}
-
-async function loadChatHistoryForWindow(peerUser: User, messagesArea: HTMLElement) {
-    console.log(`%c[LoadHistory] For ${peerUser.username} (ID: ${peerUser.id}). Target messagesArea:`, "color: blue; font-weight: bold;", messagesArea);
-
-    if (!currentUserId) {
-        console.warn("Chat: Cannot load history, current user not authenticated (currentUserId is null).");
-        messagesArea.innerHTML = '<div class="text-center text-xs text-red-400 p-2">Authentication error.</div>';
-        return;
-    }
+  requestAnimationFrame(async () => {
+    const windowId = `privateChatWindow_${peerUser.id}`;
+    const dragHandleId = `privateChatDragHandle_${peerUser.id}`;
+    const closeButtonId = `closePrivateChatBtn_${peerUser.id}`;
+    const resizeHandleId = `privateChatResizeHandle_${peerUser.id}`;
+    const messagesAreaId = `privateMessagesArea_${peerUser.id}`;
+    const inputFieldId = `privateMessageInput_${peerUser.id}`;
+    const sendButtonId = `privateSendBtn_${peerUser.id}`;
+    const invitePongButtonId = `invitePongBtn_${peerUser.id}`;
+    const newWindowElement = document.getElementById(windowId);
+    if (!newWindowElement) { console.error(`Failed to find new window element ${windowId} after insertion.`); return; }
     
-    messagesArea.innerHTML = '<div class="text-center text-xs text-slate-400 p-2">Loading history...</div>';
     try {
-        const response = await fetch(`/api/chat/history/${peerUser.id}`, {
-            method: 'GET',
-            credentials: 'include',
-        });
+      const newWindowInstance = new DesktopWindow({
+        windowId: windowId, dragHandleId: dragHandleId, resizeHandleId: resizeHandleId,
+        closeButtonId: closeButtonId, boundaryContainerId: "main", visibilityToggleId: windowId,
+        initialShow: false,
+        onCloseCallback: () => {
+          const chatInfo = activePrivateChats.get(peerUser.id);
+          if (chatInfo && chatInfo.windowInstance.element) chatInfo.windowInstance.element.remove();
+          activePrivateChats.delete(peerUser.id);
+        },
+      });
+      newWindowInstance.open();
+      const messagesArea = document.getElementById(messagesAreaId) as HTMLElement;
+      const inputField = document.getElementById(inputFieldId) as HTMLInputElement;
+      const sendButton = document.getElementById(sendButtonId) as HTMLButtonElement;
+      const invitePongButton = document.getElementById(invitePongButtonId) as HTMLButtonElement;
 
-        console.log(`%c[LoadHistory] Response status for ${peerUser.username}: ${response.status}`, "color: blue;");
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Chat: Failed to load chat history for ${peerUser.username}`, response.status, errorText);
-            messagesArea.innerHTML = `<div class="text-center text-red-400 text-xs p-2">Error loading history: ${response.status}</div>`;
-            return;
-        }
-        
-        const rawHistory: any[] = await response.json();
-        messagesArea.innerHTML = ''; 
-        
-        console.log(`%c[LoadHistory] Fetched ${rawHistory.length} raw historical messages for ${peerUser.username}.`, "color: blue;");
-
-        if (rawHistory.length === 0) {
-             messagesArea.innerHTML = '<div class="text-center text-xs text-slate-400 p-2">No messages yet. Start the conversation!</div>';
-        } else {
-            const history: ChatMessage[] = rawHistory.map(rawMsg => ({
-                id: rawMsg.id,
-                fromUserId: rawMsg.sender_id,
-                fromUsername: rawMsg.sender_username,
-                toUserId: rawMsg.receiver_id, 
-                content: rawMsg.message_content,
-                timestamp: rawMsg.timestamp,
-                type: 'newMessage'
-            }));
-
-            history.forEach(msg => {
-                displayMessageInWindow(msg, messagesArea, peerUser.id);
-            });
-        }
+      if (!messagesArea || !inputField || !sendButton || !invitePongButton) {
+        console.error(`Chat: Could not find all interactive chat sub-elements for ${peerUser.username}.`);
+        newWindowElement.remove(); return;
+      }
+      activePrivateChats.set(peerUser.id, { peer: peerUser, windowInstance: newWindowInstance, messagesArea: messagesArea, inputField: inputField, sendButton: sendButton });
+      sendButton.addEventListener("click", () => { sendMessageToPeer(peerUser, inputField.value); inputField.value = ""; inputField.focus(); });
+      inputField.addEventListener("keypress", (e) => { if (e.key === "Enter" && !sendButton.disabled) { sendMessageToPeer(peerUser, inputField.value); inputField.value = ""; }});
+      invitePongButton.addEventListener('click', () => {
+        invitePongButton.disabled = true; invitePongButton.textContent = "Invited";
+        handleInvitePlayerToPong(peerUser);
+        setTimeout(() => {
+          const currentButton = document.getElementById(invitePongButtonId) as HTMLButtonElement;
+          if(currentButton) { currentButton.disabled = false; currentButton.textContent = "Invite Pong"; }
+        }, 5000); 
+      });
+      await loadChatHistoryForWindow(peerUser, messagesArea);
+      inputField.focus();
     } catch (error) {
-        console.error(`Chat: Exception loading chat history for ${peerUser.username}:`, error);
-        messagesArea.innerHTML = `<div class="text-center text-red-400 text-xs p-2">Failed to load history.</div>`;
+      console.error(`Error initializing DesktopWindow or chat for ${peerUser.username}:`, error);
+      const elToRemoveOnCatch = document.getElementById(windowId);
+      if (elToRemoveOnCatch) elToRemoveOnCatch.remove();
     }
+  });
 }
 
-
-function sendMessageToPeer(peerUser: User, content: string) {
-    content = content.trim();
-    if (content === '' || !socket || socket.readyState !== WebSocket.OPEN || !currentUserId) {
-        console.error("Chat: Cannot send message. Conditions not met.");
-        return;
+async function loadChatHistoryForWindow(peerUser: User, messagesArea: HTMLElement) { 
+  if (!currentUserId) {
+    console.warn("Chat: Cannot load history, current user not authenticated.");
+    messagesArea.innerHTML = '<div class="text-center text-xs text-red-400 p-2">Authentication error.</div>'; return;
+  }
+  messagesArea.innerHTML = '<div class="text-center text-xs text-slate-400 p-2">Loading history...</div>';
+  try {
+    const response = await fetch(`/api/chat/history/${peerUser.id}`, { method: "GET", credentials: "include" }); 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Chat: Failed to load chat history for ${peerUser.username}`, response.status, errorText);
+      messagesArea.innerHTML = `<div class="text-center text-red-400 text-xs p-2">Error loading history: ${response.status}</div>`; return;
     }
-
-    const messageToSendPayload = {
-        type: "privateMessage",
-        toUserId: peerUser.id,
-        content: content,
-    };
-    socket.send(JSON.stringify(messageToSendPayload));
-    console.log("Chat: Sent private message payload to peer:", peerUser.id, messageToSendPayload);
-
-    const chatInfo = activePrivateChats.get(peerUser.id);
-    if (chatInfo) {
-        displayMessageInWindow({
-            fromUserId: currentUserId,
-            fromUsername: currentUsername || "You",
-            toUserId: peerUser.id,
-            content: content,
-            timestamp: new Date().toISOString()
-        }, chatInfo.messagesArea, peerUser.id);
-    }
-}
-
-function displayMessageInWindow(msg: ChatMessage, messagesArea: HTMLElement, peerIdOfThisWindow: number) {
-    console.log(`%c[DisplayMessage] msg.fromUserId: ${msg.fromUserId}, currentUserId: ${currentUserId}, peerIdOfThisWindow: ${peerIdOfThisWindow}, fromUsername: ${msg.fromUsername}`, "color: teal");
-
-    if (!messagesArea) {
-        console.error("displayMessageInWindow: messagesArea is not valid!");
-        return;
-    }
-
-    const messageContainerDiv = document.createElement('div');
-    const senderInfoDiv = document.createElement('div');
-    const messageContentDiv = document.createElement('div');
-
-    senderInfoDiv.textContent = `${msg.fromUsername || 'User'}:`;
-    senderInfoDiv.classList.add('text-xs', 'font-bold', 'underline');
-
-    messageContentDiv.textContent = msg.content;
-    messageContentDiv.className = 'px-3 text-xs break-all break-words';
-
-    if (msg.fromUserId === currentUserId) {
-        messageContainerDiv.className = 'text-[#FFE2BF] flex flex-row items-start my-2 py-2';
-        senderInfoDiv.style.color = '#FFE2BF';
-    } else if (msg.fromUserId === peerIdOfThisWindow) {
-        messageContainerDiv.className = 'flex flex-row items-start my-2 py-2';
+    const rawHistory: ChatMessage[] = await response.json();
+    messagesArea.innerHTML = "";
+    if (rawHistory.length === 0) {
+      messagesArea.innerHTML = '<div class="text-center text-xs text-slate-400 p-2">No messages yet. Start the conversation!</div>';
     } else {
-        console.warn("displayMessageInWindow: Message doesn't match current context.", { msg, peerIdOfThisWindow });
-        return; 
+      rawHistory.forEach((msg) => { displayMessageInWindow(msg, messagesArea, peerUser.id); });
     }
+  } catch (error) {
+    console.error(`Chat: Exception loading chat history for ${peerUser.username}:`, error);
+    messagesArea.innerHTML = `<div class="text-center text-red-400 text-xs p-2">Failed to load history.</div>`;
+  }
+}
+
+function sendMessageToPeer(peerUser: User, content: string) { 
+  content = content.trim();
+  if (content === "" || !socket || socket.readyState !== WebSocket.OPEN || !currentUserId) {
+    console.error("Chat: Cannot send message. Conditions not met."); return;
+  }
+  const messageToSendPayload = { type: "privateMessage", toUserId: peerUser.id.toString(), content: content }; 
+  socket.send(JSON.stringify(messageToSendPayload));
+  console.log("Chat: Sent private message payload to peer:", peerUser.id, messageToSendPayload);
+
+  const chatInfo = activePrivateChats.get(peerUser.id);
+  if (chatInfo) {
+    displayMessageInWindow(
+      { fromUserId: currentUserId as number, fromUsername: currentUsername || "You", toUserId: peerUser.id, content: content, timestamp: new Date().toISOString() },
+      chatInfo.messagesArea,
+      peerUser.id
+    );
+  }
+}
+
+function displayMessageInWindow(msg: ChatMessage, messagesArea: HTMLElement, peerIdOfThisWindowNumeric: number) {
+  let msgFromNumericId: number;
+  if (typeof msg.fromUserId === 'string' && msg.fromUserId.startsWith('user_')) {
+    msgFromNumericId = parseInt(msg.fromUserId.substring(5), 10);
+  } else if (typeof msg.fromUserId === 'number') {
+    msgFromNumericId = msg.fromUserId;
+  } else {
+    console.warn('[DisplayMessage] Unparseable msg.fromUserId:', msg.fromUserId, msg); return; 
+  }
+  if (isNaN(msgFromNumericId)){ console.warn('[DisplayMessage] msg.fromUserId resulted in NaN:', msg.fromUserId, msg); return; }
+  
+  console.log(`[DisplayMessage] msgFromNumericId: ${msgFromNumericId}, currentUserId: ${currentUserId}, peerIdOfThisWindowNumeric: ${peerIdOfThisWindowNumeric}, fromUsername: ${msg.fromUsername}`);
+
+  const messageContainerDiv = document.createElement("div");
+  const senderInfoDiv = document.createElement("div");
+  const messageContentDiv = document.createElement("div");
+  senderInfoDiv.textContent = `${msg.fromUsername || `User ${msgFromNumericId}`}:`;
+  senderInfoDiv.classList.add("text-xs", "font-bold", "underline");
+  messageContentDiv.textContent = msg.content || "";
+  messageContentDiv.className = "px-3 text-xs break-all break-words";
+
+  if (msgFromNumericId === currentUserId) {
+    messageContainerDiv.className = "text-[#FFE2BF] flex flex-row items-start my-2 py-2";
+    senderInfoDiv.style.color = "#FFE2BF";
+  } else if (msgFromNumericId === peerIdOfThisWindowNumeric) {
+    messageContainerDiv.className = "flex flex-row items-start my-2 py-2";
+  } else {
+    console.warn("[DisplayMessage] Message is not from self and not from the expected peer of this window.", { msgFromNumericId, currentUserId, peerIdOfThisWindowNumeric, originalMsg: msg });
+    return;
+  }
+  messageContainerDiv.appendChild(senderInfoDiv);
+  messageContainerDiv.appendChild(messageContentDiv);
+  messagesArea.appendChild(messageContainerDiv);
+  messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+
+function displayInviteInChat(
+    messagesArea: HTMLElement, 
+    gameId: string, 
+    inviterUsername: string,
+    inviterPrefixedId: string
+) {
+    const inviteMessageDiv = document.createElement('div');
+    inviteMessageDiv.className = 'p-2 my-1 rounded-md bg-slate-700 border border-slate-600 text-sm';
+    inviteMessageDiv.innerHTML = `
+        <span><strong>${inviterUsername}</strong> invites you to play Pong!</span>
+        <button data-action="accept" data-gameid="${gameId}" class="ml-2 px-3 py-1 bg-[#53D4C0] hover:bg-green-600 text-white text-xs font-semibold rounded-md transition-colors">Accept</button>
+        <button data-action="decline" data-gameid="${gameId}" data-inviterid="${inviterPrefixedId}" class="ml-1 px-3 py-1 bg-[#D4535B] hover:bg-red-600 text-white text-xs font-semibold rounded-md transition-colors">Decline</button>
+    `;
     
-    messageContainerDiv.appendChild(senderInfoDiv);
-    messageContainerDiv.appendChild(messageContentDiv);
-    messagesArea.appendChild(messageContainerDiv);
+    const acceptButton = inviteMessageDiv.querySelector('button[data-action="accept"]') as HTMLButtonElement;
+    const declineButton = inviteMessageDiv.querySelector('button[data-action="decline"]') as HTMLButtonElement;
+
+    if (acceptButton) {
+        acceptButton.onclick = () => { 
+            console.log(`[CHATCLIENT] Accepted Pong invite for game: ${gameId}`);
+            sendPongJoinGame(gameId);
+            inviteMessageDiv.innerHTML = `<span>Accepted Pong invitation from <strong>${inviterUsername}</strong>. Joining game...</span>`;
+        };
+    }
+
+    if (declineButton) {
+        declineButton.onclick = () => {
+            console.log(`[CHATCLIENT] Declined Pong invite for game: ${gameId}`);
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'PONG_INVITE_DECLINED',
+                    gameId: gameId,
+                    inviterId: inviterPrefixedId
+                }));
+            }
+            inviteMessageDiv.innerHTML = `<span>You declined the Pong invitation from <strong>${inviterUsername}</strong>.</span>`;
+        };
+    }
+    messagesArea.appendChild(inviteMessageDiv);
     messagesArea.scrollTop = messagesArea.scrollHeight;
 }
 
-
 export function resetChatSystem() {
-    console.log("Chat: Resetting chat system due to logout or auth change.");
-    if (socket) {
-        socket.onclose = null;
-        socket.close(1000, "User logged out");
-        socket = null;
-    }
-    currentUserId = null;
-    activePrivateChats.forEach(chatInfo => {
-        chatInfo.windowInstance.element?.remove();
-    });
-    activePrivateChats.clear();
-    if (chatUserListEl) chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs">Logged out.</li>';
-    if (chatWithUserEl) chatWithUserEl.textContent = "Log in to chat";
+  console.log("Chat: Resetting chat system due to logout or auth change.");
+  if (socket) { socket.onclose = null; socket.close(1000, "User logged out"); socket = null; }
+  currentUserId = null; currentUsername = null;
+  activePrivateChats.forEach((chatInfo) => { chatInfo.windowInstance.element?.remove(); });
+  activePrivateChats.clear();
+  if (chatUserListEl) chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs">Logged out.</li>';
+  if (chatWithUserEl) chatWithUserEl.textContent = "Log in to chat";
 }
