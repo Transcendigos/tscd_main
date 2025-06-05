@@ -7,7 +7,7 @@ import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
 import { setupInfoWindow } from "./infowindow.ts";
-import { settingUserProfile } from "./profile.ts";
+import { settingUserProfile, settingUserSetting } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
 import { setupSpotifySearch } from './music.ts';
 import { initializeChatSystem, resetChatSystem, sendPongPlayerInput, sendPongPlayerReady } from "./chatClient.js";
@@ -32,10 +32,16 @@ let weatherWindow: DesktopWindow;
 let aiWindow: DesktopWindow;
 let musicWindow: DesktopWindow;
 
-function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string) {
+// Utility functions
+function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string, onOpenCallback?: () => void) {
   const trigger = document.getElementById(triggerId);
   if (trigger) {
-    trigger.addEventListener("click", () => windowInstance.open());
+    trigger.addEventListener("click", () => {
+      windowInstance.open();
+      if (typeof onOpenCallback === 'function') {
+        onOpenCallback();
+      }
+    });
     trigger.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
     trigger.classList.add("hover-important", "cursor-default");
   }
@@ -55,11 +61,8 @@ async function updateUIBasedOnAuth() {
   const isSignedIn = await checkSignedIn();
 
   if (isSignedIn) {
-    assignOpenTrigger(profileWindow, "profileBtn");
-    document.getElementById("profileBtn")?.addEventListener("click", () => {
-      settingUserProfile();
-    });
-    assignOpenTrigger(settingWindow, "settingTab");
+    assignOpenTrigger(profileWindow, "profileBtn", settingUserProfile);
+    assignOpenTrigger(settingWindow, "settingTab", settingUserSetting);
     assignOpenTrigger(logoutWindow, "logoutTab");
     assignOpenTrigger(pongWindow, "clickMeBtn");
     assignOpenTrigger(chatWindow, "chatBtn");
@@ -70,7 +73,7 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(weatherWindow, "openWeatherBtn");
 
     initializeChatSystem();
-    
+
     disableTrigger("signinTab");
     disableTrigger("signupTab");
   }
@@ -79,7 +82,6 @@ async function updateUIBasedOnAuth() {
     (window as any).resetSigninForm?.();
     assignOpenTrigger(signupWindow, "signupTab");
     (window as any).resetSignupForm?.();
-
     disableTrigger("profileBtn");
     disableTrigger("settingTab");
     disableTrigger("logoutTab");
@@ -103,7 +105,7 @@ async function updateUIBasedOnAuth() {
     aiWindow.close();
     musicWindow.close();
     if (typeof resetChatSystem === 'function') {
-        resetChatSystem();
+      resetChatSystem();
     }
   }
 }
@@ -154,6 +156,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupSigninForm(signinWindow);
   } catch (error) {
     console.error("Failed to initialize the signin window:", error);
   }
@@ -171,6 +174,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupSignupForm(signupWindow);
   } catch (error) {
     console.error("Failed to initialize the signup window:", error);
   }
@@ -188,6 +192,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupLogoutForm(logoutWindow);
+
   } catch (error) {
     console.error("Failed to initialize 'logoutWindow':", error);
   }
@@ -259,6 +265,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupInfoWindow(weatherWindow);
   }
   catch (error) {
     console.error("Failed to initialize 'weatherWindow':", error);
@@ -351,12 +358,21 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    fetch("/ai_prompt.txt")
+      .then(res => res.text())
+      .then(text => {
+        console.log("✅ Loaded system message");
+        setupAIWindow(musicWindow, text);
+      })
+      .catch(err => {
+        console.error("❌ Failed to load system message:", err);
+        setupAIWindow(musicWindow, "You are a helpful assistant.");
+      });
   } catch (error) {
     console.error("Failed to initialize the ai window:", error);
   }
 
 // --- Music Window ---
-
   try {
     musicWindow = new DesktopWindow({
       windowId: "musicWindow",
@@ -368,6 +384,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
+    setupSpotifySearch();
   } catch (error) {
     console.error("Failed to initialize the music window:", error);
   }
@@ -439,17 +456,10 @@ window.addEventListener("DOMContentLoaded", async () => {
       handleMultiplayerGameOver(winnerId, scores);
   });
 
-  setupSignupForm(signupWindow);
   initGoogleSignIn();
-  setupSigninForm(signinWindow);
-  setupSettingForm(settingWindow);
-  setupLogoutForm(logoutWindow);
-  setupInfoWindow(weatherWindow);
   settingUserProfile();
-  setupAIWindow(musicWindow);
-  setupSpotifySearch();
+  setupSettingForm(settingWindow);
 });
-
 
 
 // ----------------WINDOW TEMPLATE----------------
@@ -485,5 +495,3 @@ window.addEventListener("DOMContentLoaded", async () => {
   //       });
   //     }
 
-
-  // --- Menu Window ---

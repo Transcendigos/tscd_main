@@ -5,8 +5,9 @@ import fastifyWebsocket from '@fastify/websocket';
 import dotenv from 'dotenv';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import fs from 'fs';
-
+import fastifyStatic from '@fastify/static';
+import path from 'path';
+import multipart from '@fastify/multipart';
 
 import { initializeDB, getDB } from './db.js';
 import { initializeRedisClients, getRedisPublisher, getRedisSubscriber } from './redis.js';
@@ -47,12 +48,11 @@ function overrideConsoleMethods() {
   console.warn = (...args) => server.log.warn(...args);
   console.error = (...args) => server.log.error(...args);
   console.debug = (...args) => server.log.debug(...args);
-  originalConsoleLog("Console methods overridden to use server.log");
+
 }
 
 overrideConsoleMethods(); 
 console.log("Loaded API KEY:", process.env.OPENWEATHER_API_KEY);
-
 
 const start = async () => {
   try {
@@ -68,7 +68,17 @@ const start = async () => {
     await server.register(swaggerUi, {
       routePrefix: '/docs',
     });
+    
+    await server.register(multipart, {
+     limits: { fileSize: 5 * 1024 * 1024 }, // optional limit
+    });
 
+// Optional: serve static files like profile pictures
+    await server.register(fastifyStatic, {
+      root: path.join(process.cwd(), 'public'),
+      prefix: '/',
+    });
+    
     server.get('/', async (request, reply) => {
       reply.send({ hello: 'world' });
     });
@@ -84,10 +94,8 @@ const start = async () => {
     await server.register(fastifyWebsocket);
 
     await server.register(authRoutes);
-    server.log.info(`!!! INDEX.JS: Registered authRoutes. Checking decorator BEFORE chatRoutes: ${typeof server.broadcastPongGameState}`);
     
     await server.register(chatRoutes);
-    server.log.info(`!!! INDEX.JS: Registered chatRoutes. Checking decorator AFTER chatRoutes: ${typeof server.broadcastPongGameState}`);
     
     await server.register(twofaRoutes);
     await server.register(twoFASettingRoutes);
@@ -100,9 +108,8 @@ const start = async () => {
     server.log.info("!!! INDEX.JS: Registered pongRoutes.");
 
     await server.listen({ port: 3000, host: '0.0.0.0' });
-    console.log("=================TEST===============");
   } catch (err) {
-    const originalConsoleError = console.error; // In case override happened but server.log failed
+    const originalConsoleError = console.error;
     originalConsoleError("!!! INDEX.JS: SERVER START ERROR !!!", err);
     if(server.log && typeof server.log.error === 'function') server.log.error(err);
     process.exit(1);

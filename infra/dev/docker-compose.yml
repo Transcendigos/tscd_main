@@ -32,6 +32,7 @@ services:
     volumes:
       - sqlite-data:/app/data
       - ../../logs:/logs
+      - ../../frontend/public/uploads:/app/public/uploads
     ports:
       - "3000:3000"
     depends_on:

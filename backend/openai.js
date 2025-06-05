@@ -3,8 +3,9 @@ import fp from 'fastify-plugin';
 
 export default fp(async function openaiRoute(server, options) {
     server.post('/api/gpt', async (req, reply) => {
-        const { message } = req.body;
 
+        const { system, message } = req.body;
+        console.log("📥 Backend received:", { system, message });
         try {
             const gptRes = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
@@ -14,12 +15,11 @@ export default fp(async function openaiRoute(server, options) {
                 },
                 body: JSON.stringify({
                     model: 'gpt-3.5-turbo',
-                    messages: [{ role: 'user', content: message }],
+                    messages: [
+                        { role: 'system', content: system || "You are a helpful assistant." },
+                        { role: 'user', content: message }
+                    ]
                 }),
-                messages: [
-                    { role: "system", content: "You are a friendly assistant. If the user seems emotional or mentions music, suggest a playlist mood like 'chill', 'sad', or 'happy'." },
-                    { role: "user", content: message }
-                ]
             });
 
             const data = await gptRes.json();
@@ -30,6 +30,7 @@ export default fp(async function openaiRoute(server, options) {
                     detail: data, // send full body back for debugging
                 });
             }
+            
             const replyText = data.choices?.[0]?.message?.content?.trim() || null;
             reply.send({ reply: replyText });
 
