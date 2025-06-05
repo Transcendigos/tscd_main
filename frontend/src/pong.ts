@@ -27,13 +27,28 @@ interface Ball {
   color: string;
 }
 
-type UserInfo = { userId: number };
+interface ScorePayload {
+  tournamentId: number | null;
+  matchId: number;
+  userId: number;
+  username: string | null;
+  score: number;
+  scoreAgainst: number;
+  won: boolean;
+  vsAI: boolean;
+  durationSeconds: number;
+  opponentId: number | null;
+  opponentUsername: string | null;
+  isDisconnected: boolean;
+  rankDelta: number;
+}
 
-let currentUser: UserInfo = { userId: -1 }; // TEMP invalid default, overwritten on fetch
+type UserInfo = { userId: number; username: string };
+let currentUser: UserInfo = { userId: -1, username: "" }; // TEMP invalid default, overwritten on fetch
 let matchId: number;
 let matchStartTime: number;
-let opponentId: number; // set when the game starts if in multiplayer
-let opponentAlias: string;
+let opponentId = -1; // hard-coded for now
+let opponentUsername = "AI"; // hard-coded for now
 let opponentScore: number;
 
 async function fetchCurrentUser() {
@@ -48,84 +63,14 @@ async function fetchCurrentUser() {
 
 		const data = await response.json();
 		console.log("User info:", data);
-		currentUser = { userId: data.user.userId };
+		currentUser = { 
+			userId: data.user.userId,
+			username: data.user.username };
 	} catch (err) {
 		console.error("❌ Failed to fetch user:", err);
 		alert("You must be signed in to play.");
 		throw err; // force early failure if accessed too soon
 	}
-}
-
-async function postScore({
-  tournamentId,
-  matchId,
-  userId,
-  score,
-  scoreAgainst,
-  won,
-  vsAI,
-  durationSeconds,
-  opponentId,
-  opponentAlias,
-  isDisconnected,
-  rankDelta
-}: {
-  tournamentId: number | null,
-  matchId: number,
-  userId: number,
-  score: number,
-  scoreAgainst: number,
-  won: boolean,
-  vsAI: boolean,
-  durationSeconds: number,
-  opponentId: number | null,
-  opponentAlias: string | null,
-  isDisconnected: boolean,
-  rankDelta: number
-}) {
-	console.log("📤 Sending score payload:", {
-		tournament_id: tournamentId,
-		match_id: matchId,
-		user_id: userId,
-		score,
-		score_against: scoreAgainst,
-		won,
-		vs_ai: vsAI,
-		duration_seconds: durationSeconds,
-		opponent_id: opponentId,
-		opponent_alias: opponentAlias,
-		is_disconnected: isDisconnected,
-		rank_delta: rankDelta
-		});
-  try {
-    const response = await fetch("http://localhost:3000/api/scores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tournament_id: tournamentId,
-        match_id: matchId,
-        user_id: userId,
-        score,
-        score_against: scoreAgainst,
-        won,
-        vs_ai: vsAI,
-        duration_seconds: durationSeconds,
-        opponent_id: opponentId,
-        opponent_alias: opponentAlias,
-        is_disconnected: isDisconnected,
-        rank_delta: rankDelta
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to save score");
-    }
-
-    const data = await response.json();
-    console.log("Score saved!", data);
-  } catch (err) {
-    console.error("Error saving score:", err);
-  }
 }
 
 let leftPaddle: Paddle, rightPaddle: Paddle, ball: Ball;
@@ -486,15 +431,10 @@ function gameLoop(currentTime: number): void {
 	if (leftScore >= winningScore || rightScore >= winningScore) {
 		const finalScore = Math.max(leftScore, rightScore);
 		opponentScore = Math.min(leftScore, rightScore);
-		opponentAlias = "AI"; // hard-coded for now
 
-		// Determine if the current user was on the left or right paddle
-		const isLeftSide = currentUser!.userId === 1;
-		const myScore = isLeftSide ? leftScore : rightScore;
+		const won = leftScore > rightScore; // assume user always controls left
 
-		const won = myScore >= winningScore;
 
-		const opponentId = -1; // hard-coded for now
 		const winnerId = won ? currentUser!.userId : opponentId;
 		const loserId = won ? opponentId : currentUser!.userId;
 
@@ -508,6 +448,39 @@ function gameLoop(currentTime: number): void {
 	animationFrameId = requestAnimationFrame(gameLoop);
 }
 
+async function postScore(payload: ScorePayload): Promise<void> {
+	try {
+		const response = await fetch("http://localhost:3000/api/scores", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({
+			tournament_id: payload.tournamentId,
+			match_id: payload.matchId,
+			user_id: payload.userId,
+			username: payload.username,
+			score: payload.score,
+			score_against: payload.scoreAgainst,
+			won: payload.won,
+			vs_ai: payload.vsAI,
+			duration_seconds: payload.durationSeconds,
+			opponent_id: payload.opponentId,
+			opponent_username: payload.opponentUsername,
+			is_disconnected: payload.isDisconnected,
+			rank_delta: payload.rankDelta
+		})
+		});
+
+		if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`❌ Failed to save score: ${response.status} ${errorText}`);
+		}
+
+		console.log("✅ Score saved!", payload);
+	} catch (err) {
+		console.error("❌ Error saving score:", err);
+	}
+}
+
 async function endGame(winnerId: number, loserId: number, finalScore: number) {
 	console.log(`Game Over! Winner: ${winnerId}, Score: ${finalScore}`);
 	
@@ -518,19 +491,20 @@ async function endGame(winnerId: number, loserId: number, finalScore: number) {
 
 	try {
 		await postScore({
-		tournamentId: null,
-		matchId,
-		userId: currentUser!.userId,
-		score: myScore,
-		scoreAgainst: theirScore,
-		won: isWinner,
-		vsAI: false,
-		durationSeconds,
-		opponentId: null, // hard-coded for now because AI opponent only
-		opponentAlias,
-		isDisconnected: false,
-		rankDelta: 0 // hard-coded for now
-		});
+			tournamentId: null,
+			matchId,
+			userId: currentUser.userId,
+			username: currentUser.username,
+			score: myScore,
+			scoreAgainst: theirScore,
+			won: isWinner,
+			vsAI: true, // hard-coded for now
+			durationSeconds,
+			opponentId: null, // hard-coded for now because AI opponent only
+			opponentUsername,
+			isDisconnected: false,
+			rankDelta: 0 // hard-coded for now
+			});
 	} catch (err) {
 		console.error("❌ Error saving score:", err);
 	}
