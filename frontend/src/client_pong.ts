@@ -6,7 +6,7 @@ interface ClientPaddle {
 interface ClientBall {
   x: number; y: number; width: number; height: number; color: string;
 }
-interface PongMessage { // General interface for messages from Pong server
+interface PongMessage {
     type: string;
     message?: string;
     context?: string;
@@ -31,7 +31,7 @@ let canvas: HTMLCanvasElement;
 let pongCtx: CanvasRenderingContext2D;
 
 let socket: WebSocket | null = null;
-const WEBSOCKET_URL = 'ws://localhost:3000/ws/remotepong'; // TODO: Ensure this matches your Fastify port
+const WEBSOCKET_URL = 'ws://localhost:3000/ws/remotepong';
 
 let localPlayerId: number | null = null;
 let playerSide: 'left' | 'right' | 'spectator' | null = null;
@@ -51,8 +51,8 @@ const BALL_HEIGHT_CLIENT = 10;
 const keyPress: Record<string, boolean> = {};
 let animationFrameId: number | null = null;
 
-function handleKeyDown(event: KeyboardEvent) { keyPress[event.key] = true; }
-function handleKeyUp(event: KeyboardEvent) { keyPress[event.key] = false; }
+function handleKeyDown(event: KeyboardEvent) { keyPress[event.key.toLowerCase()] = true; }
+function handleKeyUp(event: KeyboardEvent) { keyPress[event.key.toLowerCase()] = false; }
 
 function addKeyListeners() {
     document.removeEventListener("keydown", handleKeyDown);
@@ -74,7 +74,7 @@ export function handleUnexpectedDisconnection() {
     waitingForGameMessage = "Pong Connection Lost. Click button to retry.";
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
-    draw();
+    if (typeof draw === 'function') draw();
 
     if ((window as any).pongConnectionLostCallback) {
         (window as any).pongConnectionLostCallback();
@@ -94,12 +94,43 @@ export function setCanvas(c: HTMLCanvasElement): void {
 
 function initializeClientVisualsDefault(): void {
     if (!canvas) { console.warn("CLIENT_PONG.TS: initializeClientVisualsDefault - canvas not ready."); return; }
-    leftPaddle = { x: 10, y: canvas.height / 2 - PADDLE_HEIGHT_CLIENT / 2, width: PADDLE_WIDTH_CLIENT, height: PADDLE_HEIGHT_CLIENT, color: '#44bece', score: 0 };
-    rightPaddle = { x: canvas.width - PADDLE_WIDTH_CLIENT - 10, y: canvas.height / 2 - PADDLE_HEIGHT_CLIENT / 2, width: PADDLE_WIDTH_CLIENT, height: PADDLE_HEIGHT_CLIENT, color: '#FF69B4', score: 0 };
+    const defaultColor = '#44bece';
+    const playerHighlightColor = '#39FF14';
+
+    leftPaddle = { x: 10, y: canvas.height / 2 - PADDLE_HEIGHT_CLIENT / 2, width: PADDLE_WIDTH_CLIENT, height: PADDLE_HEIGHT_CLIENT, color: defaultColor, score: 0 };
+    rightPaddle = { x: canvas.width - PADDLE_WIDTH_CLIENT - 10, y: canvas.height / 2 - PADDLE_HEIGHT_CLIENT / 2, width: PADDLE_WIDTH_CLIENT, height: PADDLE_HEIGHT_CLIENT, color: defaultColor, score: 0 };
+    
+    // Update colors based on playerSide if already known
+    if (playerSide === 'left') {
+        leftPaddle.color = playerHighlightColor;
+        rightPaddle.color = defaultColor;
+    } else if (playerSide === 'right') {
+        rightPaddle.color = playerHighlightColor;
+        leftPaddle.color = defaultColor;
+    }
+
     ball = { x: canvas.width / 2 - BALL_WIDTH_CLIENT / 2, y: canvas.height / 2 - BALL_HEIGHT_CLIENT / 2, width: BALL_WIDTH_CLIENT, height: BALL_HEIGHT_CLIENT, color: 'white' };
-    console.log("CLIENT_PONG.TS: Visuals initialized to default.");
-    // No draw() here, let the calling context decide when to first draw.
+    console.log("CLIENT_PONG.TS: Visuals initialized/updated. Player side:", playerSide);
 }
+
+function updatePaddleColors() {
+    const defaultColor = '#44bece';
+    const playerHighlightColor = '#39FF14';
+
+    if (!leftPaddle || !rightPaddle) initializeClientVisualsDefault();
+
+    if (playerSide === 'left') {
+        if(leftPaddle) leftPaddle.color = playerHighlightColor;
+        if(rightPaddle) rightPaddle.color = defaultColor;
+    } else if (playerSide === 'right') {
+        if(rightPaddle) rightPaddle.color = playerHighlightColor;
+        if(leftPaddle) leftPaddle.color = defaultColor;
+    } else { // Spectator or no side assigned yet
+        if(leftPaddle) leftPaddle.color = defaultColor;
+        if(rightPaddle) rightPaddle.color = defaultColor;
+    }
+}
+
 
 function updateLocalGameState(serverBall: any, serverPaddles: any) {
   if (!ball || !leftPaddle || !rightPaddle) {
@@ -107,12 +138,12 @@ function updateLocalGameState(serverBall: any, serverPaddles: any) {
   }
   if (serverBall) {
     ball.x = serverBall.x; ball.y = serverBall.y;
-    // If server sends ball dimensions: ball.width = serverBall.width; ball.height = serverBall.height;
   }
   if (serverPaddles) {
     if (serverPaddles.left) { leftPaddle.y = serverPaddles.left.y; leftPaddle.score = serverPaddles.left.score; }
     if (serverPaddles.right) { rightPaddle.y = serverPaddles.right.y; rightPaddle.score = serverPaddles.right.score; }
   }
+  updatePaddleColors(); // Ensure paddle colors are correct after state update
 }
 
 function draw(): void {
@@ -129,7 +160,6 @@ function draw(): void {
     drawMidline();
     drawScore();
   }
-  // drawVerticalCRTLines(); // Uncomment if you have this function
 
   if (waitingForGameMessage) {
     pongCtx.font = "20px 'Press Start 2P'";
@@ -161,6 +191,7 @@ function drawPaddle(paddle: ClientPaddle): void {
   pongCtx.fillStyle = paddle.color; pongCtx.shadowColor = "#0fffff";
   roundRect(pongCtx, paddle.x, paddle.y, paddle.width, paddle.height, 10);
   pongCtx.fill();
+  pongCtx.shadowBlur = 0;
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number): void {
@@ -175,35 +206,54 @@ const PADDLE_MOVE_SPEED_CLIENT = 7;
 
 function handlePlayerInput(): void {
   if (!playerSide || playerSide === 'spectator' || !socket || socket.readyState !== WebSocket.OPEN || !gameIsRunningClient) return;
-  const myPaddle = (playerSide === 'left') ? leftPaddle : rightPaddle;
-  if (!myPaddle) return; // Should not happen if playerSide is set
-  let moved = false;
-
-  if (playerSide === 'left') {
-    if (keyPress['w'] && myPaddle.y > 0) { myPaddle.y -= PADDLE_MOVE_SPEED_CLIENT; moved = true; }
-    if (keyPress['s'] && myPaddle.y + myPaddle.height < canvas.height) { myPaddle.y += PADDLE_MOVE_SPEED_CLIENT; moved = true; }
-  } else if (playerSide === 'right') {
-    if (keyPress['ArrowUp'] && myPaddle.y > 0) { myPaddle.y -= PADDLE_MOVE_SPEED_CLIENT; moved = true; }
-    if (keyPress['ArrowDown'] && myPaddle.y + myPaddle.height < canvas.height) { myPaddle.y += PADDLE_MOVE_SPEED_CLIENT; moved = true; }
-  }
   
-  myPaddle.y = Math.max(0, Math.min(myPaddle.y, canvas.height - myPaddle.height)); // Clamp
+  const myPaddle = (playerSide === 'left') ? leftPaddle : rightPaddle;
+  if (!myPaddle) return;
+
+  let moved = false;
+  
+  if (keyPress['w'] && myPaddle.y > 0) {
+    myPaddle.y -= PADDLE_MOVE_SPEED_CLIENT;
+    moved = true;
+  }
+  if (keyPress['s'] && myPaddle.y + myPaddle.height < canvas.height) { // 's' for DOWN
+    myPaddle.y += PADDLE_MOVE_SPEED_CLIENT;
+    moved = true;
+  }
+
+  // UNCOMMENT THOS AND COMMENT BLOCK ABOVE TO USE ARROWS INSTEAD OF W AND S
+  // if (keyPress['arrowup'] && myPaddle.y > 0) {
+  //   myPaddle.y -= PADDLE_MOVE_SPEED_CLIENT;
+  //   moved = true;
+  // }
+  // if (keyPress['arrowdown'] && myPaddle.y + myPaddle.height < canvas.height) {
+  //   myPaddle.y += PADDLE_MOVE_SPEED_CLIENT;
+  //   moved = true;
+  // }
+  
+  myPaddle.y = Math.max(0, Math.min(myPaddle.y, canvas.height - myPaddle.height));
 
   if (moved && myPaddle.y !== lastSentPaddleY) {
     socket.send(JSON.stringify({ type: 'paddle_move', y: myPaddle.y }));
     lastSentPaddleY = myPaddle.y;
-  } else if (!moved) {
+  } else if (!moved && lastSentPaddleY !== null) {
     lastSentPaddleY = null;
   }
 }
 
 function clientGameLoop(): void {
-  if (!gameIsRunningClient && !waitingForGameMessage) { // Only stop loop if game not running AND no message to display
+  if (!gameIsRunningClient && !waitingForGameMessage) {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
       return;
   }
-  if (!canvas) { /* ... stop loop ... */ return; }
+  if (!canvas || !pongCtx) {
+      console.error("CLIENT_PONG.TS: Canvas or context not available in game loop. Stopping.");
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+      waitingForGameMessage = "Error: Canvas unavailable.";
+      return;
+  }
 
   handlePlayerInput();
   draw();
@@ -218,34 +268,28 @@ function connectToServerPromise(): Promise<{ playerId: number, username: string 
         return;
     }
     if (socket && socket.readyState === WebSocket.OPEN) {
-        console.warn("CLIENT_PONG.TS: connectToServerPromise: Socket already open. This might indicate a logic error or a successful prior connection.");
-        // If we have localPlayerId, it implies we might have authenticated.
-        // This state should ideally be handled by startPongGame ensuring a clean slate if a *new* connection is desired.
-        if (localPlayerId !== null) { // Check if we think we are authenticated from a previous session on this socket
-            // This is tricky. For now, we'll let startPongGame handle it by closing this socket first if it wants a fresh one.
-            // This promise is for a *new* full connection cycle.
-        }
-        // For safety, if this function is called when socket is OPEN, let startPongGame close it first if a fresh one is needed.
-        // For now, let's reject, assuming startPongGame should have cleaned up.
-        reject(new Error("Socket already open. Clean up before new connection."));
+        console.warn("CLIENT_PONG.TS: connectToServerPromise: Socket already open, but a new connection was requested. This is unexpected if startPongGame is used correctly.");
+        reject(new Error("Socket already open. Ensure old socket is closed before new connection."));
         return;
     }
 
     console.log("CLIENT_PONG.TS: Attempting NEW WebSocket connection to Pong server...");
     waitingForGameMessage = "Connecting to Pong...";
-    draw();
+    if (typeof draw === 'function') draw();
 
-    socket = new WebSocket(WEBSOCKET_URL);
+
+    const newSocket = new WebSocket(WEBSOCKET_URL);
     let promiseSettled = false;
 
-    socket.onopen = () => {
+    const onOpenHandler = () => {
+      if (promiseSettled) return;
+      socket = newSocket;
       console.log("CLIENT_PONG.TS: WebSocket Connection Opened! Waiting for Pong auth success from server.");
     };
 
-    socket.onmessage = (event) => {
+    const onMessageHandler = (event: MessageEvent) => {
       try {
         const message = JSON.parse(event.data as string) as PongMessage;
-        // console.log("CLIENT_PONG.TS: Received message:", message.type, message); // Verbose
 
         switch (message.type) {
             case 'pong_auth_success':
@@ -259,33 +303,31 @@ function connectToServerPromise(): Promise<{ playerId: number, username: string 
                 break;
             case 'assign_side':
                 playerSide = message.side!;
-                if (playerSide === 'left') leftPaddle.color = '#39FF14'; // Player's paddle color
-                else if (playerSide === 'right') rightPaddle.color = '#39FF14';
+                updatePaddleColors();
                 waitingForGameMessage = `You are ${playerSide}. Waiting for opponent...`;
                 console.log(`CLIENT_PONG.TS: Assigned side: ${playerSide}`);
                 break;
             case 'initial_pong_state':
-                updateLocalGameState(message.ball, message.paddles);
                 playerSide = message.yourSide!;
                 localPlayerId = message.yourPlayerId!;
-                if (playerSide === 'left') leftPaddle.color = '#39FF14';
-                else if (playerSide === 'right') rightPaddle.color = '#39FF14';
+                updateLocalGameState(message.ball, message.paddles);
                 gameIsRunningClient = message.gameIsRunning!;
                 const numPlayers = message.playersInGame?.length || 0;
-                if (message.gameIsRunning) waitingForGameMessage = null;
-                else if (numPlayers < 2) waitingForGameMessage = `You are ${playerSide}. Waiting for ${2 - numPlayers} opponent...`;
-                else waitingForGameMessage = `You are ${playerSide}. Ready.`;
+                if (message.gameIsRunning) {
+                    waitingForGameMessage = null;
+                } else if (numPlayers < 2) {
+                    waitingForGameMessage = `You are ${playerSide}. Waiting for ${2 - numPlayers} opponent...`;
+                } else {
+                    waitingForGameMessage = `You are ${playerSide}. Ready to play.`;
+                }
                 break;
             case 'game_start':
                 gameIsRunningClient = true;
                 waitingForGameMessage = null;
-                updateLocalGameState(message.ball, message.paddles);
-                // Server now sends playerSides map with IDs, so client can always know who is who
                 if (message.playerSides && localPlayerId !== null) {
-                    playerSide = message.playerSides[localPlayerId.toString()] || playerSide; // Update if needed
-                    if (playerSide === 'left') leftPaddle.color = '#39FF14';
-                    else if (playerSide === 'right') rightPaddle.color = '#39FF14';
+                    playerSide = message.playerSides[localPlayerId.toString()] || playerSide;
                 }
+                updateLocalGameState(message.ball, message.paddles);
                 console.log("CLIENT_PONG.TS: Game started!");
                 break;
             case 'game_update':
@@ -294,20 +336,17 @@ function connectToServerPromise(): Promise<{ playerId: number, username: string 
             case 'game_over':
                 gameIsRunningClient = false;
                 waitingForGameMessage = `Game Over! ${message.winnerSide ? message.winnerSide.toUpperCase() + ' WINS!' : (message.reason || '')}.`;
-                // (main.ts handles "Press Enter" via its own key listener, looking at waitingForGameMessage)
                 console.log("CLIENT_PONG.TS: Game over.");
                 break;
-            case 'status_update': // Generic status from server
-                if (message.context?.startsWith('pong_')) { // Only pong-related status
+            case 'status_update':
+                if (message.context?.startsWith('pong_')) {
                     waitingForGameMessage = message.message || "Server update...";
                 }
                 break;
             case 'player_joined_pong':
             case 'player_left_pong':
                  console.log("CLIENT_PONG.TS: Player joined/left:", message.user);
-                 // Potentially update a player list UI here or the waiting message if game not started
-                 if(!gameIsRunningClient) { // pongRoom is server-side concept
-                    // client needs its own count or rely on server's waiting message
+                 if(!gameIsRunningClient && message.type === 'player_left_pong' && waitingForGameMessage && !waitingForGameMessage.toLowerCase().includes("error") && !waitingForGameMessage.toLowerCase().includes("lost")) {
                  }
                  break;
             case 'error':
@@ -316,6 +355,7 @@ function connectToServerPromise(): Promise<{ playerId: number, username: string 
                     waitingForGameMessage = `Error: ${message.message}`;
                     if (message.message?.toLowerCase().includes("authentication") && !promiseSettled) {
                         promiseSettled = true;
+                        if (socket !== newSocket) newSocket.close(1000, "Auth error before socket fully assigned");
                         reject(new Error(message.message));
                     }
                 }
@@ -323,31 +363,50 @@ function connectToServerPromise(): Promise<{ playerId: number, username: string 
             default:
                 // console.log("CLIENT_PONG.TS: Unhandled message type:", message.type);
         }
-         draw();
+        if (typeof draw === 'function') draw();
       } catch (e) {
         console.error("CLIENT_PONG.TS: Error processing message:", e, event.data);
       }
     };
 
-    socket.onerror = (event) => {
+    const onErrorHandler = (event: Event) => {
       console.error("CLIENT_PONG.TS: WebSocket Error Event:", event);
       if (!promiseSettled) {
         promiseSettled = true;
         reject(new Error("WebSocket connection error event."));
       }
-      socket = null; // Ensure socket is cleared on error
+      if (newSocket.readyState !== WebSocket.CLOSED) {
+          newSocket.close();
+      }
+      if (socket === newSocket) {
+          socket = null;
+      }
       handleUnexpectedDisconnection();
     };
 
-    socket.onclose = (event) => {
+    const onCloseHandler = (event: CloseEvent) => {
       console.log("CLIENT_PONG.TS: WebSocket Connection Closed for Pong.", `Code: ${event.code}, Reason: "${event.reason}", Clean: ${event.wasClean}`);
-      if (!promiseSettled && event.code !== 1000 /* Normal closure */ && event.code !== 4001 /* Server replaced */) {
+      if (!promiseSettled && event.code !== 1000 && event.code !== 4001 && !event.wasClean) {
         promiseSettled = true;
         reject(new Error(`WebSocket closed unexpectedly: ${event.code} ${event.reason || ''}`));
       }
-      socket = null; // Ensure socket is cleared on close
-      handleUnexpectedDisconnection();
+      newSocket.onopen = null;
+      newSocket.onmessage = null;
+      newSocket.onerror = null;
+      newSocket.onclose = null;
+
+      if (socket === newSocket) {
+          socket = null; 
+          handleUnexpectedDisconnection();
+      } else if (!promiseSettled && !gameIsRunningClient) { 
+          handleUnexpectedDisconnection();
+      }
     };
+
+    newSocket.onopen = onOpenHandler;
+    newSocket.onmessage = onMessageHandler;
+    newSocket.onerror = onErrorHandler;
+    newSocket.onclose = onCloseHandler;
   });
 }
 
@@ -357,7 +416,7 @@ export async function startPongGame(): Promise<void> {
   if (!canvas || !pongCtx) {
     console.error("CLIENT_PONG.TS: Canvas not set. Call setCanvas first.");
     waitingForGameMessage = "Error: Canvas not ready for Pong.";
-    if (typeof draw === 'function') draw(); // Attempt to draw error if possible
+    if (typeof draw === 'function') draw();
     throw new Error("Canvas not set for Pong.");
   }
   
@@ -365,35 +424,44 @@ export async function startPongGame(): Promise<void> {
   animationFrameId = null;
   
   addKeyListeners();
-  initializeClientVisualsDefault();
-  draw(); // Draw initial "connecting" or default state
   gameIsRunningClient = false;
-  playerSide = null;
-  // Do not reset localPlayerId here; it's set upon successful auth via connectToServerPromise
+  playerSide = null; 
+  
+  initializeClientVisualsDefault();
+  if (typeof draw === 'function') draw();
+
 
   try{
-    // If a previous socket exists and isn't properly closed, explicitly close it.
     if (socket) {
         console.log("CLIENT_PONG.TS: Previous socket instance found in startPongGame. Closing it before new attempt.");
-        socket.onclose = null; // Detach old handlers to prevent them from interfering
+        socket.onclose = null; 
         socket.onerror = null;
         if(socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
             socket.close(1000, "Client re-initiating connection");
         }
-        socket = null; // Nullify it so connectToServerPromise creates a new one
+        socket = null; 
     }
 
-    await connectToServerPromise(); // This promise resolves after 'pong_auth_success'
+    await connectToServerPromise(); 
     console.log("CLIENT_PONG.TS: Connection promise resolved. Pong setup successful. Starting game loop.");
-    animationFrameId = requestAnimationFrame(clientGameLoop); // Start game loop only on success
+    if (canvas && pongCtx) {
+        animationFrameId = requestAnimationFrame(clientGameLoop);
+    } else {
+        throw new Error("Canvas became unavailable after connection.");
+    }
+
   }
-  catch (error){
+  catch (error: any){
     console.error("CLIENT_PONG.TS: Failed to establish Pong connection in startPongGame:", error);
     waitingForGameMessage = `Pong Connection Failed: ${error.message || "Unknown error"}`;
     if (typeof draw === 'function') draw();
-    removeKeyListeners(); // Remove listeners if connection failed
-    socket = null; // Ensure socket is null after a failed attempt from connectToServerPromise
-    throw error; 
+    removeKeyListeners(); 
+    if (socket) {
+        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+            socket.close(1000, "Connection failed during setup");
+        }
+        socket = null;
+    }
   }
 }
 
@@ -406,13 +474,13 @@ export function stopPongGame(): void {
   }
 
   if (socket) {
-    socket.onopen = null; // Detach all listeners to prevent them from firing during/after explicit close
+    socket.onopen = null; 
     socket.onmessage = null;
     socket.onerror = null;
-    socket.onclose = null; // Crucial: prevent default onclose from calling handleUnexpectedDisconnection again
+    socket.onclose = null; 
     
     if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
-        console.log("CLIENT_PONG.TS: Closing active WebSocket connection.");
+        console.log("CLIENT_PONG.TS: Closing active WebSocket connection from stopPongGame.");
         socket.close(1000, "Client called stopPongGame.");
     }
     socket = null;
@@ -420,9 +488,9 @@ export function stopPongGame(): void {
 
   gameIsRunningClient = false;
   playerSide = null;
-  // localPlayerId = null; // Decide if user ID should be cleared on stop
+  // localPlayerId = null; // Decide if user ID should be cleared
   waitingForGameMessage = "Pong game stopped.";
   console.log('CLIENT_PONG.TS: Multiplayer Pong stopped and resources cleaned.');
-  initializeClientVisualsDefault(); // Reset to default screen
-  draw();
+  initializeClientVisualsDefault();
+  if (typeof draw === 'function') draw();
 }
