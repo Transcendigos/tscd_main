@@ -70,11 +70,18 @@ async function renderWeatherData() {
 
 ///MAIN SECTION
 
-export function setupInfoWindow(weatherWindow: DesktopWindow) {
+export function setupInfoWindow(weatherWindow: DesktopWindow, grafanaWindow: DesktopWindow) {
   const openWeatherBtn = document.getElementById("openWeatherBtn") as HTMLButtonElement;
 
   openWeatherBtn?.addEventListener("click", async () => {
     weatherWindow.open();
+    await renderWeatherData();
+  });
+
+  const openGrafanaBtn = document.getElementById("openGrafanaBtn") as HTMLButtonElement;
+
+  openGrafanaBtn?.addEventListener("click", async () => {
+    grafanaWindow.open();
     await renderWeatherData();
   });
 }

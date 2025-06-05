@@ -7,6 +7,8 @@ import {
   activeGames as pongActiveGames,
   stopGame,
 } from "./pong_server.js";
+import { chatMessagesCounter } from './monitoring.js';
+
 
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
 
@@ -328,6 +330,12 @@ async function chatRoutes(server, options) {
               { sender: senderPrefixedId, recipientChannel, content },
               "Chat message published to Redis"
             );
+
+            //TO STORE THE METRIC IN PROMETHEUS
+            chatMessagesCounter.inc({
+              sender_id: senderRawId.toString(),
+              receiver_id: recipientRawId.toString(),
+            });
 
             db.run(
               "INSERT INTO chat_messages (sender_id, receiver_id, message_content) VALUES (?, ?, ?)",
