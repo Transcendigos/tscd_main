@@ -43,4 +43,8 @@ See Prometheus:
 See Grafana:
 - http://localhost:3001/
 - Username: admin
-- Password: Transcendence
+- Password: admin
+    the password and user reset to admin each time you restart the dockers
+
+svg free icon code:
+- https://icons.getbootstrap.com/

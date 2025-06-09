@@ -415,15 +415,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
     });
-    fetch("/ai_prompt.txt")
-      .then(res => res.text())
-      .then(text => {
-        console.log("✅ Loaded system message");
-        setupAIWindow(musicWindow, text, commandWindow);
-      })
-      .catch(err => {
-        console.error("❌ Failed to load system message:", err);
-      });
   } catch (error) {
     console.error("Failed to initialize the ai window:", error);
   }
@@ -516,6 +507,17 @@ window.addEventListener("DOMContentLoaded", async () => {
   settingUserProfile();
   setupSettingForm(settingWindow);
   setupInfoWindow(weatherWindow, grafanaWindow, commandWindow, aboutWindow);
+  
+  fetch("/ai_prompt.txt")
+    .then(res => res.text())
+    .then(text => {
+      console.log("✅ Loaded system message");
+      setupAIWindow(musicWindow, text);
+    })
+    .catch(err => {
+      console.error("❌ Failed to load system message:", err);
+    });
+
 });
 
 
