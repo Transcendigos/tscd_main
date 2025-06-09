@@ -1,4 +1,5 @@
 import { DesktopWindow } from "./DesktopWindow.js";
+import { resetAIWindow } from "./aiassistant.js";
 
 export function setupLogoutForm(logoutWindow: DesktopWindow) {
 
@@ -33,8 +34,10 @@ export function setupLogoutForm(logoutWindow: DesktopWindow) {
       method: "POST",
       credentials: "include",
     });
-
+    
+    resetAIWindow();
     logoutWindow.close(); // properly uses DesktopWindow method
+
     window.dispatchEvent(new Event("auth:updated"));
 
   });

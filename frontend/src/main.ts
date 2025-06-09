@@ -31,6 +31,8 @@ let statsWindow: DesktopWindow;
 let infoWindow: DesktopWindow;
 let weatherWindow: DesktopWindow;
 let grafanaWindow: DesktopWindow;
+let commandWindow: DesktopWindow;
+let aboutWindow: DesktopWindow;
 let aiWindow: DesktopWindow;
 let musicWindow: DesktopWindow;
 
@@ -70,7 +72,7 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(chatWindow, "chatBtn");
     assignOpenTrigger(infoWindow, "infoTab");
     assignOpenTrigger(statsWindow, "statsTab");
-    assignOpenTrigger(aiWindow, "aiBtn");
+    assignOpenTrigger(aiWindow, "aiBtn", commandWindow.open);
     assignOpenTrigger(musicWindow, "musicBtn");
     assignOpenTrigger(weatherWindow, "openWeatherBtn");
 
@@ -290,6 +292,42 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize 'grafanaWindow':", error);
   }
 
+  // --- COMMAND Window ---
+
+  try {
+    commandWindow = new DesktopWindow({
+      windowId: "commandWindow",
+      dragHandleId: "commandDragHandle",
+      resizeHandleId: "commandResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "commandWindow",
+      closeButtonId: "closecommandBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  }
+  catch (error) {
+    console.error("Failed to initialize 'commandWindow':", error);
+  }
+
+  // --- ABOUT Window ---
+
+  try {
+    aboutWindow = new DesktopWindow({
+      windowId: "aboutWindow",
+      dragHandleId: "aboutDragHandle",
+      resizeHandleId: "aboutResizeHandle",
+      boundaryContainerId: "main",
+      visibilityToggleId: "aboutWindow",
+      closeButtonId: "closeaboutBtn",
+      showClasses: defaultShowClasses,
+      hideClasses: defaultHideClasses,
+    });
+  }
+  catch (error) {
+    console.error("Failed to initialize 'aboutWindow':", error);
+  }
+
   // --- Stats Window ---
 
   try {
@@ -381,11 +419,10 @@ window.addEventListener("DOMContentLoaded", async () => {
       .then(res => res.text())
       .then(text => {
         console.log("✅ Loaded system message");
-        setupAIWindow(musicWindow, text);
+        setupAIWindow(musicWindow, text, commandWindow);
       })
       .catch(err => {
         console.error("❌ Failed to load system message:", err);
-        setupAIWindow(musicWindow, "You are a helpful assistant.");
       });
   } catch (error) {
     console.error("Failed to initialize the ai window:", error);
@@ -478,7 +515,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   initGoogleSignIn();
   settingUserProfile();
   setupSettingForm(settingWindow);
-  setupInfoWindow(weatherWindow, grafanaWindow);
+  setupInfoWindow(weatherWindow, grafanaWindow, commandWindow, aboutWindow);
 });
 
 

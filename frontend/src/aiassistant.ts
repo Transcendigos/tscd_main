@@ -119,7 +119,6 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
   const input = document.getElementById("chatInput") as HTMLInputElement;
   const messages = document.getElementById("chatMessages");
 
-
   if (!form || !input || !messages) return;
 
   setupUnifiedMic(input);
