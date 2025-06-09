@@ -14,9 +14,27 @@ const activeConnections = new Map();
 const userSubscribers = new Map();
 const pongGameConnections = new Map();
 
+let globalSubscriber; 
+
 async function chatRoutes(server, options) {
   const db = getDB();
   const redisPublisher = getRedisPublisher();
+
+
+if (!globalSubscriber) {
+      globalSubscriber = createNewRedisSubscriber(server.log);
+      globalSubscriber.subscribe('chat:status');
+      globalSubscriber.on('message', (channel, message) => {
+          if (channel === 'chat:status') {
+              activeConnections.forEach(ws => {
+                  if (ws.readyState === 1) {
+                      ws.send(message);
+                  }
+              });
+          }
+      });
+  }
+
 
   server.decorate("broadcastPongGameState", (gameId, statePayload) => {
     const connections = pongGameConnections.get(gameId);
@@ -76,7 +94,7 @@ async function chatRoutes(server, options) {
     handler: (req, reply) => {
       reply.code(400).send({ error: "This is a WebSocket endpoint." });
     },
-    wsHandler: (connection, req) => {
+    wsHandler: async (connection, req) => {
       const ws = connection;
 
       server.log.info(
@@ -120,6 +138,14 @@ async function chatRoutes(server, options) {
 
         ws.authenticatedUserId = prefixedAuthenticatedUserId;
         ws.rawAuthenticatedUserId = rawAuthenticatedUserId;
+
+        await redisPublisher.sadd('online_users', prefixedAuthenticatedUserId);
+        const userOnlineNotification = JSON.stringify({
+            type: "userOnline",
+            user: { id: prefixedAuthenticatedUserId, username: userJWTPayload.username, picture: userJWTPayload.picture }
+        });
+        await redisPublisher.publish('chat:status', userOnlineNotification);
+        
 
         if (activeConnections.has(prefixedAuthenticatedUserId)) {
           const oldSocket = activeConnections.get(prefixedAuthenticatedUserId);
@@ -746,6 +772,17 @@ async function chatRoutes(server, options) {
           `WebSocket client disconnected.`
         );
         if (ws.authenticatedUserId) {
+
+
+          await redisPublisher.srem('online_users', ws.authenticatedUserId);
+          
+          const userOfflineNotification = JSON.stringify({
+              type: "userOffline",
+              user: { id: ws.authenticatedUserId, username: ws.userJWTPayload?.username }
+          });
+          await redisPublisher.publish('chat:status', userOfflineNotification);
+
+
           if (activeConnections.get(ws.authenticatedUserId) === ws) {
             activeConnections.delete(ws.authenticatedUserId);
           }
@@ -862,26 +899,31 @@ async function chatRoutes(server, options) {
       return reply.code(401).send({ error: "Unauthorized" });
     }
     try {
-      const payload = jwt.verify(token, JWT_SECRET);
-      const currentUserRawId = payload.userId;
+        const payload = jwt.verify(token, JWT_SECRET);
+        const currentUserRawId = payload.userId;
+        const redisPublisher = getRedisPublisher();
+        const onlineUserPrefixedIds = await redisPublisher.smembers('online_users');
 
-      if (typeof currentUserRawId === "undefined") {
-        return reply.code(500).send({ error: "User ID not found." });
-      }
+        const usersFromDB = await new Promise((resolve, reject) => {
+            db.all(
+                "SELECT id, username, picture FROM users WHERE id != ? ORDER BY username ASC",
+                [currentUserRawId],
+                (err, rows) => (err ? reject(err) : resolve(rows))
+            );
+        });
 
-      const users = await new Promise((resolve, reject) => {
-        db.all(
-          "SELECT id, username, picture FROM users WHERE id != ? ORDER BY username ASC",
-          [currentUserRawId],
-          (err, rows) => {
-            if (err) {
-              return reject(err);
-            }
-            resolve(rows.map((row) => ({ ...row, id: `user_${row.id}` })));
-          }
-        );
-      });
-      reply.send(users);
+        const usersWithStatus = usersFromDB.map(user => {
+            const prefixedId = `user_${user.id}`;
+            return {
+                id: prefixedId,
+                username: user.username,
+                picture: user.picture,
+                isOnline: onlineUserPrefixedIds.includes(prefixedId)
+            };
+        });
+        
+        reply.send(usersWithStatus);
+
     } catch (err) {
       server.log.error({ err }, "/api/chat/users error");
       if (
