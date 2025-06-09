@@ -1,3 +1,5 @@
+// backend/pong_routes.js
+
 import { startGame, activeGames, isPlayerInActiveGame } from "./pong_server.js";
 import { getDB } from "./db.js";
 import jwt from "jsonwebtoken";
@@ -13,17 +15,13 @@ export default async function pongRoutes(server, options) {
   const db = getDB();
   const redisPublisher = getRedisPublisher();
   
-  console.log(`--- PONG_ROUTES.JS: typeof server.broadcastPongGameState: ${typeof server.broadcastPongGameState} ---`);
-
   server.post("/api/pong/games", async (req, reply) => {
-    console.log(`--- PONG_ROUTES.JS /api/pong/games: typeof server.broadcastPongGameState: ${typeof server.broadcastPongGameState} ---`);
     const inviterToken = req.cookies.auth_token;
     if (!inviterToken) {
       return reply.code(401).send({ error: "Authentication required to create a game." });
     }
 
     const { opponentPlayerId } = req.body; 
-
     if (!opponentPlayerId) {
       return reply.code(400).send({ error: "Opponent player ID is required." });
     }
@@ -41,20 +39,8 @@ export default async function pongRoutes(server, options) {
       return reply.code(401).send({ error: "Invalid or expired inviter token." });
     }
 
-    if (inviterUserId === opponentPlayerId) {
-      return reply.code(400).send({ error: "Cannot invite yourself to a game." });
-    }
-
-    if (isPlayerInActiveGame(inviterUserId)) {
-      server.log.warn({ inviterUserId }, "Inviter attempted to create game while already in an active game.");
-      return reply.code(409).send({ error: "You are already in an active game." });
-    }
-    
-    if (isPlayerInActiveGame(opponentPlayerId)) {
-      server.log.warn({ opponentPlayerId }, "Attempted to invite player who is already in an active game.");
-      return reply.code(409).send({ error: "Opponent is currently in another game." });
-    }
-
+    // --- MOVED THIS BLOCK UP ---
+    // It must be defined before it is used in the block check.
     let opponentRawId;
     if (typeof opponentPlayerId === 'string' && opponentPlayerId.startsWith('user_')) {
         opponentRawId = parseInt(opponentPlayerId.substring(5), 10);
@@ -66,7 +52,33 @@ export default async function pongRoutes(server, options) {
         server.log.warn({ opponentPlayerIdReceived: opponentPlayerId }, "Could not parse raw numeric ID from opponentPlayerId");
         return reply.code(400).send({ error: "Invalid opponent player ID format." });
     }
+    // --- END MOVED BLOCK ---
 
+    if (inviterRawId === opponentRawId) {
+      return reply.code(400).send({ error: "Cannot invite yourself to a game." });
+    }
+
+    const isBlocked = await new Promise((resolve, reject) => {
+        db.get(`SELECT 1 FROM blocked_users 
+                WHERE (blocker_id = ? AND blocked_id = ?) 
+                   OR (blocker_id = ? AND blocked_id = ?) 
+                LIMIT 1`,
+            [inviterRawId, opponentRawId, opponentRawId, inviterRawId],
+            (err, row) => {
+                if (err) return reject(err);
+                resolve(!!row);
+            }
+        );
+    });
+
+    if (isBlocked) {
+        return reply.code(403).send({ error: "Interaction with this user is blocked." });
+    }
+
+    if (isPlayerInActiveGame(inviterUserId) || isPlayerInActiveGame(opponentPlayerId)) {
+        return reply.code(409).send({ error: "One or more players are already in a game." });
+    }
+    
     const gameId = generateGameId();
     const gameOptions = {
       canvasWidth: 800,
@@ -102,10 +114,6 @@ export default async function pongRoutes(server, options) {
         await redisPublisher.publish(
           opponentChannel,
           JSON.stringify(invitationPayload)
-        );
-        server.log.info(
-          { channel: opponentChannel, payload: invitationPayload },
-          "Published game invitation to opponent"
         );
 
         return reply.code(201).send({

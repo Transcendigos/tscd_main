@@ -18,6 +18,7 @@ interface ApiUser {
     username: string;
     picture?: string | null;
     isOnline: boolean;
+    isBlockedByMe: boolean;
 }
 
 interface ActiveChatWindow {
@@ -64,6 +65,7 @@ const userPlaceholderColors: string[] = [
 
 
 const openProfileWindows = new Map<number, DesktopWindow>();
+const blockedSet = new Set<number>();
 
 let socket: WebSocket | null = null;
 let currentUserId: number | null = null; 
@@ -88,18 +90,45 @@ export function initializeChatSystem() {
   }
   connectWebSocket();
 
+  const generalChatInput = document.getElementById("generalChatMessageInput") as HTMLInputElement;
+  const generalChatSendBtn = document.getElementById("generalChatSendBtn") as HTMLButtonElement;
+
+  const sendPublicMessage = () => {
+    const content = generalChatInput.value.trim();
+    if (content && socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: 'publicMessage',
+            content: content
+        }));
+        generalChatInput.value = '';
+    }
+  };
+
+  generalChatSendBtn.addEventListener('click', sendPublicMessage);
+  generalChatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        sendPublicMessage();
+    }
+  });
+
   chatUserListEl.addEventListener("click", (event) => {
     const target = event.target as HTMLElement;
+    if (target.matches('input[type="checkbox"]')) { return; }
+
     const listItem = target.closest("li");
     if (listItem && listItem.parentElement === chatUserListEl && listItem.dataset.userId) {
       const userIdNumeric = parseInt(listItem.dataset.userId, 10);
-      const username = listItem.dataset.username || "User";
-      const picture = listItem.dataset.userPicture || null;
-
-      if (currentUserId && userIdNumeric === currentUserId) {
-        console.log("Chat: Cannot open a private chat with yourself.");
+      
+      if (listItem.dataset.isBlocked === 'true') {
         return;
       }
+      
+      const username = listItem.dataset.username || "User";
+      const picture = listItem.dataset.userPicture || null;
+  
+      if (currentUserId && userIdNumeric === currentUserId) { return; }
+      
       launchPrivateChatWindow({ id: userIdNumeric, username, picture });
     }
   });
@@ -124,7 +153,6 @@ async function showUserProfile(user: User) {
 
     const res = await fetch(`/api/profile/${user.id}`, { credentials: 'include' });
     if (!res.ok) {
-        alert("Could not fetch user profile.");
         return;
     }
     const { profile } = await res.json();
@@ -226,19 +254,15 @@ async function handleInvitePlayerToPong(opponent: User) {
       const gameId = responseData.gameId;
       if (gameId) {
         console.log(`[Frontend] Game created with ID: ${gameId}. Inviter sending PONG_JOIN_GAME.`);
-        // alert(`Pong invitation sent to ${opponent.username}! Starting game room...`);
         sendPongJoinGame(gameId);
       } else {
         console.error("[Frontend] Game created, but no gameId in response:", responseData);
-        alert(`Error starting game: ${responseData.message || 'No game ID returned from server.'}`);
       }
     } else {
       console.error("[Frontend] Failed to create game. API error. Status:", response.status, "Response Data:", responseData);
-      alert(`Error inviting to game: ${responseData.error || response.statusText || `Server error: ${response.status}`}`);
     }
   } catch (error) {
     console.error("[Frontend] Network or unexpected error in handleInvitePlayerToPong:", error);
-    alert("Could not contact server to invite player to game. Please try again.");
   }
 }
 
@@ -340,6 +364,8 @@ function connectWebSocket() {
             alert(`New message from ${fromUsername}! Open their chat from the user list to see it.`);
           }
         }
+      } else if (message.type === 'newPublicMessage') {
+        displayPublicMessage(message);
       } else if (message.type === 'message_sent_ack') {
         console.log("Chat: Message acknowledged by server", message);
       } else if (message.type === 'PONG_GAME_INVITE') {
@@ -387,9 +413,7 @@ function connectWebSocket() {
         const { gameId, declinedByUsername } = message;
         console.log(`[CHATCLIENT] Pong invitation for game ${gameId} was declined by ${declinedByUsername}.`);
         alert(`Your Pong invitation was declined by ${declinedByUsername}.`);
-      } 
-      
-      else if (message.type === 'PONG_GAME_STARTED') {
+      } else if (message.type === 'PONG_GAME_STARTED') {
         const { gameId, initialState, yourPlayerId, opponentUsername, opponentId } = message;
         console.log(`PONG_GAME_STARTED received for game ${gameId}. You are ${yourPlayerId}. Opponent: ${opponentUsername} (${opponentId})`, JSON.parse(JSON.stringify(initialState)));
         const gameStartEvent = new CustomEvent("pongGameStart", { detail: { gameId, initialState, yourPlayerId, opponentId, opponentUsername } });
@@ -407,6 +431,8 @@ function connectWebSocket() {
         const { gameId, message: pongErrorMessage } = message;
         console.error(`Pong Error for game ${gameId || "N/A"}: ${pongErrorMessage}`);
         alert(`Pong Game Error: ${pongErrorMessage}`);
+      } else if (message.type === 'BLOCK_STATUS_UPDATE') {
+        loadUserList();
       } else if (message.type === 'error') {
         console.error("Chat: Server sent an error:", message.message);
         if (message.message && (message.message.toLowerCase().includes("authentication required") || message.message.toLowerCase().includes("authentication failed"))) {
@@ -438,85 +464,106 @@ function connectWebSocket() {
   };
 }
 
+async function handleBlockToggle(event: Event) {
+    const checkbox = event.target as HTMLInputElement;
+    checkbox.disabled = true;
+
+    const userId = checkbox.dataset.userId;
+    const endpoint = checkbox.checked ? '/api/chat/block' : '/api/chat/unblock';
+    const bodyKey = checkbox.checked ? 'userIdToBlock' : 'userIdToUnblock';
+
+    try {
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ [bodyKey]: userId })
+        });
+        if (res.ok) {
+            loadUserList(); 
+        } else {
+            alert('Failed to update block status.');
+            checkbox.checked = !checkbox.checked;
+        }
+    } catch (error) {
+        console.error("Error toggling block status:", error);
+        alert('An error occurred.');
+        checkbox.checked = !checkbox.checked;
+    } finally {
+        checkbox.disabled = false;
+    }
+}
+
 async function loadUserList() {
-  if (!chatUserListEl) {
-    console.error("Chat: chatUserListEl not found.");
-    return;
-  }
-  if (!currentUserId) {
-    console.warn("Chat: Not authenticated (currentUserId not set). Cannot load user list.");
-    chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs p-1.5">Authentication pending...</li>';
-    return;
-  }
-  
-  try {
-    const response = await fetch("/api/chat/users", { method: "GET", credentials: "include" });
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Chat: Failed to load user list", response.status, errorText);
-      if (chatUserListEl) {
-        chatUserListEl.innerHTML = `<li class="text-red-400 text-xs p-1.5">Error loading users: ${response.status}</li>`;
-      }
-      if (response.status === 401) {
-        alert("Chat: Session expired or unauthorized for user list. Please log in again.");
-      }
-      return;
+    if (!chatUserListEl) { console.error("Chat: chatUserListEl not found."); return; }
+    if (!currentUserId) {
+        console.warn("Chat: Not authenticated (currentUserId not set). Cannot load user list.");
+        chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs p-1.5">Authentication pending...</li>';
+        return;
     }
 
-    // Use the new ApiUser interface here.
-    const usersFromServer: ApiUser[] = await response.json();
-    chatUserListEl.innerHTML = "";
-
-    if (usersFromServer.length === 0) {
-      chatUserListEl.innerHTML = '<li class="text-xs p-1.5">No other users available.</li>';
-    } else {
-      usersFromServer.forEach((user) => { 
-        const numericUserId = parseInt(user.id.substring(5), 10);
-        if (isNaN(numericUserId)) {
-            console.warn("Skipping user with unparseable ID from /api/chat/users:", user);
-            return;
+    try {
+        const usersResponse = await fetch("/api/chat/users", { credentials: 'include' });
+        if (!usersResponse.ok) {
+            throw new Error(`Failed to fetch user list. Status: ${usersResponse.status}`);
         }
+        
+        const usersFromServer: ApiUser[] = await usersResponse.json();
+        chatUserListEl.innerHTML = "";
+        
+        if (usersFromServer.length === 0) {
+            chatUserListEl.innerHTML = '<li class="text-xs p-1.5">No other users available.</li>';
+        } else {
+            usersFromServer.forEach((user) => {
+                const numericUserId = parseInt(user.id.substring(5), 10);
+                if (isNaN(numericUserId)) return;
 
-        const li = document.createElement("li");
-        li.dataset.username = user.username;
-        li.dataset.userId = numericUserId.toString();
-        if (user.picture) {
-            li.dataset.userPicture = user.picture;
+                const li = document.createElement("li");
+                li.dataset.username = user.username;
+                li.dataset.userId = numericUserId.toString();
+                li.dataset.isBlocked = user.isBlockedByMe.toString(); 
+
+                li.className = "p-1.5 hover:bg-slate-700 text-xs flex items-center space-x-2";
+                if (!user.isBlockedByMe) {
+                    li.classList.add("cursor-pointer");
+                }
+
+                const avatarContainer = document.createElement("div");
+                avatarContainer.className = "relative flex-shrink-0";
+                const statusCircle = document.createElement("div");
+                statusCircle.id = `chat-user-status-${numericUserId}`;
+                statusCircle.className = "w-2.5 h-2.5 bg-green-400 rounded-full absolute top-0 left-0 border-2 border-slate-700";
+                statusCircle.style.display = user.isOnline ? 'block' : 'none';
+
+                const colorIndex = numericUserId % userPlaceholderColors.length;
+                const placeholder = document.createElement("div");
+                placeholder.className = `w-5 h-5 flex items-center justify-center text-xs text-slate-900 pointer-events-none flex-shrink-0 ${userPlaceholderColors[colorIndex]}`;
+                placeholder.textContent = user.username.substring(0, 1).toUpperCase();
+                avatarContainer.appendChild(placeholder);
+                avatarContainer.appendChild(statusCircle);
+                li.appendChild(avatarContainer);
+
+                const nameSpan = document.createElement("span");
+                nameSpan.textContent = user.username;
+                nameSpan.className = `pointer-events-none flex-grow ${user.isBlockedByMe ? 'text-slate-500 line-through' : ''}`;
+                li.appendChild(nameSpan);
+
+                const blockCheckbox = document.createElement('input');
+                blockCheckbox.type = 'checkbox';
+                blockCheckbox.title = `Block ${user.username}`;
+                blockCheckbox.className = 'ml-auto accent-[#D4535B] h-4 w-4 flex-shrink-0';
+                blockCheckbox.dataset.userId = numericUserId.toString();
+                blockCheckbox.checked = user.isBlockedByMe;
+                blockCheckbox.addEventListener('change', handleBlockToggle);
+                li.appendChild(blockCheckbox);
+
+                chatUserListEl?.appendChild(li);
+            });
         }
-        li.className = "p-1.5 hover:bg-slate-700 cursor-pointer text-xs flex items-center space-x-2";
-
-        const avatarContainer = document.createElement("div");
-        avatarContainer.className = "relative flex-shrink-0";
-
-        const statusCircle = document.createElement("div");
-        statusCircle.id = `chat-user-status-${numericUserId}`;
-        statusCircle.className = "w-2.5 h-2.5 bg-green-400 rounded-full absolute top-0 left-0 border-2 border-slate-700";
-        statusCircle.style.display = user.isOnline ? 'block' : 'none';
-
-        const colorIndex = numericUserId % userPlaceholderColors.length;
-        const selectedBgColor = userPlaceholderColors[colorIndex];
-        const placeholder = document.createElement("div");
-        placeholder.className = `w-5 h-5 flex items-center justify-center text-xs text-slate-900 pointer-events-none flex-shrink-0 ${selectedBgColor}`;
-        placeholder.textContent = user.username.substring(0, 1).toUpperCase();
-
-        avatarContainer.appendChild(placeholder);
-        avatarContainer.appendChild(statusCircle);
-        li.appendChild(avatarContainer);
-
-        const nameSpan = document.createElement("span");
-        nameSpan.textContent = user.username;
-        nameSpan.className = "pointer-events-none";
-        li.appendChild(nameSpan);
-
-        chatUserListEl?.appendChild(li);
-      });
+    } catch (error) {
+        console.error("Chat: Error loading user list:", error);
+        if (chatUserListEl) chatUserListEl.innerHTML = '<li class="text-red-400 text-xs p-1.5">Failed to load users.</li>';
     }
-  } catch (error) {
-    console.error("Chat: Error loading user list (exception):", error);
-    if (chatUserListEl) {
-      chatUserListEl.innerHTML = '<li class="text-red-400 text-xs p-1.5">Failed to load users.</li>';
-    }
-  }
 }
 
 
@@ -697,6 +744,27 @@ function displayMessageInWindow(msg: ChatMessage, messagesArea: HTMLElement, pee
   messageContainerDiv.appendChild(messageContentDiv);
   messagesArea.appendChild(messageContainerDiv);
   messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+
+function displayPublicMessage(msg: ChatMessage) {
+    const messagesArea = document.getElementById("chatMessagesArea");
+    if (!messagesArea) return;
+
+    const messageContainerDiv = document.createElement("div");
+    messageContainerDiv.className = "text-left text-xs py-1";
+    
+    const isMyMessage = msg.fromUserId === `user_${currentUserId}`;
+    const usernameColor = isMyMessage ? 'text-[#8be076]' : 'text-[#4cb4e7]';
+    const messageColor = isMyMessage ? 'text-white' : 'text-slate-300';
+    
+    messageContainerDiv.innerHTML = `
+        <strong class="${usernameColor}">${msg.fromUsername}:</strong>
+        <span class="${messageColor} ml-1 break-all">${msg.content}</span>
+    `;
+
+    messagesArea.appendChild(messageContainerDiv);
+    messagesArea.scrollTop = messagesArea.scrollHeight;
 }
 
 
