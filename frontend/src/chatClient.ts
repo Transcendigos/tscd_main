@@ -90,7 +90,29 @@ export function initializeChatSystem() {
   }
   connectWebSocket();
 
-chatUserListEl.addEventListener("click", (event) => {
+  const generalChatInput = document.getElementById("generalChatMessageInput") as HTMLInputElement;
+  const generalChatSendBtn = document.getElementById("generalChatSendBtn") as HTMLButtonElement;
+
+  const sendPublicMessage = () => {
+    const content = generalChatInput.value.trim();
+    if (content && socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: 'publicMessage',
+            content: content
+        }));
+        generalChatInput.value = '';
+    }
+  };
+
+  generalChatSendBtn.addEventListener('click', sendPublicMessage);
+  generalChatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        sendPublicMessage();
+    }
+  });
+
+  chatUserListEl.addEventListener("click", (event) => {
     const target = event.target as HTMLElement;
     if (target.matches('input[type="checkbox"]')) { return; }
 
@@ -342,6 +364,8 @@ function connectWebSocket() {
             alert(`New message from ${fromUsername}! Open their chat from the user list to see it.`);
           }
         }
+      } else if (message.type === 'newPublicMessage') {
+        displayPublicMessage(message);
       } else if (message.type === 'message_sent_ack') {
         console.log("Chat: Message acknowledged by server", message);
       } else if (message.type === 'PONG_GAME_INVITE') {
@@ -720,6 +744,27 @@ function displayMessageInWindow(msg: ChatMessage, messagesArea: HTMLElement, pee
   messageContainerDiv.appendChild(messageContentDiv);
   messagesArea.appendChild(messageContainerDiv);
   messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+
+function displayPublicMessage(msg: ChatMessage) {
+    const messagesArea = document.getElementById("chatMessagesArea");
+    if (!messagesArea) return;
+
+    const messageContainerDiv = document.createElement("div");
+    messageContainerDiv.className = "text-left text-xs py-1";
+    
+    const isMyMessage = msg.fromUserId === `user_${currentUserId}`;
+    const usernameColor = isMyMessage ? 'text-[#8be076]' : 'text-[#4cb4e7]';
+    const messageColor = isMyMessage ? 'text-white' : 'text-slate-300';
+    
+    messageContainerDiv.innerHTML = `
+        <strong class="${usernameColor}">${msg.fromUsername}:</strong>
+        <span class="${messageColor} ml-1 break-all">${msg.content}</span>
+    `;
+
+    messagesArea.appendChild(messageContainerDiv);
+    messagesArea.scrollTop = messagesArea.scrollHeight;
 }
 
 

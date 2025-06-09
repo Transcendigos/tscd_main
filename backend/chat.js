@@ -23,9 +23,9 @@ async function chatRoutes(server, options) {
 
 if (!globalSubscriber) {
       globalSubscriber = createNewRedisSubscriber(server.log);
-      globalSubscriber.subscribe('chat:status');
+      globalSubscriber.subscribe('chat:status', 'chat:general');
       globalSubscriber.on('message', (channel, message) => {
-          if (channel === 'chat:status') {
+          if (channel === 'chat:status' || channel === 'chat:general') {
               activeConnections.forEach(ws => {
                   if (ws.readyState === 1) {
                       ws.send(message);
@@ -80,13 +80,7 @@ if (!globalSubscriber) {
       ); // ADD THIS LOG
     }
   });
-  console.log(
-    "--- CHAT.JS: server.broadcastPongGameState DECORATED --- Type NOW:",
-    typeof server.broadcastPongGameState
-  );
-  server.log.info(
-    "--- CHAT.JS: server.broadcastPongGameState DECORATED (via server.log) ---"
-  );
+
 
   server.route({
     method: "GET",
@@ -138,6 +132,7 @@ if (!globalSubscriber) {
 
         ws.authenticatedUserId = prefixedAuthenticatedUserId;
         ws.rawAuthenticatedUserId = rawAuthenticatedUserId;
+        ws.userJWTPayload = userJWTPayload;
 
         await redisPublisher.sadd('online_users', prefixedAuthenticatedUserId);
         const userOnlineNotification = JSON.stringify({
@@ -408,6 +403,24 @@ if (!globalSubscriber) {
                 }
               }
             );
+          } else if (data.type === 'publicMessage') {
+            const senderUsername = ws.userJWTPayload?.username || 'Anonymous';
+            const content = data.content;
+
+            if (!content || typeof content !== 'string' || content.trim().length === 0) {
+                return;
+            }
+
+            const publicMessagePayload = JSON.stringify({
+                type: 'newPublicMessage',
+                fromUsername: senderUsername,
+                fromUserId: ws.authenticatedUserId,
+                content: content.trim(),
+                timestamp: new Date().toISOString()
+            });
+            
+            await redisPublisher.publish('chat:general', publicMessagePayload);
+
           } else if (
             data.type === "PONG_ACCEPT_INVITE" ||
             data.type === "PONG_JOIN_GAME"
