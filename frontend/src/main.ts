@@ -6,7 +6,9 @@ import { initGoogleSignIn } from "./google_auth.js";
 import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
-import { setupTournamentButtonBehavior } from "./tournamentToggle";
+import { setupTournamentButtonBehavior } from "./tournament.ts";
+import { initPlayerCountSelection } from "./tournament.ts";
+import { initReadyToggles } from "./tournament.ts"
 import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile, settingUserSetting } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
@@ -334,18 +336,32 @@ window.addEventListener("DOMContentLoaded", async () => {
 // --- Tournament Window ---
 
   try {
-    const tournamentWindow = new DesktopWindow({
-      windowId: "tournamentWindow",
-      dragHandleId: "tournamentDragHandle",
-      resizeHandleId: "tournamentResizeHandle",
+    const tournamentCreationWindow = new DesktopWindow({
+      windowId: "tournamentCreationWindow",
+      dragHandleId: "tournamentCreationDragHandle",
+      resizeHandleId: "tournamentCreationResizeHandle",
       boundaryContainerId: "main",
-      visibilityToggleId: "tournamentWindow",
+      visibilityToggleId: "tournamentCreationWindow",
       openTriggerId: "tournamentLocalBtn",
-      closeButtonId: "closetournamentBtn",
+      closeButtonId: "closetournamentCreationBtn",
     });
   } catch (error) {
-    console.error("Failed to initialize 'tournamentWindow':", error);
+    console.error("Failed to initialize 'tournamentCreationWindow':", error);
   }
+
+  try {
+  const tournamentPlayersWindow = new DesktopWindow({
+    windowId: "tournamentPlayersWindow",
+    dragHandleId: "tournamentPlayersDragHandle",
+    resizeHandleId: "tournamentPlayersResizeHandle",
+    boundaryContainerId: "main",
+    visibilityToggleId: "tournamentPlayersWindow",
+    openTriggerId: "tournamentPlayersBtn",
+    closeButtonId: "closetournamentPlayersBtn",
+  });
+} catch (error) {
+  console.error("Failed to initialize 'tournamentPlayersWindow':", error);
+}
 
 // --- Chat Window ---
   
@@ -463,8 +479,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  setupTournamentButtonBehavior();
-
   window.addEventListener('pongGameStateUpdate', (event: Event) => {
       const customEvent = event as CustomEvent;
       const { gameId, ball, players, status } = customEvent.detail;
@@ -477,6 +491,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       handleMultiplayerGameOver(winnerId, scores);
   });
 
+  setupTournamentButtonBehavior();
+  initPlayerCountSelection();
+  initReadyToggles();
   initGoogleSignIn();
   settingUserProfile();
   setupSettingForm(settingWindow);
