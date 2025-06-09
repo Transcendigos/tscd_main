@@ -7,8 +7,11 @@ import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
 import { setupTournamentButtonBehavior } from "./tournament.ts";
-import { initPlayerCountSelection } from "./tournament.ts";
+import { initTournamentCreationLogic } from "./tournament.ts";
+import { resetTournamentCreationWindow } from "./tournament.ts";
+import { populatePlayerInputs } from "./tournament.ts";
 import { initReadyToggles } from "./tournament.ts"
+import { initReadyInputsToggleControl }from "./tournament.ts";
 import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile, settingUserSetting } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
@@ -35,6 +38,9 @@ let infoWindow: DesktopWindow;
 let weatherWindow: DesktopWindow;
 let aiWindow: DesktopWindow;
 let musicWindow: DesktopWindow;
+let tournamentCreationWindow: DesktopWindow;
+let tournamentPlayersWindow: DesktopWindow;
+let tournamentWindow: DesktopWindow;
 
 // Utility functions
 function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string, onOpenCallback?: () => void) {
@@ -336,7 +342,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 // --- Tournament Window ---
 
   try {
-    const tournamentCreationWindow = new DesktopWindow({
+      tournamentCreationWindow = new DesktopWindow({
       windowId: "tournamentCreationWindow",
       dragHandleId: "tournamentCreationDragHandle",
       resizeHandleId: "tournamentCreationResizeHandle",
@@ -350,7 +356,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
-  const tournamentPlayersWindow = new DesktopWindow({
+    tournamentPlayersWindow = new DesktopWindow({
     windowId: "tournamentPlayersWindow",
     dragHandleId: "tournamentPlayersDragHandle",
     resizeHandleId: "tournamentPlayersResizeHandle",
@@ -359,8 +365,24 @@ window.addEventListener("DOMContentLoaded", async () => {
     openTriggerId: "tournamentPlayersBtn",
     closeButtonId: "closetournamentPlayersBtn",
   });
+  
 } catch (error) {
   console.error("Failed to initialize 'tournamentPlayersWindow':", error);
+}
+
+  try {
+  tournamentWindow = new DesktopWindow({
+    windowId: "tournamentWindow",
+    dragHandleId: "tournamentDragHandle",
+    resizeHandleId: "tournamentResizeHandle",
+    boundaryContainerId: "main",
+    visibilityToggleId: "tournamentWindow",
+    //openTriggerId: "spawner",
+    closeButtonId: "closetournamentBtn",
+  });
+
+} catch (error) {
+  console.error("Failed to initialize 'tournamentWindow':", error);
 }
 
 // --- Chat Window ---
@@ -492,8 +514,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   setupTournamentButtonBehavior();
-  initPlayerCountSelection();
-  initReadyToggles();
+  initTournamentCreationLogic(tournamentCreationWindow, tournamentPlayersWindow);
+  //initReadyToggles(tournamentPlayersWindow);
+  //initReadyInputsToggleControl();
   initGoogleSignIn();
   settingUserProfile();
   setupSettingForm(settingWindow);
