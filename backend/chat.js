@@ -16,9 +16,27 @@ const activeConnections = new Map();
 const userSubscribers = new Map();
 const pongGameConnections = new Map();
 
+let globalSubscriber; 
+
 async function chatRoutes(server, options) {
   const db = getDB();
   const redisPublisher = getRedisPublisher();
+
+
+if (!globalSubscriber) {
+      globalSubscriber = createNewRedisSubscriber(server.log);
+      globalSubscriber.subscribe('chat:status', 'chat:general');
+      globalSubscriber.on('message', (channel, message) => {
+          if (channel === 'chat:status' || channel === 'chat:general') {
+              activeConnections.forEach(ws => {
+                  if (ws.readyState === 1) {
+                      ws.send(message);
+                  }
+              });
+          }
+      });
+  }
+
 
   server.decorate("broadcastPongGameState", (gameId, statePayload) => {
     const connections = pongGameConnections.get(gameId);
@@ -64,13 +82,7 @@ async function chatRoutes(server, options) {
       ); // ADD THIS LOG
     }
   });
-  console.log(
-    "--- CHAT.JS: server.broadcastPongGameState DECORATED --- Type NOW:",
-    typeof server.broadcastPongGameState
-  );
-  server.log.info(
-    "--- CHAT.JS: server.broadcastPongGameState DECORATED (via server.log) ---"
-  );
+
 
   server.route({
     method: "GET",
@@ -78,7 +90,7 @@ async function chatRoutes(server, options) {
     handler: (req, reply) => {
       reply.code(400).send({ error: "This is a WebSocket endpoint." });
     },
-    wsHandler: (connection, req) => {
+    wsHandler: async (connection, req) => {
       const ws = connection;
 
       server.log.info(
@@ -122,6 +134,15 @@ async function chatRoutes(server, options) {
 
         ws.authenticatedUserId = prefixedAuthenticatedUserId;
         ws.rawAuthenticatedUserId = rawAuthenticatedUserId;
+        ws.userJWTPayload = userJWTPayload;
+
+        await redisPublisher.sadd('online_users', prefixedAuthenticatedUserId);
+        const userOnlineNotification = JSON.stringify({
+            type: "userOnline",
+            user: { id: prefixedAuthenticatedUserId, username: userJWTPayload.username, picture: userJWTPayload.picture }
+        });
+        await redisPublisher.publish('chat:status', userOnlineNotification);
+        
 
         if (activeConnections.has(prefixedAuthenticatedUserId)) {
           const oldSocket = activeConnections.get(prefixedAuthenticatedUserId);
@@ -313,6 +334,26 @@ async function chatRoutes(server, options) {
               return;
             }
 
+            const isBlocked = await new Promise((resolve, reject) => {
+              db.get(`SELECT 1 FROM blocked_users 
+                WHERE (blocker_id = ? AND blocked_id = ?) 
+                OR (blocker_id = ? AND blocked_id = ?) 
+                LIMIT 1`,
+                [senderRawId, recipientRawId, recipientRawId, senderRawId],
+                (err, row) => {
+                  if (err) return reject(err);
+                  resolve(!!row);
+                      }
+                  );
+              });
+            
+            if (isBlocked) {
+                if (ws.readyState === 1) {
+                    ws.send(JSON.stringify({ type: "error", message: "You cannot message this user." }));
+                }
+                return;
+              }
+
             const recipientChannel = `user:${recipientRawId}:messages`;
 
             const messageDataToSend = {
@@ -370,6 +411,24 @@ async function chatRoutes(server, options) {
                 }
               }
             );
+          } else if (data.type === 'publicMessage') {
+            const senderUsername = ws.userJWTPayload?.username || 'Anonymous';
+            const content = data.content;
+
+            if (!content || typeof content !== 'string' || content.trim().length === 0) {
+                return;
+            }
+
+            const publicMessagePayload = JSON.stringify({
+                type: 'newPublicMessage',
+                fromUsername: senderUsername,
+                fromUserId: ws.authenticatedUserId,
+                content: content.trim(),
+                timestamp: new Date().toISOString()
+            });
+            
+            await redisPublisher.publish('chat:general', publicMessagePayload);
+
           } else if (
             data.type === "PONG_ACCEPT_INVITE" ||
             data.type === "PONG_JOIN_GAME"
@@ -754,6 +813,17 @@ async function chatRoutes(server, options) {
           `WebSocket client disconnected.`
         );
         if (ws.authenticatedUserId) {
+
+
+          await redisPublisher.srem('online_users', ws.authenticatedUserId);
+          
+          const userOfflineNotification = JSON.stringify({
+              type: "userOffline",
+              user: { id: ws.authenticatedUserId, username: ws.userJWTPayload?.username }
+          });
+          await redisPublisher.publish('chat:status', userOfflineNotification);
+
+
           if (activeConnections.get(ws.authenticatedUserId) === ws) {
             activeConnections.delete(ws.authenticatedUserId);
           }
@@ -864,43 +934,63 @@ async function chatRoutes(server, options) {
     }
   });
 
-  server.get("/api/chat/users", async (req, reply) => {
+server.get("/api/chat/users", async (req, reply) => {
     const token = req.cookies.auth_token;
-    if (!token) {
-      return reply.code(401).send({ error: "Unauthorized" });
-    }
+    if (!token) return reply.code(401).send({ error: "Unauthorized" });
+
     try {
-      const payload = jwt.verify(token, JWT_SECRET);
-      const currentUserRawId = payload.userId;
+        const payload = jwt.verify(token, JWT_SECRET);
+        const currentUserRawId = payload.userId;
+        const redisPublisher = getRedisPublisher();
 
-      if (typeof currentUserRawId === "undefined") {
-        return reply.code(500).send({ error: "User ID not found." });
-      }
+        const onlineUserPrefixedIds = await redisPublisher.smembers('online_users');
 
-      const users = await new Promise((resolve, reject) => {
-        db.all(
-          "SELECT id, username, picture FROM users WHERE id != ? ORDER BY username ASC",
-          [currentUserRawId],
-          (err, rows) => {
-            if (err) {
-              return reject(err);
-            }
-            resolve(rows.map((row) => ({ ...row, id: `user_${row.id}` })));
-          }
-        );
-      });
-      reply.send(users);
+        const iHaveBlockedRows = await new Promise((resolve, reject) => {
+            db.all('SELECT blocked_id FROM blocked_users WHERE blocker_id = ?', [currentUserRawId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+        const iHaveBlockedSet = new Set(iHaveBlockedRows.map(r => r.blocked_id));
+
+        const whoHaveBlockedMeRows = await new Promise((resolve, reject) => {
+            db.all('SELECT blocker_id FROM blocked_users WHERE blocked_id = ?', [currentUserRawId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+        const whoHaveBlockedMeSet = new Set(whoHaveBlockedMeRows.map(r => r.blocker_id));
+
+        const allUsersFromDB = await new Promise((resolve, reject) => {
+            db.all("SELECT id, username, picture FROM users WHERE id != ?", [currentUserRawId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+        
+            const usersWithStatus = allUsersFromDB.map(user => {
+            const prefixedId = `user_${user.id}`;
+            const isBlockedByMe = iHaveBlockedSet.has(user.id);
+            const hasBlockedMe = whoHaveBlockedMeSet.has(user.id);
+            const isInteractionBlocked = isBlockedByMe || hasBlockedMe;
+            
+            return {
+                id: prefixedId,
+                username: user.username,
+                picture: user.picture,
+                isOnline: onlineUserPrefixedIds.includes(prefixedId) && !isInteractionBlocked,
+                isBlockedByMe: isBlockedByMe
+            };
+        });
+
+        reply.send(usersWithStatus);
+
     } catch (err) {
-      server.log.error({ err }, "/api/chat/users error");
-      if (
-        err.name === "JsonWebTokenError" ||
-        err.name === "TokenExpiredError"
-      ) {
-        return reply.code(401).send({ error: "Invalid token" });
-      }
-      return reply.code(500).send({ error: "Server error" });
+        server.log.error({ err }, "/api/chat/users error");
+        reply.code(500).send({ error: "Server error" });
     }
-  });
+});
+
 }
 
 export default fp(chatRoutes, {

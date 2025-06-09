@@ -1,19 +1,25 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap");
 @import "tailwindcss";
 
-/* @custom-variant dark (&:where(.dark, .dark *)); */
 
 @layer utilities {
   .hover-important {
-    @apply hover:text-[#f8aab6] transition-transform hover:scale-110;
+    @apply hover:text-seLightRed transition-transform hover:scale-110;
   }
 }
 
 @theme {
     --font-inter: "Inter", sans-serif;
+
+    --color-seLightBlue: #4cb4e7;
+    --color-backGroundBlue: #1b3F72;
+    --color-seLightRed: #f8aab6;
+    --color-seLightGreen: #8be076;
+    --color-supRed: #D4535B;
+    --color-supGreen: #53D4C0;
 }
 
 #signinWindow {
   transition: height 0.3s ease, max-height 0.3s ease;
-  overflow: hidden; /* prevents sudden overflow during animation */
+  overflow: hidden;
 }

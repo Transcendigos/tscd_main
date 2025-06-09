@@ -12,8 +12,6 @@ RUN npm install
 
 
 COPY dev/vite.config.ts ./
-COPY dev/tailwind.config.js ./
-COPY dev/postcss.config.js ./
 COPY dev/tsconfig.json ./
 
 COPY src/ /app/src/

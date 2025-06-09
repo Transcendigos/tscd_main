@@ -41,8 +41,63 @@ export default fp(async function profileRoute(server, options) {
         return reply.send({ profile: result });
     });
 
+    // GET USER PROFILE BY ID
 
-    // Update username
+    server.get('/api/profile/:userId', async (req, reply) => {
+        const token = req.cookies.auth_token;
+        if (!token) {
+            return reply.code(401).send({ error: 'Not authenticated' });
+        }
+        
+        let requester;
+        try {
+            requester = jwt.verify(token, JWT_SECRET);
+        } catch {
+            return reply.code(401).send({ error: 'Invalid token' });
+        }
+        
+        const requesterId = requester.userId;
+        const requestedUserId = parseInt(req.params.userId, 10);
+
+        if (isNaN(requestedUserId)) {
+            return reply.code(400).send({ error: 'Invalid user ID' });
+        }
+
+        if (requesterId === requestedUserId) {
+        } else {
+            const isBlocked = await new Promise((resolve, reject) => {
+                db.get(`SELECT 1 FROM blocked_users 
+                        WHERE (blocker_id = ? AND blocked_id = ?) 
+                        OR (blocker_id = ? AND blocked_id = ?) 
+                        LIMIT 1`,
+                    [requesterId, requestedUserId, requestedUserId, requesterId],
+                    (err, row) => {
+                        if (err) return reject(err);
+                        resolve(!!row);
+                    }
+                );
+            });
+
+            if (isBlocked) {
+                return reply.code(403).send({ error: "You are not permitted to view this profile." });
+            }
+        }
+        const result = await new Promise((resolve, reject) => {
+            db.get('SELECT id, username, email, picture FROM users WHERE id = ?', [requestedUserId], (err, row) => {
+                if (err) return reject(err);
+                resolve(row);
+            });
+        });
+
+        if (!result) {
+            return reply.code(404).send({ error: 'User not found' });
+        }
+
+        return reply.send({ profile: result });
+    });
+
+
+
     server.post('/api/profile/update-username', async (req, reply) => {
         try {
             const { username } = req.body;
