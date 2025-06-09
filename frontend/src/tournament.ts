@@ -20,7 +20,7 @@ export function setupTournamentButtonBehavior(): void {
   wrapper.addEventListener("mouseenter", () => {
     tournamentBtn.classList.add("hidden");
     splitButtons.classList.remove("hidden");
-    console.log("--Mouse Enter Detected--");
+    //console.log("--Mouse Enter Detected--");
   });
 
   wrapper.addEventListener("mouseleave", () => {
@@ -38,7 +38,7 @@ export function setupTournamentButtonBehavior(): void {
     document.getElementById("tournamentBtn")?.click();
   });
 
-  console.log("button behavior set");
+  //console.log("button behavior set");
 
   onlineBtn.addEventListener("click", () => {
     alert("Online Tournament: Coming Soon 👀");
@@ -98,7 +98,7 @@ export function initTournamentCreationLogic(tournamentCreationWindow, tournament
     resetTournamentCreationWindow();
     tournamentCreationWindow.close();
     populatePlayerInputs("playerInputsContainer", tournamentPlayersWindow);
-    console.log("Tournoi prêt :", tournamentData);
+    //console.log("Tournoi prêt :", tournamentData);
 
   });
   updateCreateButtonState();
@@ -245,8 +245,8 @@ export function checkAllPlayersReadyAndShowNextWindow(tournamentPlayersWindow: D
 
     nextWin.classList.remove("opacity-0", "scale-95", "invisible", "pointer-events-none");
     nextWin.style.zIndex = "999";
-    console.log(tournamentData);
-    console.log(tournamentData.players);
+    // console.log(tournamentData);
+    // console.log(tournamentData.players);
   }
   }
 }
