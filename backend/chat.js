@@ -337,6 +337,26 @@ if (!globalSubscriber) {
               return;
             }
 
+            const isBlocked = await new Promise((resolve, reject) => {
+              db.get(`SELECT 1 FROM blocked_users 
+                WHERE (blocker_id = ? AND blocked_id = ?) 
+                OR (blocker_id = ? AND blocked_id = ?) 
+                LIMIT 1`,
+                [senderRawId, recipientRawId, recipientRawId, senderRawId],
+                (err, row) => {
+                  if (err) return reject(err);
+                  resolve(!!row);
+                      }
+                  );
+              });
+            
+            if (isBlocked) {
+                if (ws.readyState === 1) {
+                    ws.send(JSON.stringify({ type: "error", message: "You cannot message this user." }));
+                }
+                return;
+              }
+
             const recipientChannel = `user:${recipientRawId}:messages`;
 
             const messageDataToSend = {
@@ -893,48 +913,63 @@ if (!globalSubscriber) {
     }
   });
 
-  server.get("/api/chat/users", async (req, reply) => {
+server.get("/api/chat/users", async (req, reply) => {
     const token = req.cookies.auth_token;
-    if (!token) {
-      return reply.code(401).send({ error: "Unauthorized" });
-    }
+    if (!token) return reply.code(401).send({ error: "Unauthorized" });
+
     try {
         const payload = jwt.verify(token, JWT_SECRET);
         const currentUserRawId = payload.userId;
         const redisPublisher = getRedisPublisher();
+
         const onlineUserPrefixedIds = await redisPublisher.smembers('online_users');
 
-        const usersFromDB = await new Promise((resolve, reject) => {
-            db.all(
-                "SELECT id, username, picture FROM users WHERE id != ? ORDER BY username ASC",
-                [currentUserRawId],
-                (err, rows) => (err ? reject(err) : resolve(rows))
-            );
+        const iHaveBlockedRows = await new Promise((resolve, reject) => {
+            db.all('SELECT blocked_id FROM blocked_users WHERE blocker_id = ?', [currentUserRawId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
         });
+        const iHaveBlockedSet = new Set(iHaveBlockedRows.map(r => r.blocked_id));
 
-        const usersWithStatus = usersFromDB.map(user => {
+        const whoHaveBlockedMeRows = await new Promise((resolve, reject) => {
+            db.all('SELECT blocker_id FROM blocked_users WHERE blocked_id = ?', [currentUserRawId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+        const whoHaveBlockedMeSet = new Set(whoHaveBlockedMeRows.map(r => r.blocker_id));
+
+        const allUsersFromDB = await new Promise((resolve, reject) => {
+            db.all("SELECT id, username, picture FROM users WHERE id != ?", [currentUserRawId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+        
+            const usersWithStatus = allUsersFromDB.map(user => {
             const prefixedId = `user_${user.id}`;
+            const isBlockedByMe = iHaveBlockedSet.has(user.id);
+            const hasBlockedMe = whoHaveBlockedMeSet.has(user.id);
+            const isInteractionBlocked = isBlockedByMe || hasBlockedMe;
+            
             return {
                 id: prefixedId,
                 username: user.username,
                 picture: user.picture,
-                isOnline: onlineUserPrefixedIds.includes(prefixedId)
+                isOnline: onlineUserPrefixedIds.includes(prefixedId) && !isInteractionBlocked,
+                isBlockedByMe: isBlockedByMe
             };
         });
-        
+
         reply.send(usersWithStatus);
 
     } catch (err) {
-      server.log.error({ err }, "/api/chat/users error");
-      if (
-        err.name === "JsonWebTokenError" ||
-        err.name === "TokenExpiredError"
-      ) {
-        return reply.code(401).send({ error: "Invalid token" });
-      }
-      return reply.code(500).send({ error: "Server error" });
+        server.log.error({ err }, "/api/chat/users error");
+        reply.code(500).send({ error: "Server error" });
     }
-  });
+});
+
 }
 
 export default fp(chatRoutes, {

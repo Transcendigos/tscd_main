@@ -21,6 +21,7 @@ import openaiRoute from './openai.js';
 import spotifyRoute from './music.js';
 import scoreRoutes from './score.js';
 import pongRoutes from './pong_routes.js';
+import blockRoutes from './block_routes.js';
 
 console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
 
@@ -105,6 +106,8 @@ const start = async () => {
     await server.register(spotifyRoute);
     await server.register(scoreRoutes);
     await server.register(pongRoutes);
+    await server.register(blockRoutes);
+    
     server.log.info("!!! INDEX.JS: Registered pongRoutes.");
 
     await server.listen({ port: 3000, host: '0.0.0.0' });

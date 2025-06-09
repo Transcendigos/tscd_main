@@ -48,17 +48,40 @@ export default fp(async function profileRoute(server, options) {
         if (!token) {
             return reply.code(401).send({ error: 'Not authenticated' });
         }
+        
+        let requester;
         try {
-            jwt.verify(token, JWT_SECRET);
+            requester = jwt.verify(token, JWT_SECRET);
         } catch {
             return reply.code(401).send({ error: 'Invalid token' });
         }
-
+        
+        const requesterId = requester.userId;
         const requestedUserId = parseInt(req.params.userId, 10);
+
         if (isNaN(requestedUserId)) {
             return reply.code(400).send({ error: 'Invalid user ID' });
         }
-        
+
+        if (requesterId === requestedUserId) {
+        } else {
+            const isBlocked = await new Promise((resolve, reject) => {
+                db.get(`SELECT 1 FROM blocked_users 
+                        WHERE (blocker_id = ? AND blocked_id = ?) 
+                        OR (blocker_id = ? AND blocked_id = ?) 
+                        LIMIT 1`,
+                    [requesterId, requestedUserId, requestedUserId, requesterId],
+                    (err, row) => {
+                        if (err) return reject(err);
+                        resolve(!!row);
+                    }
+                );
+            });
+
+            if (isBlocked) {
+                return reply.code(403).send({ error: "You are not permitted to view this profile." });
+            }
+        }
         const result = await new Promise((resolve, reject) => {
             db.get('SELECT id, username, email, picture FROM users WHERE id = ?', [requestedUserId], (err, row) => {
                 if (err) return reject(err);
@@ -72,6 +95,7 @@ export default fp(async function profileRoute(server, options) {
 
         return reply.send({ profile: result });
     });
+
 
 
     server.post('/api/profile/update-username', async (req, reply) => {
