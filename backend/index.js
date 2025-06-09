@@ -21,18 +21,20 @@ import openaiRoute from './openai.js';
 import spotifyRoute from './music.js';
 import scoreRoutes from './score.js';
 import pongRoutes from './pong_routes.js';
+import { registerMonitoring } from './monitoring.js';
 import blockRoutes from './block_routes.js';
+
 
 console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
 
 dotenv.config();
 
 const server = Fastify({
-  logger: { 
+  logger: {
     transport: {
-        targets: [
-            { level: 'info', target: 'pino/file', options: { destination: '/logs/backend.log' } }
-        ]
+      targets: [
+        { level: 'info', target: 'pino/file', options: { destination: '/logs/backend.log' } }
+      ]
     }
   }
 });
@@ -52,7 +54,7 @@ function overrideConsoleMethods() {
 
 }
 
-overrideConsoleMethods(); 
+overrideConsoleMethods();
 console.log("Loaded API KEY:", process.env.OPENWEATHER_API_KEY);
 
 const start = async () => {
@@ -69,19 +71,15 @@ const start = async () => {
     await server.register(swaggerUi, {
       routePrefix: '/docs',
     });
-    
+
     await server.register(multipart, {
-     limits: { fileSize: 5 * 1024 * 1024 }, // optional limit
+      limits: { fileSize: 5 * 1024 * 1024 }, // optional limit
     });
 
-// Optional: serve static files like profile pictures
+    // Optional: serve static files like profile pictures
     await server.register(fastifyStatic, {
       root: path.join(process.cwd(), 'public'),
       prefix: '/',
-    });
-    
-    server.get('/', async (request, reply) => {
-      reply.send({ hello: 'world' });
     });
 
     initializeDB(server.log);
@@ -91,13 +89,13 @@ const start = async () => {
       origin: 'http://localhost:5173',
       credentials: true,
     });
+
+    registerMonitoring(server);
+
     await server.register(cookie);
     await server.register(fastifyWebsocket);
-
     await server.register(authRoutes);
-    
     await server.register(chatRoutes);
-    
     await server.register(twofaRoutes);
     await server.register(twoFASettingRoutes);
     await server.register(weatherRoutes);
@@ -107,14 +105,14 @@ const start = async () => {
     await server.register(scoreRoutes);
     await server.register(pongRoutes);
     await server.register(blockRoutes);
-    
+
     server.log.info("!!! INDEX.JS: Registered pongRoutes.");
 
     await server.listen({ port: 3000, host: '0.0.0.0' });
   } catch (err) {
     const originalConsoleError = console.error;
     originalConsoleError("!!! INDEX.JS: SERVER START ERROR !!!", err);
-    if(server.log && typeof server.log.error === 'function') server.log.error(err);
+    if (server.log && typeof server.log.error === 'function') server.log.error(err);
     process.exit(1);
   }
 };
@@ -135,18 +133,18 @@ GSignals.forEach((signal) => {
     await server.close();
 
     try {
-        const { activeGames: currentActivePongGames } = await import('./pong_server.js');
-        if (currentActivePongGames) {
-            server.log.info(`Cleaning up ${currentActivePongGames.size} active Pong game intervals.`);
-            currentActivePongGames.forEach(game => {
-                if (game.loopInterval) {
-                    clearInterval(game.loopInterval);
-                }
-            });
-            currentActivePongGames.clear();
-        }
+      const { activeGames: currentActivePongGames } = await import('./pong_server.js');
+      if (currentActivePongGames) {
+        server.log.info(`Cleaning up ${currentActivePongGames.size} active Pong game intervals.`);
+        currentActivePongGames.forEach(game => {
+          if (game.loopInterval) {
+            clearInterval(game.loopInterval);
+          }
+        });
+        currentActivePongGames.clear();
+      }
     } catch (importError) {
-        server.log.error({err: importError}, "Error dynamically importing pong_server.js for cleanup.");
+      server.log.error({ err: importError }, "Error dynamically importing pong_server.js for cleanup.");
     }
 
     const publisher = getRedisPublisher();

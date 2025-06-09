@@ -63,12 +63,35 @@ function setupUnifiedMic(inputEl: HTMLInputElement) {
   let isRecording = false;
 
   const voiceCommands: Record<string, () => void> = {
-    "open music": () => (window as any).musicWindow?.open?.(),
-    "play pong": () => (window as any).pongWindow?.open?.(),
-    "show weather": () => (window as any).weatherWindow?.open?.(),
-    "start tournament": () => alert("Tournament feature is coming soon!"),
-    "open settings": () => (window as any).settingWindow?.open?.(),
-    "open profile": () => (window as any).profileWindow?.open?.(),
+    "play music": () => { document.getElementById("musicBtn")?.click() },
+    "play pong": () => { document.getElementById("clickMeBtn")?.click(); (window as any).aiWindow?.close?.() },
+    "play multiplayer": () => alert("multiplayer feature is coming soon!"),
+    "play tournament": () => alert("Tournament feature is coming soon!"),
+    "open weather": () => { document.getElementById("openWeatherBtn")?.click() },
+    "open settings": () => { document.getElementById("settingTab")?.click() },
+    "open profile": () => { document.getElementById("profileBtn")?.click() },
+    "open info": () => { document.getElementById("infoTab")?.click() },
+    "open logout": () => { document.getElementById("logoutTab")?.click() },
+    "open system": () => { document.getElementById("openGrafanaBtn")?.click() },
+    "open about": () => { document.getElementById("openAboutBtn")?.click() },
+    "open chat": () => { document.getElementById("chatBtn")?.click() },
+    "open command": () => { document.getElementById("openCommandBtn")?.click() },
+    "open stats": () => { document.getElementById("statsTab")?.click() },
+
+    "close music": () => { document.getElementById("closemusicBtn")?.click() },
+    "close pong": () => { document.getElementById("closepongBtn")?.click(); (window as any).aiWindow?.close?.() },
+    "close multiplayer": () => alert("multiplayer feature is coming soon!"),
+    "close tournament": () => alert("Tournament feature is coming soon!"),
+    "close weather": () => { document.getElementById("closeweatherBtn")?.click() },
+    "close settings": () => { document.getElementById("closesettingBtn")?.click() },
+    "close profile": () => { document.getElementById("closeprofileBtn")?.click() },
+    "close info": () => { document.getElementById("closeinfoBtn")?.click() },
+    "close logout": () => { document.getElementById("closelogoutBtn")?.click() },
+    "close system": () => { document.getElementById("closegrafanaBtn")?.click() },
+    "close about": () => { document.getElementById("closeaboutBtn")?.click() },
+    "close chat": () => { document.getElementById("closeChatBtn")?.click() },
+    "close command": () => { document.getElementById("closecommandBtn")?.click() },
+    "close stats": () => { document.getElementById("closestatsBtn")?.click() },
   };
 
   micBtn.onclick = () => {
@@ -119,7 +142,6 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
   const input = document.getElementById("chatInput") as HTMLInputElement;
   const messages = document.getElementById("chatMessages");
 
-
   if (!form || !input || !messages) return;
 
   setupUnifiedMic(input);
@@ -144,15 +166,37 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
     const normalized = userMsg.toLowerCase();
 
     const phraseTriggers: Record<string, () => void> = {
-      "weather in paris": () => {
-        (window as any).infoWindow?.open?.();
-        document.getElementById("openWeatherBtn")?.click()
-      },
-      "play pong": () => { (window as any).pongWindow?.open?.(); document.getElementById("clickMeBtn")?.click() },
-      "open profile": () => { (window as any).profileWindow?.open?.() },
-      "open settings": () => { (window as any).settingWindow?.open?.() },
-      "start tournament": () => { alert("Tournament feature is coming soon!") },
+      "play music": () => { document.getElementById("musicBtn")?.click() },
+      "play pong": () => { document.getElementById("clickMeBtn")?.click(); (window as any).aiWindow?.close?.() },
+      "play multiplayer": () => alert("multiplayer feature is coming soon!"),
+      "play tournament": () => alert("Tournament feature is coming soon!"),
+      "open weather": () => { document.getElementById("openWeatherBtn")?.click() },
+      "open settings": () => { document.getElementById("settingTab")?.click() },
+      "open profile": () => { document.getElementById("profileBtn")?.click() },
+      "open info": () => { document.getElementById("infoTab")?.click() },
+      "open logout": () => { document.getElementById("logoutTab")?.click() },
+      "open system": () => { document.getElementById("openGrafanaBtn")?.click() },
+      "open about": () => { document.getElementById("openAboutBtn")?.click() },
+      "open chat": () => { document.getElementById("chatBtn")?.click() },
+      "open command": () => { document.getElementById("openCommandBtn")?.click() },
+      "open stats": () => { document.getElementById("statsTab")?.click() },
+
+      "close music": () => { document.getElementById("closemusicBtn")?.click() },
+      "close pong": () => { document.getElementById("closepongBtn")?.click(); (window as any).aiWindow?.close?.() },
+      "close multiplayer": () => alert("multiplayer feature is coming soon!"),
+      "close tournament": () => alert("Tournament feature is coming soon!"),
+      "close weather": () => { document.getElementById("closeweatherBtn")?.click() },
+      "close settings": () => { document.getElementById("closesettingBtn")?.click() },
+      "close profile": () => { document.getElementById("closeprofileBtn")?.click() },
+      "close info": () => { document.getElementById("closeinfoBtn")?.click() },
+      "close logout": () => { document.getElementById("closelogoutBtn")?.click() },
+      "close system": () => { document.getElementById("closegrafanaBtn")?.click() },
+      "close about": () => { document.getElementById("closeaboutBtn")?.click() },
+      "close chat": () => { document.getElementById("closeChatBtn")?.click() },
+      "close command": () => { document.getElementById("closecommandBtn")?.click() },
+      "close stats": () => { document.getElementById("closestatsBtn")?.click() },
     };
+
     for (const phrase in phraseTriggers) {
       if (normalized.includes(phrase)) {
         phraseTriggers[phrase]();
@@ -165,14 +209,19 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
 
 
       const moodKeywords = ["chill", "sad", "happy", "focus", "jazz", "epic", "lofi", "gaming", "romantic"];
-      const websiteKeywords = ["pong", "play", "setting", "2fa", "password", "email", "user", "chat", "info", "weather", "paris"];
+      const websiteKeywords = ["open", "play", "close"];
 
       const matchedMood = moodKeywords.find(mood => translatedInput.toLowerCase().includes(mood));
       const matchedWebsite = websiteKeywords.find(web => translatedInput.toLowerCase().includes(web));
-      let finalText = matchedMood ? "Opening the music player with a fitted playlist..." : "waiting AI bot";
-      finalText = matchedWebsite ? "Opening the proper window - See ya soon" : "waiting AI bot";
 
 
+      let finalText = "waiting AI bot";
+      if (matchedMood) {
+        finalText = "Opening the music player with a fitted playlist...";
+      }
+      if (matchedWebsite) {
+        finalText = "Opening/closing the proper window - See ya soon";
+      }
       if (matchedMood) {
         const musicRes = await fetch(`http://localhost:3000/api/spotify/search?q=${encodeURIComponent(matchedMood)}`);
         const musicData = await musicRes.json();

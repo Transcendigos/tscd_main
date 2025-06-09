@@ -70,11 +70,26 @@ async function renderWeatherData() {
 
 ///MAIN SECTION
 
-export function setupInfoWindow(weatherWindow: DesktopWindow) {
-  const openWeatherBtn = document.getElementById("openWeatherBtn") as HTMLButtonElement;
+export function setupInfoWindow(weatherWindow: DesktopWindow, grafanaWindow: DesktopWindow, commandWindow: DesktopWindow, aboutWindow: DesktopWindow) {
 
+  const openWeatherBtn = document.getElementById("openWeatherBtn") as HTMLButtonElement;
   openWeatherBtn?.addEventListener("click", async () => {
     weatherWindow.open();
     await renderWeatherData();
+  });
+
+  const openGrafanaBtn = document.getElementById("openGrafanaBtn") as HTMLButtonElement;
+  openGrafanaBtn?.addEventListener("click", async () => {
+    grafanaWindow.open();
+  });
+  
+  const openCommandBtn = document.getElementById("openCommandBtn") as HTMLButtonElement;
+  openCommandBtn?.addEventListener("click", async () => {
+    commandWindow.open();
+  });  
+  
+  const openAboutBtn = document.getElementById("openAboutBtn") as HTMLButtonElement;
+  openAboutBtn?.addEventListener("click", async () => {
+    aboutWindow.open();
   });
 }
