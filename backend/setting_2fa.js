@@ -2,11 +2,10 @@ import speakeasy from 'speakeasy';
 import qrcode from 'qrcode';
 import jwt from 'jsonwebtoken';
 import { getDB } from './db.js';
-import fp from 'fastify-plugin';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
-export default fp(async function twoFASettingRoutes(server, options) {
+export default async function twoFASettingRoutes(server, options) {
 
   let db = getDB();
 
@@ -113,7 +112,4 @@ export default fp(async function twoFASettingRoutes(server, options) {
     return reply.send({ message: 'TOTP 2FA has been disabled.' });
   });
 
-});
-
-
-
+}

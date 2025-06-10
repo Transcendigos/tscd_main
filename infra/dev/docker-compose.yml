@@ -11,6 +11,8 @@ services:
     volumes:
       - ../../frontend/src:/app/src
       - ../../frontend/index.html:/app/index.html
+      - ../../frontend/dev/tailwind.config.js:/app/tailwind.config.js
+      - ../../frontend/dev/postcss.config.js:/app/postcss.config.js
       - ../../frontend/dev/tsconfig.json:/app/tsconfig.json
       - ../../frontend/dev/vite.config.ts:/app/vite.config.ts
       - ../../frontend/public/:/app/public/
@@ -30,7 +32,6 @@ services:
     volumes:
       - sqlite-data:/app/data
       - ../../logs:/logs
-      - ../../frontend/public/uploads:/app/public/uploads
     ports:
       - "3000:3000"
     depends_on:
@@ -81,56 +82,8 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
 
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=30d'
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml
-      - prometheus-data:/prometheus
-    ports:
-      - "9090:9090"
-    restart: unless-stopped
-
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_SECURITY_ALLOW_EMBEDDING=true
-    volumes:
-      - grafana-storage:/var/lib/grafana
-    restart: unless-stopped
-
-  node_exporter:
-    image: prom/node-exporter
-    container_name: node_exporter
-    ports:
-      - "9101:9100"
-    restart: unless-stopped
-
-  redis_exporter:
-    image: oliver006/redis_exporter:latest
-    container_name: redis_exporter
-    environment:
-      - REDIS_ADDR=redis://redis_chat:6379
-    ports:
-      - "9121:9121"
-    depends_on:
-      - redis_chat
-    restart: unless-stopped
-
-
 
 volumes:
   sqlite-data:
   esdata:
   redis-chat-data:
-  prometheus-data:
-  grafana-storage:

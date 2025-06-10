@@ -11,7 +11,7 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": true, // Vite handles emit, tsc is for type checking
 
     "strict": true,
     "noUnusedLocals": true,
@@ -19,5 +19,5 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client"]  
   },
-  "include": ["../src"]
+  "include": ["../src"] // Only compile files in the src directory
 }

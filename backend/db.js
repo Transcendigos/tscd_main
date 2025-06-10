@@ -60,7 +60,6 @@ export function initializeDB(logger) {
         sender_id INTEGER NOT NULL,
         receiver_id INTEGER NOT NULL,
         message_content TEXT NOT NULL,
-        drawing_data_url TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
@@ -99,26 +98,6 @@ export function initializeDB(logger) {
 	}
 	});
 	scoresTable.finalize();
-
-    // Create blocked users table
-    const blockedUsersTable = db.prepare(`
-      CREATE TABLE IF NOT EXISTS blocked_users (
-        blocker_id INTEGER NOT NULL,
-        blocked_id INTEGER NOT NULL,
-        FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE,
-        PRIMARY KEY (blocker_id, blocked_id)
-      )
-    `);
-    blockedUsersTable.run((err) => {
-        if (err) {
-            if (logger) logger.error({ err }, "Error creating blocked_users table");
-        } else {
-            if (logger) logger.info("blocked_users table checked/created successfully.");
-        }
-    });
-    blockedUsersTable.finalize();
-
 
     dbInstance = db;
     return dbInstance;

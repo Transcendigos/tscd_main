@@ -37,14 +37,3 @@ See ELK logs:
 - Select the Backend Logs data view (top left dropdown)
 - You now have access to logs stream in real time, they can be searched and filtered via the searchbar
 
-See Prometheus:
-- http://localhost:9090/
-
-See Grafana:
-- http://localhost:3001/
-- Username: admin
-- Password: admin
-    the password and user reset to admin each time you restart the dockers
-
-svg free icon code:
-- https://icons.getbootstrap.com/
