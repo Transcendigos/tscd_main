@@ -100,6 +100,26 @@ export function initializeDB(logger) {
 	});
 	scoresTable.finalize();
 
+    // Create blocked users table
+    const blockedUsersTable = db.prepare(`
+      CREATE TABLE IF NOT EXISTS blocked_users (
+        blocker_id INTEGER NOT NULL,
+        blocked_id INTEGER NOT NULL,
+        FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE,
+        PRIMARY KEY (blocker_id, blocked_id)
+      )
+    `);
+    blockedUsersTable.run((err) => {
+        if (err) {
+            if (logger) logger.error({ err }, "Error creating blocked_users table");
+        } else {
+            if (logger) logger.info("blocked_users table checked/created successfully.");
+        }
+    });
+    blockedUsersTable.finalize();
+
+
     dbInstance = db;
     return dbInstance;
 }

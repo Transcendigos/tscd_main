@@ -7,6 +7,8 @@ import {
   activeGames as pongActiveGames,
   stopGame,
 } from "./pong_server.js";
+import { chatMessagesCounter } from './monitoring.js';
+
 
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
 
@@ -23,9 +25,9 @@ async function chatRoutes(server, options) {
 
 if (!globalSubscriber) {
       globalSubscriber = createNewRedisSubscriber(server.log);
-      globalSubscriber.subscribe('chat:status');
+      globalSubscriber.subscribe('chat:status', 'chat:general');
       globalSubscriber.on('message', (channel, message) => {
-          if (channel === 'chat:status') {
+          if (channel === 'chat:status' || channel === 'chat:general') {
               activeConnections.forEach(ws => {
                   if (ws.readyState === 1) {
                       ws.send(message);
@@ -80,13 +82,7 @@ if (!globalSubscriber) {
       ); // ADD THIS LOG
     }
   });
-  console.log(
-    "--- CHAT.JS: server.broadcastPongGameState DECORATED --- Type NOW:",
-    typeof server.broadcastPongGameState
-  );
-  server.log.info(
-    "--- CHAT.JS: server.broadcastPongGameState DECORATED (via server.log) ---"
-  );
+
 
   server.route({
     method: "GET",
@@ -138,6 +134,7 @@ if (!globalSubscriber) {
 
         ws.authenticatedUserId = prefixedAuthenticatedUserId;
         ws.rawAuthenticatedUserId = rawAuthenticatedUserId;
+        ws.userJWTPayload = userJWTPayload;
 
         await redisPublisher.sadd('online_users', prefixedAuthenticatedUserId);
         const userOnlineNotification = JSON.stringify({
@@ -337,6 +334,26 @@ if (!globalSubscriber) {
               return;
             }
 
+            const isBlocked = await new Promise((resolve, reject) => {
+              db.get(`SELECT 1 FROM blocked_users 
+                WHERE (blocker_id = ? AND blocked_id = ?) 
+                OR (blocker_id = ? AND blocked_id = ?) 
+                LIMIT 1`,
+                [senderRawId, recipientRawId, recipientRawId, senderRawId],
+                (err, row) => {
+                  if (err) return reject(err);
+                  resolve(!!row);
+                      }
+                  );
+              });
+            
+            if (isBlocked) {
+                if (ws.readyState === 1) {
+                    ws.send(JSON.stringify({ type: "error", message: "You cannot message this user." }));
+                }
+                return;
+              }
+
             const recipientChannel = `user:${recipientRawId}:messages`;
 
             const messageDataToSend = {
@@ -356,9 +373,17 @@ if (!globalSubscriber) {
               "Chat message published to Redis"
             );
 
+
             if (drawingDataUrl) {
               server.log.info({ sender: senderRawId, toUserId: recipientRawId}, "Received a message with a drawing (DB save skipped for MVP).");
             }
+
+            //TO STORE THE METRIC IN PROMETHEUS
+            chatMessagesCounter.inc({
+              sender_id: senderRawId.toString(),
+              receiver_id: recipientRawId.toString(),
+            });
+
 
             db.run(
               "INSERT INTO chat_messages (sender_id, receiver_id, message_content) VALUES (?, ?, ?)",
@@ -393,6 +418,24 @@ if (!globalSubscriber) {
                 }
               }
             );
+          } else if (data.type === 'publicMessage') {
+            const senderUsername = ws.userJWTPayload?.username || 'Anonymous';
+            const content = data.content;
+
+            if (!content || typeof content !== 'string' || content.trim().length === 0) {
+                return;
+            }
+
+            const publicMessagePayload = JSON.stringify({
+                type: 'newPublicMessage',
+                fromUsername: senderUsername,
+                fromUserId: ws.authenticatedUserId,
+                content: content.trim(),
+                timestamp: new Date().toISOString()
+            });
+            
+            await redisPublisher.publish('chat:general', publicMessagePayload);
+
           } else if (
             data.type === "PONG_ACCEPT_INVITE" ||
             data.type === "PONG_JOIN_GAME"
@@ -898,48 +941,63 @@ if (!globalSubscriber) {
     }
   });
 
-  server.get("/api/chat/users", async (req, reply) => {
+server.get("/api/chat/users", async (req, reply) => {
     const token = req.cookies.auth_token;
-    if (!token) {
-      return reply.code(401).send({ error: "Unauthorized" });
-    }
+    if (!token) return reply.code(401).send({ error: "Unauthorized" });
+
     try {
         const payload = jwt.verify(token, JWT_SECRET);
         const currentUserRawId = payload.userId;
         const redisPublisher = getRedisPublisher();
+
         const onlineUserPrefixedIds = await redisPublisher.smembers('online_users');
 
-        const usersFromDB = await new Promise((resolve, reject) => {
-            db.all(
-                "SELECT id, username, picture FROM users WHERE id != ? ORDER BY username ASC",
-                [currentUserRawId],
-                (err, rows) => (err ? reject(err) : resolve(rows))
-            );
+        const iHaveBlockedRows = await new Promise((resolve, reject) => {
+            db.all('SELECT blocked_id FROM blocked_users WHERE blocker_id = ?', [currentUserRawId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
         });
+        const iHaveBlockedSet = new Set(iHaveBlockedRows.map(r => r.blocked_id));
 
-        const usersWithStatus = usersFromDB.map(user => {
+        const whoHaveBlockedMeRows = await new Promise((resolve, reject) => {
+            db.all('SELECT blocker_id FROM blocked_users WHERE blocked_id = ?', [currentUserRawId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+        const whoHaveBlockedMeSet = new Set(whoHaveBlockedMeRows.map(r => r.blocker_id));
+
+        const allUsersFromDB = await new Promise((resolve, reject) => {
+            db.all("SELECT id, username, picture FROM users WHERE id != ?", [currentUserRawId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+        
+            const usersWithStatus = allUsersFromDB.map(user => {
             const prefixedId = `user_${user.id}`;
+            const isBlockedByMe = iHaveBlockedSet.has(user.id);
+            const hasBlockedMe = whoHaveBlockedMeSet.has(user.id);
+            const isInteractionBlocked = isBlockedByMe || hasBlockedMe;
+            
             return {
                 id: prefixedId,
                 username: user.username,
                 picture: user.picture,
-                isOnline: onlineUserPrefixedIds.includes(prefixedId)
+                isOnline: onlineUserPrefixedIds.includes(prefixedId) && !isInteractionBlocked,
+                isBlockedByMe: isBlockedByMe
             };
         });
-        
+
         reply.send(usersWithStatus);
 
     } catch (err) {
-      server.log.error({ err }, "/api/chat/users error");
-      if (
-        err.name === "JsonWebTokenError" ||
-        err.name === "TokenExpiredError"
-      ) {
-        return reply.code(401).send({ error: "Invalid token" });
-      }
-      return reply.code(500).send({ error: "Server error" });
+        server.log.error({ err }, "/api/chat/users error");
+        reply.code(500).send({ error: "Server error" });
     }
-  });
+});
+
 }
 
 export default fp(chatRoutes, {
