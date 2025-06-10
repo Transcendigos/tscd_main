@@ -310,9 +310,9 @@ if (!globalSubscriber) {
           if (data.type === "privateMessage") {
             const senderRawId = ws.rawAuthenticatedUserId;
             const senderPrefixedId = ws.authenticatedUserId;
-            const { toUserId, content } = data;
+            const { toUserId, content, drawingDataUrl } = data;
 
-            if (!toUserId || typeof content === "undefined") {
+            if (!toUserId || (typeof content === "undefined" && typeof drawingDataUrl === "undefined")) {
               if (ws.readyState === 1) {
                 ws.send(
                   JSON.stringify({
@@ -345,15 +345,20 @@ if (!globalSubscriber) {
               fromUsername: userJWTPayload.username,
               toUserId: `user_${recipientRawId}`,
               content: content,
+              drawingDataUrl: drawingDataUrl,
               timestamp: new Date().toISOString(),
             };
             const messageToSendString = JSON.stringify(messageDataToSend);
 
             await redisPublisher.publish(recipientChannel, messageToSendString);
             server.log.info(
-              { sender: senderPrefixedId, recipientChannel, content },
+              { sender: senderPrefixedId, recipientChannel, content, hasDrawing: !!drawingDataUrl },
               "Chat message published to Redis"
             );
+
+            if (drawingDataUrl) {
+              server.log.info({ sender: senderRawId, toUserId: recipientRawId}, "Received a message with a drawing (DB save skipped for MVP).");
+            }
 
             db.run(
               "INSERT INTO chat_messages (sender_id, receiver_id, message_content) VALUES (?, ?, ?)",

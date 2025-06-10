@@ -38,6 +38,7 @@ interface ChatMessage {
   content?: string;
   timestamp?: string;
   message?: string;
+  drawingDataUrl?: string;
   user?: WebSocketUser;
   users?: (ApiUser)[];
   messageId?: number;
@@ -524,17 +525,51 @@ function createPrivateChatWindowHtml(peerUser: User): string {
   const peerIdNumeric = peerUser.id;
   const peerUsernameSafe = (peerUser.username || "User").replace(/[&<>"']/g, (match) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[match]!));
   return `
-        <div id="privateChatWindow_${peerIdNumeric}" class="border-2 w-[450px] text-sm flex flex-col bg-slate-900/60 absolute left-1/3 top-1/3 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out backdrop-blur-xs opacity-0 scale-95 invisible pointer-events-none drop-shadow-xl/30" style="width: 300px; height: 350px; min-width: 300px; min-height: 350px; max-width: 600px; max-height: 80vh;">
+        <div id="privateChatWindow_${peerIdNumeric}" class="border-2 w-[450px] text-sm flex flex-col bg-slate-900/60 absolute left-1/3 top-1/3 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out backdrop-blur-xs opacity-0 scale-95 invisible pointer-events-none drop-shadow-xl/30" style="width: 380px; height: auto; min-width: 350px; min-height: 400px; max-width: 600px; max-height: 80vh;">
             <div id="privateChatDragHandle_${peerIdNumeric}" class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 cursor-grab active:cursor-grabbing select-none">
-                <div class="flex items-center space-x-1.5"><button id="viewProfileBtn_${peerUser.id}" title="View ${peerUser.username}'s profile" class="font-bold hover:underline">Chat with ${peerUser.username}</button></div>
+                <div class="flex items-center space-x-1.5"><span class="font-bold">Chat with ${peerUsernameSafe}</span></div>
                 <div class="flex items-center space-x-1">
-                    <button id="invitePongBtn_${peerIdNumeric}" title="Invite ${peerUsernameSafe} to Pong" class="px-2 py-0.5 border border-green-500 text-green-400 hover:bg-green-500 hover:text-slate-900 text-xs rounded transition-colors">Invite Pong</button>
+                    <button id="invitePongBtn_${peerIdNumeric}" title="Invite ${peerUsernameSafe} to Pong" class="px-2 py-0.5 border border-seLightBlue text-seLightBlue hover:bg-seLightBlue hover:text-slate-900 font-bold text-xs transition-colors">Invite ${peerUsernameSafe} to Pong</button>
                     <button aria-label="Close private chat with ${peerUsernameSafe}" id="closePrivateChatBtn_${peerIdNumeric}" class="w-5 h-5 border flex items-center justify-center font-bold hover-important transition-colors">X</button>
                 </div>
             </div>
-            <div class="flex-grow p-2 overflow-y-auto space-y-2 divide-y divide-slate-600/60" id="privateMessagesArea_${peerIdNumeric}"></div>
+            <div class="flex-grow p-2 overflow-y-auto space-y-2 divide-y divide-slate-600/60" id="privateMessagesArea_${peerIdNumeric}" style="min-height: 200px;"></div>
+            
+            <div id="drawingContainer_${peerIdNumeric}" class="p-2 border-t hidden flex items-start space-x-3 bg-slate-800">
+                <div id="drawingToolbar_${peerIdNumeric}" class="p-1 border-2 border-t-slate-600 border-l-slate-600 border-b-slate-950 border-r-slate-950 bg-slate-800 flex flex-col gap-2">
+                    <div id="colorPalette_${peerIdNumeric}" class="grid grid-cols-2 gap-1">
+                        <button class="w-5 h-5 bg-black tool-color border-2 border-solid" data-color="black"></button>
+                        <button class="w-5 h-5 bg-white tool-color border-2 border-solid" data-color="white"></button>
+                        <button class="w-5 h-5 bg-slate-400 tool-color border-2 border-solid" data-color="#94a3b8"></button>
+                        <button class="w-5 h-5 bg-red-600 tool-color border-2 border-solid" data-color="#E53E3E"></button>
+                        <button class="w-5 h-5 bg-yellow-400 tool-color border-2 border-solid" data-color="#F6E05E"></button>
+                        <button class="w-5 h-5 bg-green-500 tool-color border-2 border-solid" data-color="#38A169"></button>
+                        <button class="w-5 h-5 bg-blue-600 tool-color border-2 border-solid" data-color="#3182CE"></button>
+                        <button class="w-5 h-5 bg-purple-500 tool-color border-2 border-solid" data-color="#805AD5"></button>
+                    </div>
+                    <div class="border-t border-slate-700"></div>
+                    <div id="sizeSelector_${peerIdNumeric}" class="flex flex-col space-y-2 items-center justify-center">
+                        <button class="w-full h-3 flex items-center justify-center tool-size border-2 border-solid" data-size="1"><div class="h-px w-4/5 bg-seLightBlue"></div></button>
+                        <button class="w-full h-3 flex items-center justify-center tool-size border-2 border-solid" data-size="3"><div class="h-0.5 w-4/5 bg-seLightBlue"></div></button>
+                        <button class="w-full h-3 flex items-center justify-center tool-size border-2 border-solid" data-size="6"><div class="h-1 w-4/5 bg-seLightBlue"></div></button>
+                    </div>
+                    <div class="border-t border-slate-700"></div>
+                    <button id="eraserBtn_${peerIdNumeric}" title="Eraser" class="h-5 w-full flex items-center justify-center p-0.5 border-2 border-solid">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-eraser-fill" viewBox="0 0 16 16"><path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828zm.66 11.34L3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293z"/></svg>
+                    </button>
+                </div>
+                <div class="flex-grow flex flex-col items-center justify-start pt-3">
+                    <canvas id="drawingCanvas_${peerIdNumeric}" width="160" height="160" class="bg-white border-2 border-t-slate-950 border-l-slate-950 border-b-slate-600 border-r-slate-600 cursor-crosshair"></canvas>
+                    <div class="flex justify-between items-center mt-2 w-full max-w-[160px]">
+                        <button id="clearCanvasBtn_${peerIdNumeric}" class="retro-button text-xs font-bold px-3 py-1 border hover:bg-supRed hover:text-slate-900">CLEAR</button>
+                        <button id="sendDrawingBtn_${peerIdNumeric}" class="retro-button text-xs font-bold px-3 py-1 border hover:bg-seLightGreen hover:text-slate-900">SEND</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="p-2 border-t">
                 <div class="flex space-x-2">
+                    <button id="toggleDrawBtn_${peerIdNumeric}" title="Open Drawing Pad" class="border p-1.5 hover:bg-slate-700 transition-colors">✏️</button>
                     <input type="text" id="privateMessageInput_${peerIdNumeric}" placeholder="Message ${peerUsernameSafe}..." class="flex-grow p-1.5 bg-slate-900 border text-xs focus:ring-1 focus:ring-[#4cb4e7] focus:border-[#4cb4e7] outline-none" />
                     <button id="privateSendBtn_${peerIdNumeric}" class="border px-3 py-1.5 font-bold tracking-wider hover:bg-[#8be076] hover:text-slate-900 transition-colors text-xs">SEND</button>
                 </div>
@@ -585,6 +620,130 @@ async function launchPrivateChatWindow(peerUser: User) {
       const inputField = document.getElementById(inputFieldId) as HTMLInputElement;
       const sendButton = document.getElementById(sendButtonId) as HTMLButtonElement;
       const invitePongButton = document.getElementById(invitePongButtonId) as HTMLButtonElement;
+
+
+      // --- DRAWING MVP CODE ---
+      const toggleDrawBtn = document.getElementById(`toggleDrawBtn_${peerUser.id}`) as HTMLButtonElement;
+      const drawingContainer = document.getElementById(`drawingContainer_${peerUser.id}`) as HTMLDivElement;
+      const canvas = document.getElementById(`drawingCanvas_${peerUser.id}`) as HTMLCanvasElement;
+      const clearCanvasBtn = document.getElementById(`clearCanvasBtn_${peerUser.id}`) as HTMLButtonElement;
+      const sendDrawingBtn = document.getElementById(`sendDrawingBtn_${peerUser.id}`) as HTMLButtonElement;
+      const colorPalette = document.getElementById(`colorPalette_${peerUser.id}`) as HTMLDivElement;
+      const sizeSelector = document.getElementById(`sizeSelector_${peerUser.id}`) as HTMLDivElement;
+      const eraserBtn = document.getElementById(`eraserBtn_${peerUser.id}`) as HTMLButtonElement;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.error("Failed to get canvas context");
+        return;
+      }
+
+      let currentColor = 'black';
+      let currentSize = 1;
+      let isErasing = false;
+      let isDrawing = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      const updateToolVisuals = () => {
+        const activeStyle = { top: "#020617", left: "#020617", bottom: "#4b5563", right: "#4b5563" }; // Inset
+        const inactiveStyle = { top: "#4b5563", left: "#4b5563", bottom: "#020617", right: "#020617" }; // Outset
+
+        const applyStyles = (el: HTMLElement, isActive: boolean) => {
+            const styleToApply = isActive ? activeStyle : inactiveStyle;
+            el.style.borderTopColor = styleToApply.top;
+            el.style.borderLeftColor = styleToApply.left;
+            el.style.borderBottomColor = styleToApply.bottom;
+            el.style.borderRightColor = styleToApply.right;
+        };
+
+        colorPalette.querySelectorAll('.tool-color').forEach(b => {
+            const button = b as HTMLButtonElement;
+            applyStyles(button, button.dataset.color === currentColor && !isErasing);
+        });
+        
+        sizeSelector.querySelectorAll('.tool-size').forEach(b => {
+            const button = b as HTMLButtonElement;
+            applyStyles(button, parseInt(button.dataset.size!) === currentSize);
+        });
+
+        applyStyles(eraserBtn, isErasing);
+      };
+
+      updateToolVisuals();
+
+      colorPalette.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const button = target.closest('.tool-color') as HTMLButtonElement | null;
+        if (button) {
+          currentColor = button.dataset.color || 'black';
+          isErasing = false;
+          updateToolVisuals();
+        }
+      });
+
+      sizeSelector.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const button = target.closest('.tool-size') as HTMLButtonElement | null;
+        if (button) {
+          currentSize = parseInt(button.dataset.size || '1', 10);
+          updateToolVisuals();
+        }
+      });
+
+      eraserBtn.addEventListener('click', () => {
+        isErasing = true;
+        updateToolVisuals();
+      });
+      
+      const draw = (e: MouseEvent) => {
+        if (!isDrawing) return;
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+        [lastX, lastY] = [e.offsetX, e.offsetY];
+      };
+
+      canvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        ctx.lineWidth = currentSize;
+        ctx.strokeStyle = isErasing ? '#FFFFFF' : currentColor;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        [lastX, lastY] = [e.offsetX, e.offsetY];
+      });
+
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', () => isDrawing = false);
+      canvas.addEventListener('mouseout', () => isDrawing = false);
+
+      toggleDrawBtn.addEventListener('click', () => {
+        drawingContainer.classList.toggle('hidden');
+      });
+
+      clearCanvasBtn.addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      });
+
+      sendDrawingBtn.addEventListener('click', () => {
+        const dataUrl = canvas.toDataURL('image/png');
+        if (socket && socket.readyState === WebSocket.OPEN && currentUserId) {
+          const payload = { type: "privateMessage", toUserId: peerUser.id.toString(), drawingDataUrl: dataUrl };
+          socket.send(JSON.stringify(payload));
+
+          displayMessageInWindow(
+            { fromUserId: currentUserId, fromUsername: currentUsername || "You", toUserId: peerUser.id, drawingDataUrl: dataUrl, timestamp: new Date().toISOString() },
+            messagesArea,
+            peerUser.id
+          );
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          drawingContainer.classList.add('hidden');
+        }
+      });
+
+      // --- END DRAWING MVP CODE ---
 
       if (!messagesArea || !inputField || !sendButton || !invitePongButton) {
         console.error(`Chat: Could not find all interactive chat sub-elements for ${peerUser.username}.`);
@@ -670,29 +829,43 @@ function displayMessageInWindow(msg: ChatMessage, messagesArea: HTMLElement, pee
   } else if (typeof msg.fromUserId === 'number') {
     msgFromNumericId = msg.fromUserId;
   } else {
-    console.warn('[DisplayMessage] Unparseable msg.fromUserId:', msg.fromUserId, msg); return; 
+    return;
   }
-  if (isNaN(msgFromNumericId)){ console.warn('[DisplayMessage] msg.fromUserId resulted in NaN:', msg.fromUserId, msg); return; }
-  
-  console.log(`[DisplayMessage] msgFromNumericId: ${msgFromNumericId}, currentUserId: ${currentUserId}, peerIdOfThisWindowNumeric: ${peerIdOfThisWindowNumeric}, fromUsername: ${msg.fromUsername}`);
+  if (isNaN(msgFromNumericId)) {
+    return;
+  }
 
   const messageContainerDiv = document.createElement("div");
   const senderInfoDiv = document.createElement("div");
   const messageContentDiv = document.createElement("div");
-  senderInfoDiv.textContent = `${msg.fromUsername || `User ${msgFromNumericId}`}:`;
-  senderInfoDiv.classList.add("text-xs", "font-bold", "underline");
-  messageContentDiv.textContent = msg.content || "";
-  messageContentDiv.className = "px-3 text-xs break-all break-words";
+
+  if (msg.drawingDataUrl) {
+    const img = document.createElement('img');
+    img.src = msg.drawingDataUrl;
+    img.alt = `${msg.fromUsername}'s drawing`;
+    img.className = "max-w-full h-auto border rounded-md bg-white mt-1";
+    messageContentDiv.appendChild(img);
+  }
+
+  if (msg.content) {
+    const textNode = document.createElement('div');
+    textNode.textContent = msg.content;
+    textNode.className = "text-xs break-words";
+    messageContentDiv.appendChild(textNode);
+  }
 
   if (msgFromNumericId === currentUserId) {
-    messageContainerDiv.className = "text-[#FFE2BF] flex flex-row items-start my-2 py-2";
-    senderInfoDiv.style.color = "#FFE2BF";
+    messageContainerDiv.className = "flex flex-col items-end my-2 py-2";
+    senderInfoDiv.className = "text-xs font-bold underline text-right";
+    senderInfoDiv.textContent = `You:`;
   } else if (msgFromNumericId === peerIdOfThisWindowNumeric) {
-    messageContainerDiv.className = "flex flex-row items-start my-2 py-2";
+    messageContainerDiv.className = "flex flex-col items-start my-2 py-2";
+    senderInfoDiv.className = "text-xs font-bold underline text-left";
+    senderInfoDiv.textContent = `${msg.fromUsername || `User ${msgFromNumericId}`}:`;
   } else {
-    console.warn("[DisplayMessage] Message is not from self and not from the expected peer of this window.", { msgFromNumericId, currentUserId, peerIdOfThisWindowNumeric, originalMsg: msg });
     return;
   }
+
   messageContainerDiv.appendChild(senderInfoDiv);
   messageContainerDiv.appendChild(messageContentDiv);
   messagesArea.appendChild(messageContainerDiv);
