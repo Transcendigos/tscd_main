@@ -339,8 +339,4 @@ export default fp(async function authRoutes(server, options) {
     }
   });
 
-
-}
-
 });
-
