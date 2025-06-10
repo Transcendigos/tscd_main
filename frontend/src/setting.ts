@@ -180,10 +180,15 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
       } else {
         deleteMsg.textContent = `❌ ${data.error || "Failed to delete account"}`;
       }
+      if (data.user.method_sign == "google")
+        disableTrigger("twofaSection");
+      else
+        enableTrigger("twofaSection");
     } catch (err) {
       console.error("Error deleting account:", err);
       deleteMsg.textContent = "❌ Unexpected error occurred.";
     }
+
   });
 
   // 2FA SECTION
@@ -193,6 +198,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
   const verifyTotpInput = document.getElementById('verifyTotpInput') as HTMLInputElement;
   const confirmTotpButton = document.getElementById('confirmTotpButton') as HTMLButtonElement;
   const totpMsg = document.getElementById('totpStatus') as HTMLParagraphElement;
+
 
   // ✅ Enable/Disable TOTP 2FA
   totp2faCheckbox.addEventListener('change', async () => {

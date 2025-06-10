@@ -1,5 +1,7 @@
+
 // frontend/src/main.ts
 import { startPongGame, setCanvas, stopPongGame } from "./pong.js";
+
 import { DesktopWindow } from "./DesktopWindow.js";
 import { checkSignedIn, setupSignupForm } from "./sign_up.js";
 import { initGoogleSignIn } from "./google_auth.js";
@@ -19,6 +21,29 @@ import {
 } from './multiplayer_pong.js';
 
 
+
+// For Solo AI Pong
+import { 
+    startPongGame as startAIPong, 
+    setCanvas as setAIPongCanvas, 
+    stopPongGame as stopAIPong 
+} from "./pong.js";
+
+// For Remote Multiplayer Server Sided Pong 
+import { 
+    startPongGame as startMultiplayerPong, 
+    setCanvas as setMultiplayerPongCanvas, 
+    stopPongGame as stopMultiplayerPong 
+} from "./client_pong.ts";
+
+// For Local multiplayer Pong
+import {
+    startPongGame as startLocalMultiplayerPong,
+    setCanvas as setLocalMultiplayerPongCanvas,
+    stopPongGame as stopLocalMultiplayerPong
+} from "./localmultipong.js";
+
+
 let signinWindow: DesktopWindow;
 let signupWindow: DesktopWindow;
 let logoutWindow: DesktopWindow;
@@ -35,6 +60,10 @@ let commandWindow: DesktopWindow;
 let aboutWindow: DesktopWindow;
 let aiWindow: DesktopWindow;
 let musicWindow: DesktopWindow;
+
+let activePongMode: 'solo' | 'multiplayer' | 'localMultiplayer' | null = null;
+let currentPongStopFunction: (() => void) | null = null;
+
 
 // Utility functions
 function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string, onOpenCallback?: () => void) {
@@ -358,7 +387,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
       onCloseCallback: () => {
-        stopPongGame();
+        stopAIPong();
       }
     });
   } catch (error) {
@@ -436,29 +465,123 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the music window:", error);
   }
 
-  const gameContainer = document.getElementById("gameContainer")!;
-  const clickMeBtn = document.getElementById("clickMeBtn")!;
-  const soloPongCanvasElement = document.getElementById("pongCanvas") as HTMLCanvasElement;
+  // WEBCAM FUNCTION TO BE TESTED LATER
+  // const startTestWebcamButton = document.getElementById('startTestWebcamBtn'); // Assuming this ID exists
+  //   if (startTestWebcamButton) {
+  //       startTestWebcamButton.addEventListener('click', async () => {
+  //           console.log("Start Test Webcam button clicked.");
+  //           // Make sure the 'testWindow' is open and its video elements are in the DOM
+  //           const stream = await startWebcamFeed('testWebcamVideo', 'testWebcamError');
+  //           if (stream) {
+  //               // You might want to associate this stream with the testWindow instance
+  //               // so you can stop it when the testWindow is closed.
+  //               // e.g., testWindowInstance.setActiveStream(stream);
+  //           }
+  //       });
+  //     }
 
-  if (clickMeBtn && gameContainer && soloPongCanvasElement) {
-    clickMeBtn.addEventListener("click", () => {
-      if (multiplayerPongWindow && multiplayerPongWindow.isVisible()) {
-        multiplayerPongWindow.close();
+  // --- Pong Game Specific Logic ---
+  const gameContainer = document.getElementById("gameContainer")!; // Ensure it exists
+  const clickSoloBtn = document.getElementById("clickMeBtn")!; //solo vs IA button
+  const clickMultiBtn = document.getElementById("darkBtn"); // remote multi button (server side)
+  const clickLocalbtn = document.getElementById("localbutton"); //local multi button 
+  const canvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
+
+  if (!gameContainer || !canvas) {
+    console.error("Pong gameContainer or canvas element is missing from the DOM.");
+    return; // Exit if essential elements are not found
+  }
+
+  // Solo AI Pong Button bellow
+  if (clickSoloBtn) {
+    clickSoloBtn.addEventListener("click", () => {
+      console.log("Solo Pong button clicked.");
+      if (pongWindow.isVisible() && activePongMode === 'solo') {
+        console.log("Solo Pong is already running and window is visible.");
+        return; // Already in this mode and window is open
       }
-      cleanupMultiplayerPong();
-      if (pongWindow && pongWindow.isVisible()) {
-        return;
-      } else if (pongWindow && !pongWindow.isVisible()) {
+
+      if (currentPongStopFunction) {
+        console.log(`Switching from ${activePongMode} to solo. Stopping previous mode.`);
+        currentPongStopFunction(); // Stop any other active pong game
+      }
+      
+      if (!pongWindow.isVisible()) {
         pongWindow.open();
-        setCanvas(soloPongCanvasElement);
-        startPongGame();
-      } else {
-        setCanvas(soloPongCanvasElement);
-        startPongGame();
       }
+      
+      console.log("Setting up and starting AI Pong.");
+      setAIPongCanvas(canvas); // Use aliased function for AI Pong
+      startAIPong();           // Use aliased function for AI Pong
+      
+      activePongMode = 'solo';
+      currentPongStopFunction = stopAIPong; // Set the correct stop function
     });
   } else {
-    console.error("One or more elements for SOLO Pong game setup are missing.");
+    console.error("Solo Pong button ('clickMeBtn') not found.");
+  }
+
+
+  // Remote server side multiplayer bellow 
+  if (clickMultiBtn) {
+    clickMultiBtn.addEventListener("click", () => {
+      console.log("Multiplayer Pong button clicked.");
+      if (pongWindow.isVisible() && activePongMode === 'multiplayer') {
+        console.log("Multiplayer Pong is already running and window is visible.");
+        return; // Already in this mode and window is open
+      }
+
+      if (currentPongStopFunction) {
+        console.log(`Switching from ${activePongMode} to multiplayer. Stopping previous mode.`);
+        currentPongStopFunction(); // Stop any other active pong game
+      }
+
+      if (!pongWindow.isVisible()) {
+        pongWindow.open();
+      }
+      
+      console.log("Setting up and starting Multiplayer Pong.");
+      setMultiplayerPongCanvas(canvas); // Use aliased function for Multiplayer Pong
+      startMultiplayerPong();           // Use aliased function for Multiplayer Pong (handles connection)
+      
+      activePongMode = 'multiplayer';
+      currentPongStopFunction = stopMultiplayerPong; // Set the correct stop function
+    });
+  } else {
+    console.error("Multiplayer Pong button ('darkBtn') not found.");
+  }
+
+  // Local Multiplayer Pong Button
+  if (clickLocalbtn) {
+    clickLocalbtn.addEventListener("click", () => {
+      console.log("Local Multiplayer Pong button clicked.");
+      if (activePongMode === 'localMultiplayer' && pongWindow.isVisible()) {
+        console.log("Local Multiplayer Pong is already running and window is visible.");
+
+
+        return;
+      }
+
+      if (currentPongStopFunction) {
+        console.log(`Switching from ${activePongMode} to local multiplayer. Stopping previous mode.`);
+        currentPongStopFunction();
+      }
+
+      if (!pongWindow.isVisible()) {
+        pongWindow.open();
+
+      }
+
+      console.log("Setting up and starting Local Multiplayer Pong.");
+      setLocalMultiplayerPongCanvas(canvas); // Use aliased function for Local Multiplayer Pong
+      startLocalMultiplayerPong();           // Use aliased function for Local Multiplayer Pong
+
+      activePongMode = 'localMultiplayer';
+      currentPongStopFunction = stopLocalMultiplayerPong; // Set the correct stop function
+    });
+  } else {
+    console.error("Local Multiplayer Pong button ('localbutton') not found.");
+
   }
 
   await updateUIBasedOnAuth();
