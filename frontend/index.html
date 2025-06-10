@@ -542,21 +542,7 @@
 
         <!-- Liste verticale des participants -->
         <div class="flex flex-col space-y-2">
-          <!-- Participants -->
           <div id="playerInputsContainer" class="flex flex-col gap-2 mt-4"></div>
-
-          <!-- <div class="participant-row flex items-center space-x-2">
-            <input type="text"
-              class="participant-name flex-grow px-2 py-1 bg-slate-700 border border-[#4cb4e7]/50 rounded text-center"
-              placeholder="Nom du participant" />
-            <button class="ready-toggle w-6 h-6 flex items-center justify-center border border-[#4cb4e7]/50 rounded
-           text-[#4cb4e7] bg-transparent hover:bg-green-400 hover:text-white
-           transition-colors opacity-50 cursor-not-allowed" disabled>
-              ✓
-            </button>
-          </div> -->
-
-
         </div>
 
         <!-- Message bas gauche -->
@@ -573,7 +559,7 @@
             absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
             transition-all duration-300 ease-in-out
             opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
+      style="min-width: 900px; min-height: 400px; max-width: 90vw; max-height: 80vh;">
       <div id="tournamentDragHandle"
         class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
         <div class="flex items-center space-x-1.5">
@@ -605,17 +591,38 @@
         </div>
       </div>
 
-      <div class="flex-grow p-2 overflow-auto bg-slate-800/50">
-        <p>This is the content of tournamentWindow.</p>
-        <p>Replace this with actual application content.</p>
-        <input type="text" placeholder="Sample input..."
-          class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
+      <div class="flex-grow p-2 bg-slate-800/50 flex flex-col items-center overflow-auto">
+        <h2 id="tournamentName" class="text-lg font-bold mb-4"></h2>
+
+        <div class="flex w-full justify-between items-start mb-4">
+
+          <div id="tournamentBracketContainer"
+            class="flex flex-grow justify-start bg-slate-700/50 p-2 rounded-lg min-h-[300px]">
+            <div id="finalWinnerDisplay" class="hidden"></div>
+          </div>
+
+          <div id="nextMatchButtonContainer"
+            class="flex flex-col items-center justify-center p-4 ml-4 bg-slate-700/50 rounded-lg hidden">
+            <span class="text-lg font-bold text-[#8be076] mb-2 text-center">Prochain Match :</span>
+            <button id="nextMatchButton"
+              class="bg-[#4cb4e7] text-slate-900 font-extrabold py-4 px-8 rounded-lg hover:bg-green-400 transition-colors cursor-pointer text-xl text-center">
+              <span id="player1Name" class="block"></span>
+              <span class="block">vs</span>
+              <span id="player2Name" class="block"></span>
+            </button>
+          </div>
+
+          <button id="launchTournamentBtn"
+            class="bg-[#4cb4e7] text-slate-900 font-bold py-2 px-6 rounded hover:bg-green-400 transition-colors opacity-50 cursor-not-allowed ml-auto">
+            Lancer le Tournoi
+          </button>
+        </div>
+
       </div>
 
       <div id="tournamentResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
       </div>
     </div>
-
 
     <!----------------------- SETTING WINDOW -------------------->
 

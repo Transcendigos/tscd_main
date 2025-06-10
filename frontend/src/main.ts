@@ -8,10 +8,7 @@ import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
 import { setupTournamentButtonBehavior } from "./tournament.ts";
 import { initTournamentCreationLogic } from "./tournament.ts";
-import { resetTournamentCreationWindow } from "./tournament.ts";
-import { populatePlayerInputs } from "./tournament.ts";
-import { initReadyToggles } from "./tournament.ts"
-import { initReadyInputsToggleControl }from "./tournament.ts";
+import { initTournamentWindow, tournamentData } from "./tournament.ts";
 import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile, settingUserSetting } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
@@ -370,176 +367,188 @@ window.addEventListener("DOMContentLoaded", async () => {
   console.error("Failed to initialize 'tournamentPlayersWindow':", error);
 }
 
-  try {
+try {
   tournamentWindow = new DesktopWindow({
     windowId: "tournamentWindow",
     dragHandleId: "tournamentDragHandle",
     resizeHandleId: "tournamentResizeHandle",
     boundaryContainerId: "main",
     visibilityToggleId: "tournamentWindow",
-    //openTriggerId: "spawner",
     closeButtonId: "closetournamentBtn",
   });
-
 } catch (error) {
   console.error("Failed to initialize 'tournamentWindow':", error);
 }
 
+// C'est l'écouteur d'événement pour lancer un tournoi de TEST (via le bouton "ONLINE")
+const tournamentOnlineBtn = document.getElementById("tournamentOnlineBtn")!;
+tournamentOnlineBtn.addEventListener("click", () => {
+    // Nettoyer tournamentData avant d'ajouter les joueurs de test
+    tournamentData.players = []; 
+    tournamentData.name = "SAUCISSE";
+    tournamentData.playerCount = 4; // Ou 8 pour tester
+    tournamentData.players.push({ id: 1, name: "Jules" });
+    tournamentData.players.push({ id: 2, name: "Guillaume" });
+    tournamentData.players.push({ id: 3, name: "Florence" });
+    tournamentData.players.push({ id: 4, name: "Yann" });
+
+    tournamentWindow.open(); // Ouvre la fenêtre DesktopWindow
+    initTournamentWindow(); // Initialise le contenu du tournoi avec les données de test
+});
+
 // --- Chat Window ---
-  
-  try {
-    chatWindow = new DesktopWindow({
-      windowId: "chatWindow",
-      dragHandleId: "chatDragHandle",
-      resizeHandleId: "chatResizeHandle",
-      boundaryContainerId: "main",
-      visibilityToggleId: "chatWindow", 
-      closeButtonId: "closeChatBtn",
-      showClasses: defaultShowClasses,
-      hideClasses: defaultHideClasses,
-    });
-  } catch (error) {
-    console.error("Failed to initialize the chat window:", error);
-  }
+
+try {
+  chatWindow = new DesktopWindow({
+    windowId: "chatWindow",
+    dragHandleId: "chatDragHandle",
+    resizeHandleId: "chatResizeHandle",
+    boundaryContainerId: "main",
+    visibilityToggleId: "chatWindow", 
+    closeButtonId: "closeChatBtn",
+    showClasses: defaultShowClasses,
+    hideClasses: defaultHideClasses,
+  });
+} catch (error) {
+  console.error("Failed to initialize the chat window:", error);
+}
 
 // --- AI Window ---
 
-  try {
-    aiWindow = new DesktopWindow({
-      windowId: "aiWindow",
-      dragHandleId: "aiDragHandle",
-      resizeHandleId: "aiResizeHandle",
-      boundaryContainerId: "main",
-      visibilityToggleId: "aiWindow", 
-      closeButtonId: "closeaiBtn",
-      showClasses: defaultShowClasses,
-      hideClasses: defaultHideClasses,
-    });
-    fetch("/ai_prompt.txt")
-      .then(res => res.text())
-      .then(text => {
-        console.log("✅ Loaded system message");
-        setupAIWindow(musicWindow, text);
-      })
-      .catch(err => {
-        console.error("❌ Failed to load system message:", err);
-        setupAIWindow(musicWindow, "You are a helpful assistant.");
-      });
-  } catch (error) {
-    console.error("Failed to initialize the ai window:", error);
-  }
+try {
+  aiWindow = new DesktopWindow({
+    windowId: "aiWindow",
+    dragHandleId: "aiDragHandle",
+    resizeHandleId: "aiResizeHandle",
+    boundaryContainerId: "main",
+    visibilityToggleId: "aiWindow", 
+    closeButtonId: "closeaiBtn",
+    showClasses: defaultShowClasses,
+    hideClasses: defaultHideClasses,
+  });
+  fetch("/ai_prompt.txt")
+  .then(res => res.text())
+  .then(text => {
+    console.log("✅ Loaded system message");
+    setupAIWindow(musicWindow, text);
+  })
+  .catch(err => {
+    console.error("❌ Failed to load system message:", err);
+    setupAIWindow(musicWindow, "You are a helpful assistant.");
+  });
+} catch (error) {
+  console.error("Failed to initialize the ai window:", error);
+}
 
 // --- Music Window ---
-  try {
-    musicWindow = new DesktopWindow({
-      windowId: "musicWindow",
-      dragHandleId: "musicDragHandle",
-      resizeHandleId: "musicResizeHandle",
-      boundaryContainerId: "main",
-      visibilityToggleId: "musicWindow", 
-      closeButtonId: "closemusicBtn",
-      showClasses: defaultShowClasses,
-      hideClasses: defaultHideClasses,
-    });
-    setupSpotifySearch();
-  } catch (error) {
-    console.error("Failed to initialize the music window:", error);
-  }
+try {
+  musicWindow = new DesktopWindow({
+    windowId: "musicWindow",
+    dragHandleId: "musicDragHandle",
+    resizeHandleId: "musicResizeHandle",
+    boundaryContainerId: "main",
+    visibilityToggleId: "musicWindow", 
+    closeButtonId: "closemusicBtn",
+    showClasses: defaultShowClasses,
+    hideClasses: defaultHideClasses,
+  });
+  setupSpotifySearch();
+} catch (error) {
+  console.error("Failed to initialize the music window:", error);
+}
 
-  const gameContainer = document.getElementById("gameContainer")!;
-  const clickMeBtn = document.getElementById("clickMeBtn")!;
-  const soloPongCanvasElement = document.getElementById("pongCanvas") as HTMLCanvasElement;
+const gameContainer = document.getElementById("gameContainer")!;
+const clickMeBtn = document.getElementById("clickMeBtn")!;
+const soloPongCanvasElement = document.getElementById("pongCanvas") as HTMLCanvasElement;
 
-  if (clickMeBtn && gameContainer && soloPongCanvasElement) {
-    clickMeBtn.addEventListener("click", () => {
-      if (multiplayerPongWindow && multiplayerPongWindow.isVisible()) {
-        multiplayerPongWindow.close(); 
-      }
-      cleanupMultiplayerPong();
-      if (pongWindow && pongWindow.isVisible()) {
-        return;
-      } else if (pongWindow && !pongWindow.isVisible()) {
-        pongWindow.open();
-        setCanvas(soloPongCanvasElement);
-        startPongGame(); 
-      } else {
-        setCanvas(soloPongCanvasElement);
-        startPongGame();
-      }
-    });
-  } else {
-    console.error("One or more elements for SOLO Pong game setup are missing.");
-  }
-
-  await updateUIBasedOnAuth();
-  window.addEventListener("auth:updated", updateUIBasedOnAuth);
-
-  const multiplayerPongCanvasElement = document.getElementById('multiplayerPongCanvas') as HTMLCanvasElement;
-
-  window.addEventListener('pongGameStart', (event: Event) => {
-    const customEvent = event as CustomEvent;
-    const { gameId, initialState, yourPlayerId, opponentId, opponentUsername } = customEvent.detail;
-    
-    if (multiplayerPongCanvasElement && multiplayerPongWindow) {
-        if (pongWindow && pongWindow.isVisible()) {
-            pongWindow.close();
-        }
-        stopPongGame(); 
-        multiplayerPongWindow.open(); 
-        initMultiplayerPong(
-            gameId, 
-            initialState, 
-            yourPlayerId, 
-            opponentId, 
-            opponentUsername,
-            multiplayerPongCanvasElement,
-            sendPongPlayerInput,
-            sendPongPlayerReady
-        );
+if (clickMeBtn && gameContainer && soloPongCanvasElement) {
+  clickMeBtn.addEventListener("click", () => {
+    if (multiplayerPongWindow && multiplayerPongWindow.isVisible()) {
+      multiplayerPongWindow.close(); 
+    }
+    cleanupMultiplayerPong();
+    if (pongWindow && pongWindow.isVisible()) {
+      return;
+    } else if (pongWindow && !pongWindow.isVisible()) {
+      pongWindow.open();
+      setCanvas(soloPongCanvasElement);
+      startPongGame(); 
     } else {
-        console.error("Multiplayer Pong canvas or window not found for game start.");
+      setCanvas(soloPongCanvasElement);
+      startPongGame();
     }
   });
+} else {
+  console.error("One or more elements for SOLO Pong game setup are missing.");
+}
 
-  window.addEventListener('pongGameStateUpdate', (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { gameId, ball, players, status } = customEvent.detail;
-      updateMultiplayerGameState(ball, players, status);
-  });
+await updateUIBasedOnAuth();
+window.addEventListener("auth:updated", updateUIBasedOnAuth);
 
-  window.addEventListener('pongGameOver', (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { gameId, winnerId, scores } = customEvent.detail;
-      handleMultiplayerGameOver(winnerId, scores);
-  });
+const multiplayerPongCanvasElement = document.getElementById('multiplayerPongCanvas') as HTMLCanvasElement;
 
-  setupTournamentButtonBehavior();
-  initTournamentCreationLogic(tournamentCreationWindow, tournamentPlayersWindow);
-  //initReadyToggles(tournamentPlayersWindow);
-  //initReadyInputsToggleControl();
-  initGoogleSignIn();
-  settingUserProfile();
-  setupSettingForm(settingWindow);
+window.addEventListener('pongGameStart', (event: Event) => {
+  const customEvent = event as CustomEvent;
+  const { gameId, initialState, yourPlayerId, opponentId, opponentUsername } = customEvent.detail;
+  
+  if (multiplayerPongCanvasElement && multiplayerPongWindow) {
+    if (pongWindow && pongWindow.isVisible()) {
+      pongWindow.close();
+    }
+    stopPongGame(); 
+    multiplayerPongWindow.open(); 
+    initMultiplayerPong(
+      gameId, 
+      initialState, 
+      yourPlayerId, 
+      opponentId, 
+      opponentUsername,
+      multiplayerPongCanvasElement,
+      sendPongPlayerInput,
+      sendPongPlayerReady
+    );
+  } else {
+    console.error("Multiplayer Pong canvas or window not found for game start.");
+  }
+});
+
+window.addEventListener('pongGameStateUpdate', (event: Event) => {
+  const customEvent = event as CustomEvent;
+  const { gameId, ball, players, status } = customEvent.detail;
+  updateMultiplayerGameState(ball, players, status);
+});
+
+window.addEventListener('pongGameOver', (event: Event) => {
+  const customEvent = event as CustomEvent;
+  const { gameId, winnerId, scores } = customEvent.detail;
+  handleMultiplayerGameOver(winnerId, scores);
+});
+
+setupTournamentButtonBehavior();
+initTournamentCreationLogic(tournamentCreationWindow, tournamentPlayersWindow);
+initGoogleSignIn();
+settingUserProfile();
+setupSettingForm(settingWindow);
 });
 
 
 // ----------------WINDOW TEMPLATE----------------
 
 // try {
-//   const myNewWindow = new DesktopWindow({
-//     windowId: "PREFIXWindow",
-//     dragHandleId: "PREFIXDragHandle",
-//     resizeHandleId: "PREFIXResizeHandle",
-//     boundaryContainerId: "main",
-//     visibilityToggleId: "PREFIXWindow",
-//     openTriggerId: "spawner",
-//     closeButtonId: "closePREFIXBtn",
-//   });
-// } catch (error) {
-//   console.error("Failed to initialize 'PREFIXWindow':", error);
-// }
-
-
+  //   const myNewWindow = new DesktopWindow({
+    //     windowId: "PREFIXWindow",
+    //     dragHandleId: "PREFIXDragHandle",
+    //     resizeHandleId: "PREFIXResizeHandle",
+    //     boundaryContainerId: "main",
+    //     visibilityToggleId: "PREFIXWindow",
+    //     openTriggerId: "spawner",
+    //     closeButtonId: "closePREFIXBtn",
+    //   });
+    // } catch (error) {
+      //   console.error("Failed to initialize 'PREFIXWindow':", error);
+      // }
+      
+      
 
   // WEBCAM FUNCTION TO BE TESTED LATER
   // const startTestWebcamButton = document.getElementById('startTestWebcamBtn'); // Assuming this ID exists
