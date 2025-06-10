@@ -153,16 +153,7 @@ export async function settingUserProfile() {
         }
         console.log('image is ', profile.picture);
         const fallbackImage = '/favicon.jpg';
-        const resolvedSrc = profile.picture || fallbackImage;
-        const absoluteResolvedSrc = resolvedSrc.startsWith('http')
-            ? resolvedSrc
-            : new URL(resolvedSrc, window.location.origin).href;
-
-
-        // Avoid flickering
-        if (imgEl.src !== absoluteResolvedSrc) {
-            imgEl.src = resolvedSrc;
-        }
+        imgEl.src = profile.picture || fallbackImage;
 
         console.log(imgEl);
         imgEl.alt = `${profile.username}'s profile picture`;
