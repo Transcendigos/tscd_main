@@ -11,9 +11,7 @@
   "devDependencies": {
     "typescript": "latest",
     "vite": "latest",
-    "tailwindcss": "latest",
     "@tailwindcss/vite": "latest",
-    "postcss": "latest",
     "autoprefixer": "latest",
     "dotenv":"^16.5.0"
   }

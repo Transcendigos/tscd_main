@@ -1,79 +1,204 @@
 import { DesktopWindow } from "./DesktopWindow.js";
 
-export function setupSettingForm(settingWindow: DesktopWindow) {
-  const totp2faCheckbox = document.getElementById('totp2faCheckbox') as HTMLInputElement;
-  const qrContainer = document.getElementById('qrContainer') as HTMLDivElement;
-  const qrCodeImage = document.getElementById('qrCodeImage') as HTMLImageElement;
-  const verifyTotpInput = document.getElementById('verifyTotpInput') as HTMLInputElement;
-  const confirmTotpButton = document.getElementById('confirmTotpButton') as HTMLButtonElement;
-  const statusMsg = document.getElementById('totpStatus') as HTMLParagraphElement;
+export async function setupSettingForm(settingWindow: DesktopWindow) {
 
-  function disableTrigger(triggerId: string) {
-  const el = document.getElementById(triggerId);
-  if (el) {
-    el.classList.add("opacity-50", "cursor-not-allowed", "select-none");
-    el.classList.remove("hover-important", "cursor-default");
-
-    // Désactiver tous les <input> enfants
-    const inputs = el.querySelectorAll("input");
-    inputs.forEach((input) => {
-      (input as HTMLInputElement).disabled = true;
-      (input as HTMLInputElement).style.pointerEvents = 'none';
-    });
+  async function resetAllForms() {
+    (document.getElementById("newUsername") as HTMLInputElement).value = '';
+    (document.getElementById("newEmail") as HTMLInputElement).value = '';
+    (document.getElementById("newPassword") as HTMLInputElement).value = '';
+    (document.getElementById("profilePicInput") as HTMLInputElement).value = '';
+    (document.getElementById("verifyTotpInput") as HTMLInputElement).value = '';
+    hide("usernameForm");
+    hide("emailForm");
+    hide("passwordForm");
+    hide("pictureForm");
+    const usernameMsg = document.getElementById("UsernameUpdateStatus")!;
+    const emailMsg = document.getElementById("emailUpdateStatus")!;
+    const passwordMsg = document.getElementById("passwordUpdateStatus")!;
+    const pictureMsg = document.getElementById("pictureUpdateStatus")!;
+    const deleteMsg = document.getElementById("deleteUpdateStatus")!;
+    usernameMsg.textContent = "";
+    emailMsg.textContent = "";
+    passwordMsg.textContent = "";
+    pictureMsg.textContent = "";
+    deleteMsg.textContent = "";
   }
-}
 
-function enableTrigger(triggerId: string) {
-  const el = document.getElementById(triggerId);
-  if (el) {
-    el.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
+  const usernameMsg = document.getElementById("UsernameUpdateStatus")!;
+  const emailMsg = document.getElementById("emailUpdateStatus")!;
+  const passwordMsg = document.getElementById("passwordUpdateStatus")!;
+  const pictureMsg = document.getElementById("pictureUpdateStatus")!;
+  const deleteMsg = document.getElementById("deleteUpdateStatus")!;
 
-    const inputs = el.querySelectorAll("input");
-    inputs.forEach((input) => {
-      (input as HTMLInputElement).disabled = false;
-      (input as HTMLInputElement).style.pointerEvents = 'auto';
+  const show = (id: string) => document.getElementById(id)!.classList.remove("hidden");
+  const hide = (id: string) => document.getElementById(id)!.classList.add("hidden");
+
+  document.getElementById("changeUsernameBtn")?.addEventListener("click", () => show("usernameForm"));
+  document.getElementById("changeEmailBtn")?.addEventListener("click", () => show("emailForm"));
+  document.getElementById("changePasswordBtn")?.addEventListener("click", () => show("passwordForm"));
+  document.getElementById("changePictureBtn")?.addEventListener("click", () => show("pictureForm"));
+  const currentUsername = document.getElementById('currentUsername');
+  const currentEmail = document.getElementById('currentEmail');
+
+
+  // Username
+  document.getElementById("saveUsernameBtn")?.addEventListener("click", async () => {
+    const newUsername = (document.getElementById("newUsername") as HTMLInputElement).value;
+    const res = await fetch("http://localhost:3000/api/profile/update-username", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ username: newUsername }),
     });
-  }
-}
 
-  async function refreshTotpState() {
-    console.log("Refreshing TOTP state");
-    qrContainer.classList.add('hidden');
+    const data = await res.json();
+    if (res.ok) {
+      currentUsername.textContent = newUsername;
+      const logoutUsername = document.getElementById("logoutUsername") as HTMLDivElement;
+      logoutUsername.textContent = newUsername;
+      const usernameProfile = document.getElementById('profileUsername');
+      usernameProfile.textContent = newUsername;
+      usernameMsg.textContent = "✅ Username updated!";
+      setTimeout(() => {
+        hide("usernameForm"); resetAllForms()
+      }, 1500);
+      ;
+      console.log("ALL GOOD");
+    } else {
+      usernameMsg.textContent = `❌ ${data.error || "Failed to update username"}`;
+    }
+  });
+
+  // Email
+  document.getElementById("saveEmailBtn")?.addEventListener("click", async () => {
+    const emailInput = document.getElementById("newEmail") as HTMLInputElement;
+    const newEmail = emailInput.value;
+
+    if (!emailInput.checkValidity()) {
+      emailInput.reportValidity(); // Trigger browser-style error popup
+      return;
+    }
+
+    const res = await fetch("http://localhost:3000/api/profile/update-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email: newEmail }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      currentEmail.textContent = newEmail;
+      const emailProfile = document.getElementById("profileEmail");
+      emailProfile.textContent = newEmail;
+      emailMsg.textContent = "✅ Email updated!";
+      setTimeout(() => {
+        hide("emailForm");
+      }, 1000);
+      resetAllForms();
+      console.log("ALL GOOD");
+    } else {
+      emailMsg.textContent = `❌ ${data.error || "Failed to update email"}`;
+    }
+  });
+  // Password
+  document.getElementById("savePasswordBtn")?.addEventListener("click", async () => {
+    const newPassword = (document.getElementById("newPassword") as HTMLInputElement).value;
+    const res = await fetch("http://localhost:3000/api/profile/update-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ password: newPassword }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      passwordMsg.textContent = "✅ Password updated!";
+      setTimeout(() => {
+        hide("passwordForm"); // Redirect to homepage or login
+      }, 1000);
+      resetAllForms();
+      console.log("ALL GOOD");
+    } else {
+      passwordMsg.textContent = `❌ ${data.error || "Failed to update password"}`;
+    }
+  });
+
+  // Picture Upload profileImageSetting
+  document.getElementById("uploadPicBtn")?.addEventListener("click", async () => {
+    const fileInput = document.getElementById("profilePicInput") as HTMLInputElement;
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("profilePic", file);
+
+    const res = await fetch("http://localhost:3000/api/profile/upload-picture", {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      const img_profile = document.getElementById("profileImage") as HTMLImageElement;
+      img_profile.src = data.url || URL.createObjectURL(file); // temporary preview
+      const img_setting = document.getElementById("profileImageSetting") as HTMLImageElement;
+      img_setting.src = data.url || URL.createObjectURL(file); // temporary preview
+      pictureMsg.textContent = "✅ Picture updated!";
+      setTimeout(() => {
+        hide("pictureForm"); // Redirect to homepage or login
+      }, 1000);
+      resetAllForms();
+      console.log("ALL GOOD");
+    } else {
+      pictureMsg.textContent = `❌ ${data.error || "Failed to upload picture"}`;
+    }
+  });
+
+  // DELETE ACCOUNT
+
+  document.getElementById("deleteAccount")?.addEventListener("click", async () => {
+    const confirmDelete = confirm("⚠️ Are you sure you want to delete your account? This action is irreversible.");
+    if (!confirmDelete) return;
+
+    deleteMsg.textContent = "⏳ Deleting your account...";
+
     try {
-      const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+      const res = await fetch("http://localhost:3000/api/profile/delete-account", {
+        method: "POST",
+        credentials: "include"
+      });
+
       const data = await res.json();
-      if (data.signedIn && data.user) {
-        totp2faCheckbox.checked = data.user.totp_enabled;
+
+      if (res.ok) {
+        deleteMsg.textContent = "✅ Account deleted. Redirecting...";
+        setTimeout(() => {
+          window.location.href = "/"; // Redirect to homepage or login
+        }, 1500);
+        resetAllForms();
+      } else {
+        deleteMsg.textContent = `❌ ${data.error || "Failed to delete account"}`;
       }
       if (data.user.method_sign == "google")
         disableTrigger("twofaSection");
       else
         enableTrigger("twofaSection");
     } catch (err) {
-      console.error("Failed to refresh TOTP state:", err);
-      totp2faCheckbox.checked = false;
+      console.error("Error deleting account:", err);
+      deleteMsg.textContent = "❌ Unexpected error occurred.";
     }
-  }
 
-  // async function disabletopCheckbox(){
-  //     const res = await fetch("http://localhost:3000/api/me", {credentials: "include" });
-  //     const data = await res.json();
-  //     //alert("big prouting");
-  //     if (data.user.method_sign === 'method'){
-  //       disableTrigger("twofaSection");
-  //     }
-  //   }
+  });
 
-  // Patch the open method to always update TOTP checkbox
-  const originalOpen = settingWindow.open.bind(settingWindow);
-  settingWindow.open = async () => {
-    await refreshTotpState();
-    originalOpen();
-  };
+  // 2FA SECTION
+  const totp2faCheckbox = document.getElementById('totp2faCheckbox') as HTMLInputElement;
+  const qrContainer = document.getElementById('qrContainer') as HTMLDivElement;
+  const qrCodeImage = document.getElementById('qrCodeImage') as HTMLImageElement;
+  const verifyTotpInput = document.getElementById('verifyTotpInput') as HTMLInputElement;
+  const confirmTotpButton = document.getElementById('confirmTotpButton') as HTMLButtonElement;
+  const totpMsg = document.getElementById('totpStatus') as HTMLParagraphElement;
 
-  // Call once during init just in case
-  refreshTotpState();
-  //disabletopCheckbox();
 
   // ✅ Enable/Disable TOTP 2FA
   totp2faCheckbox.addEventListener('change', async () => {
@@ -100,7 +225,7 @@ function enableTrigger(triggerId: string) {
       qrCodeImage.src = data.qrCodeUrl;
       qrCodeImage.dataset.secret = data.base32; // ← store secret
       qrContainer.classList.remove('hidden');
-      statusMsg.textContent = '';
+      totpMsg.textContent = '';
     }
   });
 
@@ -108,7 +233,7 @@ function enableTrigger(triggerId: string) {
   confirmTotpButton.addEventListener('click', async () => {
     const token = verifyTotpInput.value;
     const secret = qrCodeImage.dataset.secret || '';
-    statusMsg.textContent = ''; // clear previous
+    totpMsg.textContent = ''; // clear previous
 
     try {
       const res = await fetch('http://localhost:3000/api/2fa/verify-totp', {
@@ -125,20 +250,20 @@ function enableTrigger(triggerId: string) {
       }
 
       // ✅ Success
-      statusMsg.textContent = data.message;
-      statusMsg.classList.remove('text-[#D4535B]');
-      statusMsg.classList.add('text-[#53D4C0]');
+      totpMsg.textContent = data.message;
+      totpMsg.classList.remove('text-[#D4535B]');
+      totpMsg.classList.add('text-[#53D4C0]');
       setTimeout(() => {
         qrContainer.classList.add('hidden');
-        statusMsg.textContent = '';
+        totpMsg.textContent = '';
       }, 1500);
 
     } catch (err) {
       // 👇 You will see any backend-provided error here
       console.error("❌ TOTP verification failed:", err);
-      statusMsg.textContent = err.message || 'TOTP verification failed';
-      statusMsg.classList.remove('text-[#53D4C0]');
-      statusMsg.classList.add('text-[#D4535B]');
+      totpMsg.textContent = err.message || 'TOTP verification failed';
+      totpMsg.classList.remove('text-[#53D4C0]');
+      totpMsg.classList.add('text-[#D4535B]');
 
     }
   });
