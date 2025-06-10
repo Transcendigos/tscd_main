@@ -17,6 +17,7 @@ import {
   handleMultiplayerGameOver,
   cleanupMultiplayerPong
 } from './multiplayer_pong.js';
+import { SceneManager } from "./pong3D/sceneManager.js";
 
 
 let signinWindow: DesktopWindow;
@@ -35,6 +36,7 @@ let commandWindow: DesktopWindow;
 let aboutWindow: DesktopWindow;
 let aiWindow: DesktopWindow;
 let musicWindow: DesktopWindow;
+let sceneManager: SceneManager | null = null;
 
 // Utility functions
 function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string, onOpenCallback?: () => void) {
@@ -347,7 +349,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // --- Pong Window ---
 
-  try {
+   try {
     pongWindow = new DesktopWindow({
       windowId: "pongWindow",
       dragHandleId: "pongDragHandle",
@@ -358,11 +360,15 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
       onCloseCallback: () => {
-        stopPongGame();
+        if (sceneManager) {
+          sceneManager.engine.dispose();
+          sceneManager = null;
+          console.log("3D Pong scene disposed.");
+        }
       }
     });
   } catch (error) {
-    console.error("Failed to initialize the solo pong window:", error);
+    console.error("Failed to initialize the 3D pong window:", error);
   }
 
   // --- Pong Multi Window ---
@@ -436,6 +442,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the music window:", error);
   }
 
+
+
   const gameContainer = document.getElementById("gameContainer")!;
   const clickMeBtn = document.getElementById("clickMeBtn")!;
   const soloPongCanvasElement = document.getElementById("pongCanvas") as HTMLCanvasElement;
@@ -446,16 +454,23 @@ window.addEventListener("DOMContentLoaded", async () => {
         multiplayerPongWindow.close();
       }
       cleanupMultiplayerPong();
-      if (pongWindow && pongWindow.isVisible()) {
-        return;
-      } else if (pongWindow && !pongWindow.isVisible()) {
-        pongWindow.open();
-        setCanvas(soloPongCanvasElement);
-        startPongGame();
-      } else {
-        setCanvas(soloPongCanvasElement);
-        startPongGame();
-      }
+      // if (pongWindow && pongWindow.isVisible()) {
+      //   return;
+      // } else if (pongWindow && !pongWindow.isVisible()) {
+      //   pongWindow.open();
+      //   setCanvas(soloPongCanvasElement);
+      //   startPongGame();
+      // } else {
+      //   setCanvas(soloPongCanvasElement);
+      //   startPongGame();
+      // }
+
+      pongWindow.open();
+        if (!sceneManager) {
+            sceneManager = new SceneManager(soloPongCanvasElement);
+            console.log("3D Pong scene created.");
+        }
+
     });
   } else {
     console.error("One or more elements for SOLO Pong game setup are missing.");
