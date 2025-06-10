@@ -85,6 +85,35 @@ function disableTrigger(triggerId: string) {
   }
 }
 
+
+function playPongSolo() {
+  const gameContainer = document.getElementById("gameContainer")!;
+  const clickMeBtn = document.getElementById("clickMeBtn")!;
+  const soloPongCanvasElement = document.getElementById("pongCanvas") as HTMLCanvasElement;
+
+  if (clickMeBtn && gameContainer && soloPongCanvasElement) {
+    clickMeBtn.addEventListener("click", () => {
+      if (multiplayerPongWindow && multiplayerPongWindow.isVisible()) {
+        multiplayerPongWindow.close();
+      }
+      cleanupMultiplayerPong();
+      if (pongWindow && pongWindow.isVisible()) {
+        return;
+      } else if (pongWindow && !pongWindow.isVisible()) {
+        pongWindow.open();
+        setCanvas(soloPongCanvasElement);
+        startPongGame();
+      } else {
+        setCanvas(soloPongCanvasElement);
+        startPongGame();
+      }
+    });
+  } else {
+    console.error("One or more elements for SOLO Pong game setup are missing.");
+  }
+}
+
+
 async function updateUIBasedOnAuth() {
   const isSignedIn = await checkSignedIn();
 
@@ -92,7 +121,7 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(profileWindow, "profileBtn", settingUserProfile);
     assignOpenTrigger(settingWindow, "settingTab", settingUserSetting);
     assignOpenTrigger(logoutWindow, "logoutTab");
-    assignOpenTrigger(pongWindow, "clickMeBtn");
+    assignOpenTrigger(pongWindow, "clickMeBtn", startPongGame);
     assignOpenTrigger(chatWindow, "chatBtn");
     assignOpenTrigger(infoWindow, "infoTab");
     assignOpenTrigger(statsWindow, "statsTab");
@@ -127,11 +156,13 @@ async function updateUIBasedOnAuth() {
     statsWindow.close();
     chatWindow.close();
     pongWindow.close();
+    aiWindow.close();
+    grafanaWindow.close();
+    musicWindow.close();
+    aboutWindow.close();
     if (multiplayerPongWindow && multiplayerPongWindow.isVisible()) {
       multiplayerPongWindow.close();
     }
-    aiWindow.close();
-    musicWindow.close();
     if (typeof resetChatSystem === 'function') {
       resetChatSystem();
     }
@@ -383,8 +414,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       hideClasses: defaultHideClasses,
       onCloseCallback: () => {
         stopPongGame();
-      }
+      },
     });
+    playPongSolo();
   } catch (error) {
     console.error("Failed to initialize the solo pong window:", error);
   }
@@ -607,7 +639,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   settingUserProfile();
   setupSettingForm(settingWindow);
   setupInfoWindow(weatherWindow, grafanaWindow, commandWindow, aboutWindow);
-  
+
   fetch("/ai_prompt.txt")
     .then(res => res.text())
     .then(text => {
