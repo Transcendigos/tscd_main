@@ -60,6 +60,7 @@ export function initializeDB(logger) {
         sender_id INTEGER NOT NULL,
         receiver_id INTEGER NOT NULL,
         message_content TEXT NOT NULL,
+        drawing_data_url TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
