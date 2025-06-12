@@ -3,52 +3,73 @@ import "@babylonjs/loaders/glTF";
 
 export class Environment {
     private scene: BABYLON.Scene;
-    public screen: BABYLON.Mesh;
+    private shadowGenerator: BABYLON.ShadowGenerator;
+
+    private walls: BABYLON.Mesh[] = [];
+    private ceiling: BABYLON.Mesh;
+    private pointLights: BABYLON.PointLight[] = [];
+    private spotLight: BABYLON.SpotLight;
+    
+    private hasRevealed = false;
 
     constructor(scene: BABYLON.Scene) {
         this.scene = scene;
 
-        this.createLights();
+        const mainLight = this.createLights();
+        this.shadowGenerator = new BABYLON.ShadowGenerator(1024, mainLight);
+        
         this.createOffice();
-        this.screen = this.createComputerScreen(); // Create the screen and store it
-        this.loadModels();
+        this.createEnvironment();
+        this.loadModelsAndGetScreenMesh();
     }
 
-    private createLights(): void {
-        new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 6, 5.4), new BABYLON.Vector3(0, -1, 0), Math.PI / 5, 1, this.scene);
+    private createEnvironment(): void {
+        const envTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("/assets/textures/environment.dds", this.scene);
+        this.scene.environmentTexture = envTexture;
+        this.scene.createDefaultSkybox(envTexture, true, 1000, 0.3);
+
+        // Start with no ambient light for the dark "void" effect
+        this.scene.environmentIntensity = 0;
+    }
+
+    private createLights(): BABYLON.IShadowLight {
+        // This spotlight illuminates the distant desk
+        this.spotLight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 10, 18), new BABYLON.Vector3(0, -0.8, -1), Math.PI / 10, 20, this.scene);
+        this.spotLight.intensity = 5000;
+
+        // Room lights start with zero intensity
         const small = new BABYLON.PointLight("small", new BABYLON.Vector3(0, 2, 3.8), this.scene);
         small.range = 0.5;
-        small.intensity = 0.2;
+        small.intensity = 0;
 
         const bulb = new BABYLON.PointLight("bulb", new BABYLON.Vector3(4, 1.5, -4), this.scene);
-        bulb.intensity = 2;
         bulb.range = 60;
-        bulb.diffuse = new BABYLON.Color3(0.4, 0.4, 0.4);
+        bulb.intensity = 0;
 
         const bulb2 = new BABYLON.PointLight("bulb2", new BABYLON.Vector3(-4, 1.5, 4), this.scene);
-        bulb2.intensity = 2;
         bulb2.range = 60;
-        bulb2.diffuse = new BABYLON.Color3(0.4, 0.4, 0.4);
+        bulb2.intensity = 0;
+        
+        this.pointLights.push(small, bulb, bulb2);
+        return this.spotLight;
     }
 
     private createOffice(): void {
         const wallThickness = 1;
         const wallHeight = 4;
         const groundSize = 20;
+        const initialScale = 100;
 
-        // --- Walls ---
-        const wallMaterial = new BABYLON.StandardMaterial("wallMaterial", this.scene);
-        wallMaterial.diffuseTexture = new BABYLON.Texture("/assets/textures/wall/wallpaper/wallpaper.jpg", this.scene);
-        (wallMaterial.diffuseTexture as BABYLON.Texture).uScale = 6;
-        (wallMaterial.diffuseTexture as BABYLON.Texture).vScale = 6;
-        wallMaterial.specularColor = new BABYLON.Color3(0.01, 0.01, 0.01);
-
+        const wallMaterial = new BABYLON.PBRMaterial("wallPBRMaterial", this.scene);
+        // ... (Your wall material setup)
+        
         const createWall = (name: string, w: number, h: number, d: number, pos: BABYLON.Vector3) => {
             const wall = BABYLON.MeshBuilder.CreateBox(name, { width: w, height: h, depth: d }, this.scene);
             wall.position = pos;
-            wall.checkCollisions = true;
+            wall.scaling.setAll(initialScale);
+            wall.checkCollisions = false; // Collisions off until reveal
             wall.material = wallMaterial;
-            return wall;
+            this.walls.push(wall);
         };
 
         createWall("wallFront", groundSize, wallHeight, wallThickness, new BABYLON.Vector3(0, wallHeight / 2, groundSize / 2));
@@ -56,54 +77,74 @@ export class Environment {
         createWall("wallLeft", wallThickness, wallHeight, groundSize, new BABYLON.Vector3(-groundSize / 2, wallHeight / 2, 0));
         createWall("wallRight", wallThickness, wallHeight, groundSize, new BABYLON.Vector3(groundSize / 2, wallHeight / 2, 0));
 
-        // --- Ground ---
         const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 20, height: 20 }, this.scene);
         ground.checkCollisions = true;
-        const groundMaterial = new BABYLON.StandardMaterial("groundMat", this.scene);
-        groundMaterial.diffuseTexture = new BABYLON.Texture("/assets/textures/carpets/carpet2/carpet02.jpg", this.scene);
-        (groundMaterial.diffuseTexture as BABYLON.Texture).uScale = 4;
-        (groundMaterial.diffuseTexture as BABYLON.Texture).vScale = 4;
-        groundMaterial.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
-        ground.material = groundMaterial;
+        ground.receiveShadows = true;
+        // ... (Your ground material setup)
 
-        // --- Ceiling ---
-        const ceiling = BABYLON.MeshBuilder.CreateGround("ceiling", { width: 20, height: 20 }, this.scene);
-        ceiling.position.y = wallHeight;
-        ceiling.rotation.x = Math.PI;
-        ceiling.checkCollisions = true;
-        // Add ceiling material if needed
-    }
-    
-    private createComputerScreen(): BABYLON.Mesh {
-        const screen = BABYLON.MeshBuilder.CreatePlane("computerScreen", { width: 0.8, height: 0.6 }, this.scene);
-        screen.position = new BABYLON.Vector3(0, 1.56, 5.05);
-        
-        const screenMat = new BABYLON.StandardMaterial("screenMat", this.scene);
-        screenMat.emissiveColor = new BABYLON.Color3(1, 1, 1); // Make it glow
-        screenMat.specularColor = new BABYLON.Color3(0, 0, 0);
-        screen.material = screenMat;
-        
-        return screen;
+        this.ceiling = BABYLON.MeshBuilder.CreateGround("ceiling", { width: 20, height: 20 }, this.scene);
+        this.ceiling.position.y = wallHeight;
+        this.ceiling.rotation.x = Math.PI;
+        this.ceiling.scaling.setAll(initialScale); // Also scale the ceiling
+        this.ceiling.checkCollisions = false;
+        // ... (Your ceiling material setup)
     }
 
-    private async loadModels(): Promise<void> {
-        // --- Computer and Desk ---
+    public async loadModelsAndGetScreenMesh(): Promise<BABYLON.Mesh> {
+        const deskGroupZ = 15; // Set desk further away initially
+
         const computerAsset = await BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "computerFixed.glb", this.scene);
-        const computer = computerAsset.meshes[0];
-        computer.position = new BABYLON.Vector3(0, 0, 5.2);
-        computer.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
-        computer.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-
-        // Find the actual screen mesh within the loaded model and disable it, as we created our own plane.
-        const originalScreenMesh = computer.getChildMeshes(false, (node) => node.name === "CRT_Monitor_monitor_glass_0")[0];
-        if (originalScreenMesh) {
-            originalScreenMesh.isVisible = false;
-        }
-
-        // --- Chair ---
+        const deskAsset = await BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "desk.glb", this.scene);
         const chairAsset = await BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "orangeChair.glb", this.scene);
-        const chair = chairAsset.meshes[0];
-        chair.position = new BABYLON.Vector3(0, 0.5, 3.6);
-        chair.scaling = new BABYLON.Vector3(0.03, 0.03, 0.03);
+
+        [...computerAsset.meshes, ...deskAsset.meshes, ...chairAsset.meshes].forEach(mesh => {
+            this.shadowGenerator.addShadowCaster(mesh, true);
+        });
+
+        computerAsset.meshes[0].position = new BABYLON.Vector3(0, 1.55, deskGroupZ + 0.2);
+        deskAsset.meshes[0].position = new BABYLON.Vector3(0, 0, deskGroupZ);
+        chairAsset.meshes[0].position = new BABYLON.Vector3(0, 0.5, deskGroupZ - 1.4);
+        
+        // ... (Your other model properties)
+
+        const screenMesh = computerAsset.meshes.find(m => m.name === "CRT_Monitor_monitor_glass_0");
+        if (!screenMesh) throw new Error("Could not find screen mesh.");
+        
+        return screenMesh as BABYLON.Mesh;
+    }
+
+    public triggerRevealAnimation(): void {
+        if (this.hasRevealed) return;
+        this.hasRevealed = true;
+
+        const frameRate = 30;
+        const animDuration = frameRate * 3;
+
+        const scaleAnim = new BABYLON.Animation("scaleAnim", "scaling", frameRate, BABYLON.Animation.ANIMATIONTYPE_VECTOR3);
+        scaleAnim.setKeys([
+            { frame: 0, value: new BABYLON.Vector3(100, 100, 100) },
+            { frame: animDuration, value: new BABYLON.Vector3(1, 1, 1) }
+        ]);
+
+        const lightAnim = new BABYLON.Animation("lightIntensityAnim", "intensity", frameRate, BABYLON.Animation.ANIMATIONTYPE_FLOAT);
+        lightAnim.setKeys([ { frame: 0, value: 0 }, { frame: animDuration, value: 150 } ]);
+
+        const envAnim = new BABYLON.Animation("envIntensityAnim", "environmentIntensity", frameRate, BABYLON.Animation.ANIMATIONTYPE_FLOAT);
+        envAnim.setKeys([ { frame: 0, value: 0 }, { frame: animDuration, value: 0.7 } ]);
+
+        [...this.walls, this.ceiling].forEach(mesh => {
+            mesh.animations.push(scaleAnim.clone());
+            this.scene.beginAnimation(mesh, 0, animDuration, false, 1, () => {
+                mesh.checkCollisions = true;
+            });
+        });
+
+        this.pointLights.forEach(light => {
+            light.animations.push(lightAnim.clone());
+            this.scene.beginAnimation(light, 0, animDuration, false);
+        });
+
+        this.scene.animations.push(envAnim);
+        this.scene.beginAnimation(this.scene, 0, animDuration, false);
     }
 }

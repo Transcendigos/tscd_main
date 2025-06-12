@@ -1,6 +1,5 @@
 import * as BABYLON from '@babylonjs/core';
 
-// Interfaces for our game objects to enforce type safety
 interface IPaddle {
     x: number; y: number; width: number; height: number;
     prevY: number; dv: number;
@@ -19,7 +18,6 @@ export class Pong3D {
     private ctx: CanvasRenderingContext2D;
     private screenMesh: BABYLON.Mesh;
 
-    // Game state properties
     private leftPaddle: IPaddle;
     private rightPaddle: IPaddle;
     private ball: IBall;
@@ -29,34 +27,34 @@ export class Pong3D {
     private canvasSize = { width: 800, height: 600 };
     private flickerPhase = 0;
 
-    // AI properties
     private aiMode = true;
     private aiDifficulty = 1;
     private aiPrecision = 5;
     private aiUpdateInterval: number | null = null;
     private readonly AI_RATE = 1000;
+    private aiReactionBaseDelay = { 1: 60, 2: 120, 3: 220 };
 
     constructor(scene: BABYLON.Scene, screenMesh: BABYLON.Mesh) {
         this.scene = scene;
         this.screenMesh = screenMesh;
-
         this.texture = new BABYLON.DynamicTexture("pongTexture", this.canvasSize, this.scene, true);
         this.ctx = this.texture.getContext();
 
-        const screenMaterial = this.screenMesh.material as BABYLON.StandardMaterial;
+        const screenMaterial = new BABYLON.StandardMaterial("pongScreenMat", this.scene);
         screenMaterial.diffuseTexture = this.texture;
         screenMaterial.emissiveTexture = this.texture;
+        screenMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+        this.screenMesh.material = screenMaterial;
 
         this.leftPaddle = { x: 10, y: this.canvasSize.height / 2 - 35, width: 8, height: 70, prevY: 0, dv: 0 };
         this.rightPaddle = { x: this.canvasSize.width - 18, y: this.canvasSize.height / 2 - 35, width: 8, height: 70, prevY: 0, dv: 0 };
         this.ball = this.createBall();
-        
         this.start();
     }
 
     public start(): void {
         if (this.aiUpdateInterval) clearInterval(this.aiUpdateInterval);
-        this.aiUpdateInterval = window.setInterval(() => this.runAI(), this.AI_RATE);
+        this.aiUpdateInterval = window.setInterval(() => this.runAIPrediction(), this.AI_RATE);
     }
 
     public stop(): void {
@@ -72,16 +70,72 @@ export class Pong3D {
 
     public update(dt: number): void {
         this.updatePaddles(dt);
+        if (this.aiMode) {
+            this.updateAI(dt);
+        }
         this.updateBall(dt);
         this.draw();
     }
 
+    private async runAIPrediction(): Promise<void> {
+        if (!this.aiMode) return;
+
+        if (this.ball.vx < 0) {
+            this.ball.predictY = this.canvasSize.height / 2;
+            return;
+        }
+        
+        this.predictBallPosition();
+        this.ball.paddleCenter = Math.random() * this.rightPaddle.height;
+        
+        const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+        const baseDelay = this.aiReactionBaseDelay[this.aiDifficulty] || 120;
+        const reactionDelay = baseDelay + Math.random() * 50;
+        await wait(reactionDelay);
+    }
+
+    private updateAI(dt: number): void {
+        const paddleSpeed = 500 * dt;
+        let aimZone = this.aiPrecision + this.aiPrecision * this.ball.bounce;
+        let paddleCenter = this.rightPaddle.y + this.ball.paddleCenter;
+      
+        if (this.aiDifficulty === 3 && this.ball.vx < 0) return;
+      
+        if (this.ball.predictY >= paddleCenter - aimZone && this.ball.predictY <= paddleCenter + aimZone) {
+          return;
+        }
+        if (this.ball.predictY <= paddleCenter && this.rightPaddle.y > 0) {
+          this.rightPaddle.y -= paddleSpeed;
+        }
+        if (this.ball.predictY >= paddleCenter && this.rightPaddle.y + this.rightPaddle.height < this.canvasSize.height) {
+          this.rightPaddle.y += paddleSpeed;
+        }
+    }
+
+    private updatePaddles(dt: number): void {
+        const paddleSpeed = 500 * dt;
+        
+        if (this.keysPressed['w'] && this.leftPaddle.y > 0) {
+            this.leftPaddle.y -= paddleSpeed;
+        }
+        if (this.keysPressed['s'] && this.leftPaddle.y + this.leftPaddle.height < this.canvasSize.height) {
+            this.leftPaddle.y += paddleSpeed;
+        }
+        this.leftPaddle.y = Math.max(0, Math.min(this.leftPaddle.y, this.canvasSize.height - this.leftPaddle.height));
+        this.leftPaddle.dv = this.leftPaddle.y - this.leftPaddle.prevY;
+        this.leftPaddle.prevY = this.leftPaddle.y;
+        
+        this.rightPaddle.y = Math.max(0, Math.min(this.rightPaddle.y, this.canvasSize.height - this.rightPaddle.height));
+        this.rightPaddle.dv = this.rightPaddle.y - this.rightPaddle.prevY;
+        this.rightPaddle.prevY = this.rightPaddle.y;
+    }
+    
     private createBall(): IBall {
         return {
             x: this.canvasSize.width / 2, y: this.canvasSize.height / 2,
             width: 10, height: 10,
             vx: 200 * (Math.random() > 0.5 ? 1 : -1),
-            vy: (Math.random() * 100 - 50),
+            vy: (Math.random() > 0.5 ? 1 : -1) * 100,
             dt: 0, predictY: 0, hitZ: 0, paddleCenter: 1, bounce: 0, exchange: 0
         };
     }
@@ -90,27 +144,12 @@ export class Pong3D {
         this.leftPaddle.y = this.canvasSize.height / 2 - this.leftPaddle.height / 2;
         this.rightPaddle.y = this.canvasSize.height / 2 - this.rightPaddle.height / 2;
         const newBall = this.createBall();
-        newBall.vx = this.ball.vx > 0 ? -200 : 200; // Keep direction after score
+        newBall.vx = this.ball.vx > 0 ? -200 : 200;
         this.ball = newBall;
         
         if (this.rightScore - this.leftScore < 0) {
             this.aiDifficulty = 1;
         }
-    }
-
-    private updatePaddles(dt: number): void {
-        const paddleSpeed = 500 * dt;
-        if (this.keysPressed['w'] && this.leftPaddle.y > 0) {
-            this.leftPaddle.y -= paddleSpeed;
-        }
-        if (this.keysPressed['s'] && this.leftPaddle.y + this.leftPaddle.height < this.canvasSize.height) {
-            this.leftPaddle.y += paddleSpeed;
-        }
-        this.leftPaddle.dv = this.leftPaddle.y - this.leftPaddle.prevY;
-        this.leftPaddle.prevY = this.leftPaddle.y;
-        
-        this.rightPaddle.dv = this.rightPaddle.y - this.rightPaddle.prevY;
-        this.rightPaddle.prevY = this.rightPaddle.y;
     }
 
     private updateBall(dt: number): void {
@@ -148,7 +187,13 @@ export class Pong3D {
 
     private handleCollision(ball: IBall, paddle: IPaddle): void {
         ball.vx *= -1.1;
-        ball.vx = Math.max(Math.min(ball.vx, 500), -500);
+
+        if (Math.abs(ball.vx) < 350) {
+            if (ball.vx < 0) ball.vx = -350;
+            else if (ball.vx > 0) ball.vx = 350;
+        }
+        if (ball.vx < -500) ball.vx = -500;
+        else if (ball.vx > 500) ball.vx = 500;
 
         const hitZone = (ball.y - paddle.y) / paddle.height;
         const maxAngle = 250;
@@ -157,8 +202,12 @@ export class Pong3D {
         if (hitZone >= 0.4 && hitZone <= 0.6) {
             ball.vy = 0;
             ball.vx *= 1.3;
-        } else {
-            ball.vy = deflect + paddle.dv * 15;
+        } else if (deflect < 0) {
+            ball.vy = deflect - Math.abs(ball.vx / 4);
+            ball.vy += paddle.dv * 15;
+        } else if (deflect > 0) {
+            ball.vy = deflect + Math.abs(ball.vx / 4);
+            ball.vy += paddle.dv * 15;
         }
 
         ball.exchange++;
@@ -170,28 +219,6 @@ export class Pong3D {
         if (gap <= 0 && this.aiDifficulty > 1) this.aiDifficulty--;
         else if (gap > 0 && this.aiDifficulty < 3) this.aiDifficulty++;
         this.aiPrecision = 10 + 15 * (this.aiDifficulty - 1);
-    }
-
-    private runAI(): void {
-        if (!this.aiMode || this.ball.vx < 0) return;
-
-        this.predictBallPosition();
-        this.ball.paddleCenter = Math.random() * this.rightPaddle.height;
-
-        const aimZone = this.aiPrecision + this.aiPrecision * this.ball.bounce;
-        const paddleCenterY = this.rightPaddle.y + this.ball.paddleCenter;
-
-        if (this.ball.predictY >= paddleCenterY - aimZone && this.ball.predictY <= paddleCenterY + aimZone) {
-            return;
-        }
-
-        const paddleSpeed = 400;
-        if (this.ball.predictY < paddleCenterY && this.rightPaddle.y > 0) {
-            this.rightPaddle.y -= paddleSpeed * this.ball.dt * 10;
-        }
-        if (this.ball.predictY > paddleCenterY && this.rightPaddle.y + this.rightPaddle.height < this.canvasSize.height) {
-            this.rightPaddle.y += paddleSpeed * this.ball.dt * 10;
-        }
     }
 
     private predictBallPosition(): void {

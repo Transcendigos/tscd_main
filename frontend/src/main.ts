@@ -442,19 +442,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the music window:", error);
   }
 
-
-
-  const gameContainer = document.getElementById("gameContainer")!;
-  const clickMeBtn = document.getElementById("clickMeBtn")!;
-  const soloPongCanvasElement = document.getElementById("pongCanvas") as HTMLCanvasElement;
-
-  if (clickMeBtn && gameContainer && soloPongCanvasElement) {
-    clickMeBtn.addEventListener("click", () => {
-      if (multiplayerPongWindow && multiplayerPongWindow.isVisible()) {
-        multiplayerPongWindow.close();
-      }
-      cleanupMultiplayerPong();
-      // if (pongWindow && pongWindow.isVisible()) {
+        // if (pongWindow && pongWindow.isVisible()) {
       //   return;
       // } else if (pongWindow && !pongWindow.isVisible()) {
       //   pongWindow.open();
@@ -465,12 +453,26 @@ window.addEventListener("DOMContentLoaded", async () => {
       //   startPongGame();
       // }
 
-      pongWindow.open();
-        if (!sceneManager) {
-            sceneManager = new SceneManager(soloPongCanvasElement);
-            console.log("3D Pong scene created.");
-        }
 
+
+  const gameContainer = document.getElementById("gameContainer")!;
+  const clickMeBtn = document.getElementById("clickMeBtn");
+  const pongCanvasElement = document.getElementById("pongCanvas") as HTMLCanvasElement;
+
+  if (clickMeBtn && pongCanvasElement) {
+    clickMeBtn.addEventListener("click", async () => {
+        if (pongWindow.isVisible()) return;
+
+        if (multiplayerPongWindow && multiplayerPongWindow.isVisible()) {
+            multiplayerPongWindow.close();
+        }
+        cleanupMultiplayerPong();
+        
+        pongWindow.open();
+        if (!sceneManager) {
+            sceneManager = await SceneManager.create(pongCanvasElement);
+            console.log("3D Pong scene created and initialized.");
+        }
     });
   } else {
     console.error("One or more elements for SOLO Pong game setup are missing.");

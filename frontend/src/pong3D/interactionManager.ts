@@ -13,32 +13,35 @@ export class InteractionManager {
     private playerController: PlayerController;
     private pongGame: Pong3D;
 
-    // Position of the computer chair for interaction
-    private computerPosition = new BABYLON.Vector3(0, 1, 3.6);
-    private interactionRadius = 2.5; // How close the player needs to be to interact
+    private computerPosition = new BABYLON.Vector3(0, 1.4, 3.6);
+    private interactionRadius = 2.5;
+
+    private originalFov: number;
+    // FOV is now exactly 30 degrees, converted to radians
+    private sittingFov = BABYLON.Tools.ToRadians(30);
+
+    private crtPipeline: BABYLON.DefaultRenderingPipeline | null = null;
 
     constructor(scene: BABYLON.Scene, playerController: PlayerController, pongGame: Pong3D) {
         this.scene = scene;
         this.playerController = playerController;
         this.pongGame = pongGame;
 
+        this.originalFov = this.playerController.camera.fov;
+
         this.setupInputListeners();
     }
 
     private setupInputListeners(): void {
         this.scene.onKeyboardObservable.add((kbInfo) => {
-            // Handle state switching with 'e' key
             if (kbInfo.type === BABYLON.KeyboardEventTypes.KEYDOWN && kbInfo.event.key === 'e') {
-                if (this.currentState === GameState.EXPLORING) {
-                    if (this.isPlayerNearComputer()) {
-                        this.sitDown();
-                    }
-                } else {
+                if (this.currentState === GameState.EXPLORING && this.isPlayerNearComputer()) {
+                    this.sitDown();
+                } else if (this.currentState === GameState.PLAYING_PONG) {
                     this.standUp();
                 }
             }
 
-            // Route game controls based on state
             if (this.currentState === GameState.PLAYING_PONG) {
                 if (kbInfo.event.key === 'w' || kbInfo.event.key === 's') {
                     this.pongGame.handleInput(kbInfo.event.key, kbInfo.type === BABYLON.KeyboardEventTypes.KEYDOWN);
@@ -54,47 +57,49 @@ export class InteractionManager {
 
     private sitDown(): void {
         this.currentState = GameState.PLAYING_PONG;
-
-        // Disable player movement and hide the crosshair
         this.playerController.disable();
-        document.exitPointerLock();
-
-        // Move camera to a fixed "sitting" position, looking at the screen
+        
         const camera = this.playerController.camera;
-        const sittingPosition = new BABYLON.Vector3(0, 1.4, 3.7);
-        const screenTarget = new BABYLON.Vector3(0, 1.4, 5.05);
-        
-        // Use an animation for a smooth transition
-        BABYLON.Animation.CreateAndStartAnimation(
-            "sitDownAnim",
-            camera,
-            "position",
-            60, // animation speed
-            30, // frame count
-            camera.position,
-            sittingPosition,
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-        );
-        
-        // Also animate the camera target
-        const currentTarget = camera.getTarget();
-        const targetAnimation = new BABYLON.Animation(
-            "sitDownTargetAnim", "target", 60,
-            BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
-        );
-        targetAnimation.setKeys([
-            { frame: 0, value: currentTarget },
-            { frame: 30, value: screenTarget }
-        ]);
-        camera.animations.push(targetAnimation);
-        this.scene.beginAnimation(camera, 0, 30, false);
+
+        // --- Using the EXACT values from your original implementation ---
+        const sittingPosition = new BABYLON.Vector3(0, 1.7, 3.7);
+        const screenTarget = new BABYLON.Vector3(0, 1.56, 5.05);
+
+        // Set position, target, and FOV
+        camera.position = sittingPosition;
+        camera.setTarget(screenTarget);
+        camera.fov = this.sittingFov;
+
+        this.enableCRTEffect();
     }
 
     private standUp(): void {
         this.currentState = GameState.EXPLORING;
+        const camera = this.playerController.camera;
+
+        camera.fov = this.originalFov;
         
-        // Re-enable player movement controls
+        camera.rotation = new BABYLON.Vector3(0, camera.rotation.y, 0);
+        camera.cameraRotation.x = 0;
+
         this.playerController.enable();
+        
+        this.disableCRTEffect();
+    }
+    
+    private enableCRTEffect(): void {
+        if (this.crtPipeline) this.crtPipeline.dispose();
+        this.crtPipeline = new BABYLON.DefaultRenderingPipeline("crtPipeline", true, this.scene, [this.playerController.camera]);
+        this.crtPipeline.chromaticAberrationEnabled = true;
+        this.crtPipeline.chromaticAberration.aberrationAmount = 8;
+        this.crtPipeline.grainEnabled = true;
+        this.crtPipeline.grain.intensity = 10;
+    }
+
+    private disableCRTEffect(): void {
+        if (this.crtPipeline) {
+            this.crtPipeline.dispose();
+            this.crtPipeline = null;
+        }
     }
 }

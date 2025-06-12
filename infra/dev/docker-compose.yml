@@ -11,6 +11,7 @@ services:
     volumes:
       - ../../frontend/src:/app/src
       - ../../frontend/index.html:/app/index.html
+      - ../../frontend/pong_dev.html:/app/pong_dev.html
       - ../../frontend/dev/tsconfig.json:/app/tsconfig.json
       - ../../frontend/dev/vite.config.ts:/app/vite.config.ts
       - ../../frontend/public/:/app/public/

@@ -14,23 +14,30 @@ export class SceneManager {
     private interactionManager: InteractionManager;
     private lastFrameTime: number = 0;
 
-    constructor(private canvas: HTMLCanvasElement) {
+    private constructor(private canvas: HTMLCanvasElement) {
         this.engine = new BABYLON.Engine(this.canvas, true);
         this.scene = new BABYLON.Scene(this.engine);
-        this.scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
-        this.scene.collisionsEnabled = true;
+    }
 
-        this.environment = new Environment(this.scene);
-        this.playerController = new PlayerController(this.scene, this.canvas);
-        this.pongGame = new Pong3D(this.scene, this.environment.screen);
+    public static async create(canvas: HTMLCanvasElement): Promise<SceneManager> {
+        const manager = new SceneManager(canvas);
+        manager.scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
+        manager.scene.collisionsEnabled = true;
+
+        manager.environment = new Environment(manager.scene);
         
-        // Initialize the interaction manager, passing it the components it needs to control
-        this.interactionManager = new InteractionManager(this.scene, this.playerController, this.pongGame);
+        const screenMesh = await manager.environment.loadModelsAndGetScreenMesh();
 
-        this.playerController.enable();
+        manager.playerController = new PlayerController(manager.scene, canvas);
+        manager.pongGame = new Pong3D(manager.scene, screenMesh);
+        manager.interactionManager = new InteractionManager(manager.scene, manager.playerController, manager.pongGame);
+        
+        manager.playerController.enable();
 
-        this.lastFrameTime = performance.now();
-        this.run();
+        manager.lastFrameTime = performance.now();
+        manager.run();
+        
+        return manager;
     }
 
     private run(): void {
@@ -41,7 +48,6 @@ export class SceneManager {
 
             this.playerController.update();
             
-            // The interactionManager now decides if the pong game should be updated
             if (this.interactionManager.currentState === GameState.PLAYING_PONG) {
                 this.pongGame.update(deltaTime);
             }
