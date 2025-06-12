@@ -1151,26 +1151,29 @@
           class="border-2 border-[#4cb4e7] w-[1000px] text-[#4cb4e7] text-sm flex flex-col
   bg-slate-900 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
   transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none"
-          style="min-width: 600px; min-height: 400px; max-width: 90vw; max-height: 80vh;">
-          <div id="grafanaDragHandle"
-            class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-            <div class="flex items-center space-x-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                fill="currentColor"
-                class="bi bi-bar-chart-line" viewBox="0 0 16 16">
-                <path
-                  d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1zm1 12h2V2h-2zm-3 0V7H7v7zm-5 0v-3H2v3z" />
-              </svg>
-              <span class="font-bold">System Dashboard</span>
-            </div>
-            <div class="flex items-center space-x-1">
-              <button id="closegrafanaBtn"
-                class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-                X
-              </button>
-            </div>
-          </div>
+      style="min-width: 600px; min-height: 400px; max-width: 90vw; max-height: 80vh;">
+      <div id="grafanaDragHandle"
+        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+        <div class="flex items-center space-x-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+            class="bi bi-bar-chart-line" viewBox="0 0 16 16">
+            <path
+              d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1zm1 12h2V2h-2zm-3 0V7H7v7zm-5 0v-3H2v3z" />
+          </svg>
+          <span class="font-bold">System Dashboard</span>
+        </div>
+        <div class="flex items-center space-x-1">
+          <button id="closegrafanaBtn"
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+            X
+          </button>
+        </div>
+      </div>
 
+      <div class="flex-grow bg-slate-800/50 relative">
+        <iframe src="http://localhost:3001/public-dashboards/af339453d186411e8676365ef448cf05"
+          class="absolute inset-0 w-full h-full" frameborder="0"></iframe>
+      </div>
           <div class="flex-grow bg-slate-800/50 relative">
             <iframe
               src="http://localhost:3001/public-dashboards/f67b61b9eb584d5fbc844f823d6d0c5a"
