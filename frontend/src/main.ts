@@ -17,6 +17,7 @@ import {
   handleMultiplayerGameOver,
   cleanupMultiplayerPong
 } from './multiplayer_pong.js';
+import { SceneManager } from "./pong3D/sceneManager.js";
 
 
 // For Solo AI Pong
@@ -56,6 +57,7 @@ let commandWindow: DesktopWindow;
 let aboutWindow: DesktopWindow;
 let aiWindow: DesktopWindow;
 let musicWindow: DesktopWindow;
+let sceneManager: SceneManager | null = null;
 
 let activePongMode: 'solo' | 'multiplayer' | 'localMultiplayer' | null = null;
 let currentPongStopFunction: (() => void) | null = null;
@@ -402,7 +404,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // --- Pong Window ---
 
-  try {
+   try {
     pongWindow = new DesktopWindow({
       windowId: "pongWindow",
       dragHandleId: "pongDragHandle",
@@ -413,12 +415,16 @@ window.addEventListener("DOMContentLoaded", async () => {
       showClasses: defaultShowClasses,
       hideClasses: defaultHideClasses,
       onCloseCallback: () => {
-        stopPongGame();
-      },
+        if (sceneManager) {
+          sceneManager.engine.dispose();
+          sceneManager = null;
+          console.log("3D Pong scene disposed.");
+        }
+      }
     });
     playPongSolo();
   } catch (error) {
-    console.error("Failed to initialize the solo pong window:", error);
+    console.error("Failed to initialize the 3D pong window:", error);
   }
 
   // --- Pong Multi Window ---
@@ -492,43 +498,38 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the music window:", error);
   }
 
-    // --- Pong Game Specific Logic ---
-  const gameContainer = document.getElementById("gameContainer")!; // Ensure it exists
-  const clickSoloBtn = document.getElementById("clickMeBtn")!; //solo vs IA button
-  const clickMultiBtn = document.getElementById("darkBtn"); // remote multi button (server side)
-  const clickLocalbtn = document.getElementById("localbutton"); //local multi button 
-  const canvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
 
-  if (!gameContainer || !canvas) {
-    console.error("Pong gameContainer or canvas element is missing from the DOM.");
-    return; // Exit if essential elements are not found
-  }
+        // if (pongWindow && pongWindow.isVisible()) {
+      //   return;
+      // } else if (pongWindow && !pongWindow.isVisible()) {
+      //   pongWindow.open();
+      //   setCanvas(soloPongCanvasElement);
+      //   startPongGame();
+      // } else {
+      //   setCanvas(soloPongCanvasElement);
+      //   startPongGame();
+      // }
 
 
-  // Solo AI Pong Button bellow
-  if (clickSoloBtn) {
-    clickSoloBtn.addEventListener("click", () => {
-      console.log("Solo Pong button clicked.");
-      if (pongWindow.isVisible() && activePongMode === 'solo') {
-        console.log("Solo Pong is already running and window is visible.");
-        return; // Already in this mode and window is open
-      }
 
-      if (currentPongStopFunction) {
-        console.log(`Switching from ${activePongMode} to solo. Stopping previous mode.`);
-        currentPongStopFunction(); // Stop any other active pong game
-      }
-      
-      if (!pongWindow.isVisible()) {
+  const gameContainer = document.getElementById("gameContainer")!;
+  const clickMeBtn = document.getElementById("clickMeBtn");
+  const pongCanvasElement = document.getElementById("pongCanvas") as HTMLCanvasElement;
+
+  if (clickMeBtn && pongCanvasElement) {
+    clickMeBtn.addEventListener("click", async () => {
+        if (pongWindow.isVisible()) return;
+
+        if (multiplayerPongWindow && multiplayerPongWindow.isVisible()) {
+            multiplayerPongWindow.close();
+        }
+        cleanupMultiplayerPong();
+        
         pongWindow.open();
-      }
-      
-      console.log("Setting up and starting AI Pong.");
-      setAIPongCanvas(canvas); // Use aliased function for AI Pong
-      startAIPong();           // Use aliased function for AI Pong
-      
-      activePongMode = 'solo';
-      currentPongStopFunction = stopAIPong; // Set the correct stop function
+        if (!sceneManager) {
+            sceneManager = await SceneManager.create(pongCanvasElement);
+            console.log("3D Pong scene created and initialized.");
+        }
     });
   } else {
     console.error("Solo Pong button ('clickMeBtn') not found.");
