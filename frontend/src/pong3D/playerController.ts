@@ -14,7 +14,7 @@ export class PlayerController {
         this.scene = scene;
         this.canvas = canvas;
         
-        this.camera = new BABYLON.UniversalCamera("playerCam", new BABYLON.Vector3(0, this.playerHeight, -5), this.scene);
+        this.camera = new BABYLON.UniversalCamera("playerCam", new BABYLON.Vector3(0, this.playerHeight, -7), this.scene);
         this.setupCamera();
         this.setupPointerLock();
     }

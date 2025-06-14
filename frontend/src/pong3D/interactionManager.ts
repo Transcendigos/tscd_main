@@ -17,7 +17,6 @@ export class InteractionManager {
     private interactionRadius = 2.5;
 
     private originalFov: number;
-    // FOV is now exactly 30 degrees, converted to radians
     private sittingFov = BABYLON.Tools.ToRadians(30);
 
     private crtPipeline: BABYLON.DefaultRenderingPipeline | null = null;
