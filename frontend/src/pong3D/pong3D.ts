@@ -41,7 +41,7 @@ export class Pong3D {
         this.ctx = this.texture.getContext();
 
         const screenMaterial = new BABYLON.StandardMaterial("pongScreenMat", this.scene);
-        screenMaterial.diffuseTexture = this.texture;
+        screenMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         screenMaterial.emissiveTexture = this.texture;
         screenMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         this.screenMesh.material = screenMaterial;

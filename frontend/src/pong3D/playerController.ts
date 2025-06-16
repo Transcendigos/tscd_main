@@ -10,29 +10,33 @@ export class PlayerController {
     private readonly playerHeight = 1.7;
     private readonly playerAngularSensibility = 2500;
 
-    constructor(scene: BABYLON.Scene, canvas: HTMLCanvasElement) {
+    constructor(scene: BABYLON.Scene, canvas: HTMLCanvasElement, debugMode: boolean = false) {
         this.scene = scene;
         this.canvas = canvas;
         
-        this.camera = new BABYLON.UniversalCamera("playerCam", new BABYLON.Vector3(0, this.playerHeight, -7), this.scene);
-        this.setupCamera();
-        this.setupPointerLock();
+        this.camera = new BABYLON.UniversalCamera("playerCam", new BABYLON.Vector3(0, this.playerHeight, -24), this.scene);
+        this.setupCamera(debugMode);
+        // this.setupPointerLock();
     }
 
-    private setupCamera(): void {
+    private setupCamera(debugMode: boolean): void {
         // Standard WASD controls
         this.camera.keysUp = [87];    // W
         this.camera.keysDown = [83];  // S
         this.camera.keysLeft = [65];  // A
         this.camera.keysRight = [68]; // D
 
-        // Physics properties for collision
-        this.camera.ellipsoid = new BABYLON.Vector3(0.4, 0.9, 0.4);
-        this.camera.checkCollisions = true;
-        this.camera.applyGravity = true; // Works with the scene's gravity setting
+        // --- Apply debug mode settings ---
+        this.camera.speed = debugMode ? this.playerSpeed * 3 : this.playerSpeed; // 3x speed in debug
+        this.camera.checkCollisions = !debugMode; // No collisions in debug
+        this.camera.applyGravity = !debugMode; // No gravity (flight) in debug
+        
+        // Physics properties are only added if not in debug mode
+        if (!debugMode) {
+            this.camera.ellipsoid = new BABYLON.Vector3(0.4, 0.9, 0.4);
+        }
 
         // Movement settings
-        this.camera.speed = this.playerSpeed;
         this.camera.inertia = 0.1;
         this.camera.angularSensibility = this.playerAngularSensibility;
     }

@@ -1,6 +1,7 @@
 import * as BABYLON from '@babylonjs/core';
 import { PlayerController } from './playerController';
 import { Pong3D } from './pong3D';
+import { Environment } from './environment';
 
 export enum GameState {
     EXPLORING,
@@ -12,6 +13,7 @@ export class InteractionManager {
     private scene: BABYLON.Scene;
     private playerController: PlayerController;
     private pongGame: Pong3D;
+    private environment: Environment;
 
     private computerPosition = new BABYLON.Vector3(0, 1.4, 3.6);
     private interactionRadius = 2.5;
@@ -20,16 +22,20 @@ export class InteractionManager {
     private sittingFov = BABYLON.Tools.ToRadians(30);
 
     private crtPipeline: BABYLON.DefaultRenderingPipeline | null = null;
+    private hasPlayedIntro: boolean = false;
 
-    constructor(scene: BABYLON.Scene, playerController: PlayerController, pongGame: Pong3D) {
+    constructor(scene: BABYLON.Scene, playerController: PlayerController, pongGame: Pong3D, environment: Environment) {
         this.scene = scene;
         this.playerController = playerController;
         this.pongGame = pongGame;
+        this.environment = environment;
 
         this.originalFov = this.playerController.camera.fov;
 
         this.setupInputListeners();
     }
+
+    
 
     private setupInputListeners(): void {
         this.scene.onKeyboardObservable.add((kbInfo) => {
@@ -47,6 +53,9 @@ export class InteractionManager {
                 }
             }
         });
+
+        // this.animateBackWall(true);
+        // this.animateFrontWall(true);
     }
 
     private isPlayerNearComputer(): boolean {
@@ -60,16 +69,24 @@ export class InteractionManager {
         
         const camera = this.playerController.camera;
 
-        // --- Using the EXACT values from your original implementation ---
         const sittingPosition = new BABYLON.Vector3(0, 1.7, 3.7);
         const screenTarget = new BABYLON.Vector3(0, 1.56, 5.05);
 
-        // Set position, target, and FOV
         camera.position = sittingPosition;
         camera.setTarget(screenTarget);
         camera.fov = this.sittingFov;
 
         this.enableCRTEffect();
+
+        if (!this.hasPlayedIntro) {
+            this.animateBackWall(true);
+            this.animateFrontWall(true);
+            setTimeout(() => {
+                this.animateLights(true);
+            }, 1000);
+            this.hasPlayedIntro = true;
+        }
+
     }
 
     private standUp(): void {
@@ -86,6 +103,84 @@ export class InteractionManager {
         this.disableCRTEffect();
     }
     
+    private animateLights(fadeIn: boolean): void {
+        const frameRate = 30;
+        const duration = 10;
+        
+        const ambientAnim = new BABYLON.Animation(
+            "ambientLightIntensityAnim", "intensity", frameRate,
+            BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+        );
+        ambientAnim.setKeys([
+            { frame: 0, value: fadeIn ? 0 : 5 },
+            { frame: frameRate * duration, value: fadeIn ? 5 : 0 }
+        ]);
+
+        const spotAnim = new BABYLON.Animation(
+            "spotLightIntensityAnim", "intensity", frameRate,
+            BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+        );
+        spotAnim.setKeys([
+            { frame: 0, value: fadeIn ? 2000 : 50 },
+            { frame: frameRate * duration, value: fadeIn ? 50 : 2000 }
+        ]);
+        
+        this.environment.ambientLights.forEach(light => {
+            light.animations = [ambientAnim.clone()];
+            this.scene.beginAnimation(light, 0, frameRate * duration, false);
+        });
+
+        this.environment.spotLight.animations = [spotAnim];
+        this.scene.beginAnimation(this.environment.spotLight, 0, frameRate * duration, false);
+    }
+
+    private animateBackWall(moveIn: boolean): void {
+        const frameRate = 30;
+        const duration = 0.1;
+
+        const wallAnim = new BABYLON.Animation(
+            "wallMoveAnimation",
+            "position.z",
+            frameRate,
+            BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+        );
+
+        const originalZ = -25;
+        const targetZ = -10;
+
+        const keys = [
+            { frame: 0, value: moveIn ? originalZ : targetZ },
+            { frame: frameRate * duration, value: moveIn ? targetZ : originalZ }
+        ];
+        wallAnim.setKeys(keys);
+
+        this.environment.backWall.animations.push(wallAnim);
+        this.scene.beginAnimation(this.environment.backWall, 0, frameRate * duration, false);
+    }
+
+    private animateFrontWall(moveIn: boolean): void {
+        const frameRate = 30;
+        const duration = 0.1;
+
+        const wallAnim = new BABYLON.Animation(
+            "frontWallMoveAnimation", "position.z", frameRate,
+            BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+        );
+
+        const originalZ = 25;
+        const targetZ = 10;
+
+        wallAnim.setKeys([
+            { frame: 0, value: moveIn ? originalZ : targetZ },
+            { frame: frameRate * duration, value: moveIn ? targetZ : originalZ }
+        ]);
+
+        this.environment.frontWall.animations = [];
+        this.environment.frontWall.animations.push(wallAnim);
+        this.scene.beginAnimation(this.environment.frontWall, 0, frameRate * duration, false);
+    }
+
     private enableCRTEffect(): void {
         if (this.crtPipeline) this.crtPipeline.dispose();
         this.crtPipeline = new BABYLON.DefaultRenderingPipeline("crtPipeline", true, this.scene, [this.playerController.camera]);
@@ -101,4 +196,6 @@ export class InteractionManager {
             this.crtPipeline = null;
         }
     }
+
+    
 }
