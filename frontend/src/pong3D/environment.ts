@@ -164,11 +164,13 @@ export class Environment {
         waterAsset,
         recorderOrangeAsset,
         drawerAsset,
-        drawerAsset2
+        drawerAsset2,
+        keyboardAsset,
+        boardAsset,
     ] = await Promise.all([
         BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "computerFixed.glb", this.scene),
         BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "desk.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "orangeChair.glb", this.scene),
+        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeChair.glb", this.scene),
         BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "coffeeDesk.glb", this.scene),
         BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officePlant.glb", this.scene),
         BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeRecorderBlue.glb", this.scene),
@@ -177,12 +179,14 @@ export class Environment {
         BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeRecorderOrange.glb", this.scene),
         BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeDrawerB.glb", this.scene),
         BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeDrawerA.glb", this.scene),
+        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "keyboard.glb", this.scene),
+        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeBoard.glb", this.scene),
     ]);
 
     const computerRoot = computerAsset.meshes[0];
-    computerRoot.position = new BABYLON.Vector3(0, 1.55, 5.2);
+    computerRoot.position = new BABYLON.Vector3(-0.5, 1.55, 5.3);
     computerRoot.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
-    computerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+    computerRoot.rotation = new BABYLON.Vector3(0, Math.PI / 1.1, 0);
 
     const screenMesh = computerRoot.getChildMeshes(false, (node) => node.name === "CRT_Monitor_monitor_glass_0")[0];
     if (!screenMesh) {
@@ -193,14 +197,22 @@ export class Environment {
     deskAsset.meshes[0].scaling = new BABYLON.Vector3(0.006, 0.006, 0.006);
     deskAsset.meshes[0].rotation = new BABYLON.Vector3(0, Math.PI, 0);
 
+    const keyboardAssetRoot = keyboardAsset.meshes[0];
+    keyboardAssetRoot.position = new BABYLON.Vector3(-0.6, 1.15, 4.48);
+    keyboardAssetRoot.rotation = new BABYLON.Vector3(0, Math.PI / 1.1, 0);
+    keyboardAssetRoot.scaling = new BABYLON.Vector3(1.5, 1.5, 1.5);
+
     const chairAssetRoot = chairAsset.meshes[0];
-    chairAssetRoot.position = new BABYLON.Vector3(0, 0.4, 3.6);
-    chairAssetRoot.scaling = new BABYLON.Vector3(0.03, 0.03, 0.03);
-    chairAssetRoot.rotation = new BABYLON.Vector3(0, 0, 0);
+    chairAssetRoot.position = new BABYLON.Vector3(0, 0.1, 3.6);
+    chairAssetRoot.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
 
     const coffeeDeskRoot = coffeeDeskAsset.meshes[0];
     coffeeDeskRoot.position = new BABYLON.Vector3(8.8, 0, 3.6);
     coffeeDeskRoot.rotation = new BABYLON.Vector3(0, Math.PI / 2, 0);
+
+    const boardAssetRoot = boardAsset.meshes[0];
+    boardAssetRoot.position = new BABYLON.Vector3(6, -0.8, 9.4);
+    boardAssetRoot.scaling = new BABYLON.Vector3(2, 2, 2);
 
     const clockRoot = clockAsset.meshes[0];
     clockRoot.position = new BABYLON.Vector3(0, -1.5, 9.4);
@@ -212,19 +224,25 @@ export class Environment {
 
     const originalPlantRoot = plantAsset.meshes[0];
     const plant1 = originalPlantRoot.clone("plant_clone_1", null);
+    const plant2 = originalPlantRoot.clone("plant_clone_2", null);
     plant1.position = new BABYLON.Vector3(2.2, 0.2, 8.9);
+    plant2.position = new BABYLON.Vector3(-3.2, 0.2, 8.9);
+    plant2.rotation = new BABYLON.Vector3(0, Math.PI / 2, 0);
     originalPlantRoot.setEnabled(false);
 
     const originalRecorderBlueRoot = recorderBlueAsset.meshes[0];
     const recorderBlue1 = originalRecorderBlueRoot.clone("recorderBlue_clone_1", null);
+    const recorderBlue2 = originalRecorderBlueRoot.clone("recorderBlue_clone_2", null);
     recorderBlue1.position = new BABYLON.Vector3(1.4, 0.09, 8.8);
     recorderBlue1.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
+    recorderBlue2.position = new BABYLON.Vector3(-1.4, 0, 8.8);
+    recorderBlue2.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
     originalRecorderBlueRoot.setEnabled(false);
 
     const originalRecorderOrangeRoot = recorderOrangeAsset.meshes[0];
-    const recorderOrange1 = originalRecorderOrangeRoot.clone("recorderOrange_clone_1", null);
-    recorderOrange1.position = new BABYLON.Vector3(-1.4, 0, 8.8);
-    recorderOrange1.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
+    // const recorderOrange1 = originalRecorderOrangeRoot.clone("recorderOrange_clone_1", null);
+    // recorderOrange1.position = new BABYLON.Vector3(-1.4, 0, 8.8);
+    // recorderOrange1.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
     originalRecorderOrangeRoot.setEnabled(false);
     
     const originalDrawerRoot = drawerAsset.meshes[0];

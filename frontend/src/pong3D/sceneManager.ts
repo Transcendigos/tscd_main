@@ -39,7 +39,7 @@ export class SceneManager {
         manager.playerController.enable();
 
         if (manager.debugMode) {
-            manager.scene.environmentIntensity = 0.2;
+            manager.scene.environmentIntensity = 1;
             
             manager.scene.debugLayer.show({
                 embedMode: false,

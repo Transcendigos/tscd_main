@@ -70,7 +70,7 @@ export class InteractionManager {
         const camera = this.playerController.camera;
 
         const sittingPosition = new BABYLON.Vector3(0, 1.7, 3.7);
-        const screenTarget = new BABYLON.Vector3(0, 1.56, 5.05);
+        const screenTarget = new BABYLON.Vector3(-0.4, 1.56, 5.05);
 
         camera.position = sittingPosition;
         camera.setTarget(screenTarget);
