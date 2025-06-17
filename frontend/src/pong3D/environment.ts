@@ -9,6 +9,10 @@ export class Environment {
     public backWall: BABYLON.Mesh;
     public frontWall: BABYLON.Mesh;
 
+    // New properties for the employee photo frame
+    public employeePhotoFrame: BABYLON.Mesh;
+    private employeePhotoMaterial: BABYLON.StandardMaterial;
+
 
     constructor(scene: BABYLON.Scene) {
         this.scene = scene;
@@ -151,136 +155,179 @@ export class Environment {
         ceilingMaterial.roughness = 1;
         ceiling.material = ceilingMaterial;
     }
+    
+    // --- New method to update the photo frame texture ---
+    public updateEmployeeOfMonthPicture(dataUrl: string): void {
+        if (this.employeePhotoMaterial) {
+            const texture = new BABYLON.Texture(dataUrl, this.scene, false, false);
+            this.employeePhotoMaterial.emissiveTexture = texture;
+            this.employeePhotoMaterial.diffuseTexture = texture;
+            this.employeePhotoMaterial.emissiveColor = BABYLON.Color3.White();
+        }
+    }
+
 
     public async loadModelsAndGetScreenMesh(): Promise<BABYLON.Mesh> {
-    const [
-        computerAsset,
-        deskAsset,
-        chairAsset,
-        coffeeDeskAsset,
-        plantAsset,
-        recorderBlueAsset,
-        clockAsset,
-        waterAsset,
-        recorderOrangeAsset,
-        drawerAsset,
-        drawerAsset2,
-        keyboardAsset,
-        boardAsset,
-    ] = await Promise.all([
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "computerFixed.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "desk.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeChair.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "coffeeDesk.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officePlant.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeRecorderBlue.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeClock.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeWater.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeRecorderOrange.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeDrawerB.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeDrawerA.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "keyboard.glb", this.scene),
-        BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeBoard.glb", this.scene),
-    ]);
+        const [
+            computerAsset, deskAsset, chairAsset, coffeeDeskAsset, plantAsset,
+            recorderBlueAsset, clockAsset, waterAsset, recorderOrangeAsset,
+            drawerAsset, drawerAsset2, keyboardAsset, boardAsset,
+        ] = await Promise.all([
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "computerFixed.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "desk.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeChair.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "coffeeDesk.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officePlant.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeRecorderBlue.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeClock.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeWater.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeRecorderOrange.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeDrawerB.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeDrawerA.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "keyboard.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeBoard.glb", this.scene),
+        ]);
 
-    const computerRoot = computerAsset.meshes[0];
-    computerRoot.position = new BABYLON.Vector3(-0.5, 1.55, 5.3);
-    computerRoot.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
-    computerRoot.rotation = new BABYLON.Vector3(0, Math.PI / 1.1, 0);
+        const computerRoot = computerAsset.meshes[0];
+        computerRoot.position = new BABYLON.Vector3(-0.5, 1.55, 5.3);
+        computerRoot.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
+        computerRoot.rotation = new BABYLON.Vector3(0, Math.PI / 1.1, 0);
 
-    const screenMesh = computerRoot.getChildMeshes(false, (node) => node.name === "CRT_Monitor_monitor_glass_0")[0];
-    if (!screenMesh) {
-        throw new Error("Could not find screen mesh in the computer model.");
+        const screenMesh = computerRoot.getChildMeshes(false, (node) => node.name === "CRT_Monitor_monitor_glass_0")[0];
+        if (!screenMesh) {
+            throw new Error("Could not find screen mesh in the computer model.");
+        }
+        
+        deskAsset.meshes[0].position = new BABYLON.Vector3(0, 0, 4.9);
+        deskAsset.meshes[0].scaling = new BABYLON.Vector3(0.006, 0.006, 0.006);
+        deskAsset.meshes[0].rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+        const keyboardAssetRoot = keyboardAsset.meshes[0];
+        keyboardAssetRoot.position = new BABYLON.Vector3(-0.6, 1.15, 4.48);
+        keyboardAssetRoot.rotation = new BABYLON.Vector3(0, Math.PI / 1.1, 0);
+        keyboardAssetRoot.scaling = new BABYLON.Vector3(1.5, 1.5, 1.5);
+
+        const chairAssetRoot = chairAsset.meshes[0];
+        chairAssetRoot.position = new BABYLON.Vector3(0, 0.1, 3.6);
+        chairAssetRoot.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
+
+        const coffeeDeskRoot = coffeeDeskAsset.meshes[0];
+        coffeeDeskRoot.position = new BABYLON.Vector3(8.8, 0, 3.6);
+        coffeeDeskRoot.rotation = new BABYLON.Vector3(0, Math.PI / 2, 0);
+
+        const boardAssetRoot = boardAsset.meshes[0];
+        boardAssetRoot.position = new BABYLON.Vector3(6, -0.8, 9.4);
+        boardAssetRoot.scaling = new BABYLON.Vector3(2, 2, 2);
+
+        this.employeePhotoFrame = BABYLON.MeshBuilder.CreatePlane("employeePhoto", {width: 0.6, height: 0.8}, this.scene);
+        
+        this.employeePhotoFrame.position = new BABYLON.Vector3(6, 2.4, 9.3);
+        this.employeePhotoFrame.rotation = new BABYLON.Vector3(0, 0, Math.PI);
+        
+        // Create a bright, glowing, unmissable material for debugging
+        this.employeePhotoMaterial = new BABYLON.PBRMaterial("employeePhotoMat_DEBUG", this.scene);
+        this.employeePhotoMaterial.diffuseColor = new BABYLON.Color3(255, 255, 255);
+        this.employeePhotoMaterial.roughness = 1;
+        this.employeePhotoMaterial.metallic = 0.0;
+        this.employeePhotoMaterial.specularColor = new BABYLON.Color3(0, 0, 0); // No specular reflection
+        this.employeePhotoMaterial.emissiveColor = new BABYLON.Color3(0, 0, 0); // Bright magenta
+        this.employeePhotoFrame.material = this.employeePhotoMaterial;
+
+        // --- Create "Employee of the Month" Text Plaque (PBR Version) ---
+        const plaque = BABYLON.MeshBuilder.CreatePlane("plaque", { width: 1.0, height: 0.2 }, this.scene);
+        plaque.position = new BABYLON.Vector3(6, 2.0, 9.29);
+        plaque.rotation.z = 0; // Using your corrected rotation
+
+        // Create the texture first
+        const plaqueTexture = new BABYLON.DynamicTexture("plaqueTexture", {width: 512, height: 100}, this.scene, true);
+
+        // Create the white, unreflective PBR material
+        const plaqueMaterial = new BABYLON.PBRMaterial("plaquePBRMat", this.scene);
+        plaqueMaterial.albedoColor = new BABYLON.Color3(1, 1, 1); // Plain white base color
+        plaqueMaterial.metallic = 0.0; // Not metallic
+        plaqueMaterial.roughness = 1.0; // Not reflective (fully rough)
+        
+        // Apply the texture and enable its transparency
+        plaqueMaterial.albedoTexture = plaqueTexture;
+        plaqueMaterial.useAlphaFromAlbedoTexture = true;
+        plaque.material = plaqueMaterial;
+
+        // Draw the text onto the texture
+        const font = "bold 24px 'Press Start 2P'";
+        
+        // The 6th parameter (clearColor) is now null for a transparent background
+        plaqueTexture.drawText(
+            "Employee of the Month",
+            null, // Auto-center horizontally
+            60,   // Vertical position
+            font,
+            "black",
+            "white",
+            true,
+            true
+        );
+
+
+
+
+
+
+        const clockRoot = clockAsset.meshes[0];
+        clockRoot.position = new BABYLON.Vector3(0, -1.5, 9.4);
+        clockRoot.scaling = new BABYLON.Vector3(2, 2, 2);
+
+        const waterRoot = waterAsset.meshes[0];
+        waterRoot.position = new BABYLON.Vector3(-8.8, 0, 3.6);
+        waterRoot.rotation = new BABYLON.Vector3(0, -Math.PI /2, 0);
+
+        const originalPlantRoot = plantAsset.meshes[0];
+        const plant1 = originalPlantRoot.clone("plant_clone_1", null);
+        const plant2 = originalPlantRoot.clone("plant_clone_2", null);
+        plant1.position = new BABYLON.Vector3(2.2, 0.2, 8.9);
+        plant2.position = new BABYLON.Vector3(-3.2, 0.2, 8.9);
+        plant2.rotation = new BABYLON.Vector3(0, Math.PI / 2, 0);
+        originalPlantRoot.setEnabled(false);
+
+        const originalRecorderBlueRoot = recorderBlueAsset.meshes[0];
+        const recorderBlue1 = originalRecorderBlueRoot.clone("recorderBlue_clone_1", null);
+        const recorderBlue2 = originalRecorderBlueRoot.clone("recorderBlue_clone_2", null);
+        recorderBlue1.position = new BABYLON.Vector3(1.4, 0.09, 8.8);
+        recorderBlue1.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
+        recorderBlue2.position = new BABYLON.Vector3(-1.4, 0, 8.8);
+        recorderBlue2.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
+        originalRecorderBlueRoot.setEnabled(false);
+
+        const originalRecorderOrangeRoot = recorderOrangeAsset.meshes[0];
+        originalRecorderOrangeRoot.setEnabled(false);
+        
+        const originalDrawerRoot = drawerAsset.meshes[0];
+        const drawer1 = originalDrawerRoot.clone("drawer_clone_1", null);
+        const drawer2 = originalDrawerRoot.clone("drawer_clone_2", null);
+        const drawer3 = originalDrawerRoot.clone("drawer_clone_3", null);
+        drawer1.position = new BABYLON.Vector3(-9, 0, 8);
+        drawer2.position = new BABYLON.Vector3(-9, 0, 7);
+        drawer3.position = new BABYLON.Vector3(-0.5, 0, 9);
+        drawer1.rotation = new BABYLON.Vector3(0, -Math.PI / 2, 0);
+        drawer2.rotation = new BABYLON.Vector3(0, -Math.PI / 2, 0);
+        drawer3.rotation = new BABYLON.Vector3(0, -Math.PI * 2, 0);
+        originalDrawerRoot.setEnabled(false);
+
+
+        const originalDrawer2Root = drawerAsset2.meshes[0];
+        const drawer4 = originalDrawer2Root.clone("drawer_clone_4", null);
+        drawer4.position = new BABYLON.Vector3(0.4, 0, 9);
+        drawer4.rotation = new BABYLON.Vector3(0, -Math.PI * 2, 0);
+        originalDrawer2Root.setEnabled(false);
+        
+        const allAssets = [
+            computerAsset, deskAsset, chairAsset, coffeeDeskAsset, clockAsset, waterAsset,
+            plantAsset, recorderBlueAsset, recorderOrangeAsset, drawerAsset
+        ];
+
+        allAssets.forEach(asset => {
+            asset.meshes.forEach(mesh => this.shadowGenerator.addShadowCaster(mesh, true));
+        });
+
+        return screenMesh as BABYLON.Mesh;
     }
-    
-    deskAsset.meshes[0].position = new BABYLON.Vector3(0, 0, 4.9);
-    deskAsset.meshes[0].scaling = new BABYLON.Vector3(0.006, 0.006, 0.006);
-    deskAsset.meshes[0].rotation = new BABYLON.Vector3(0, Math.PI, 0);
-
-    const keyboardAssetRoot = keyboardAsset.meshes[0];
-    keyboardAssetRoot.position = new BABYLON.Vector3(-0.6, 1.15, 4.48);
-    keyboardAssetRoot.rotation = new BABYLON.Vector3(0, Math.PI / 1.1, 0);
-    keyboardAssetRoot.scaling = new BABYLON.Vector3(1.5, 1.5, 1.5);
-
-    const chairAssetRoot = chairAsset.meshes[0];
-    chairAssetRoot.position = new BABYLON.Vector3(0, 0.1, 3.6);
-    chairAssetRoot.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
-
-    const coffeeDeskRoot = coffeeDeskAsset.meshes[0];
-    coffeeDeskRoot.position = new BABYLON.Vector3(8.8, 0, 3.6);
-    coffeeDeskRoot.rotation = new BABYLON.Vector3(0, Math.PI / 2, 0);
-
-    const boardAssetRoot = boardAsset.meshes[0];
-    boardAssetRoot.position = new BABYLON.Vector3(6, -0.8, 9.4);
-    boardAssetRoot.scaling = new BABYLON.Vector3(2, 2, 2);
-
-    const clockRoot = clockAsset.meshes[0];
-    clockRoot.position = new BABYLON.Vector3(0, -1.5, 9.4);
-    clockRoot.scaling = new BABYLON.Vector3(2, 2, 2);
-
-    const waterRoot = waterAsset.meshes[0];
-    waterRoot.position = new BABYLON.Vector3(-8.8, 0, 3.6);
-    waterRoot.rotation = new BABYLON.Vector3(0, -Math.PI /2, 0);
-
-    const originalPlantRoot = plantAsset.meshes[0];
-    const plant1 = originalPlantRoot.clone("plant_clone_1", null);
-    const plant2 = originalPlantRoot.clone("plant_clone_2", null);
-    plant1.position = new BABYLON.Vector3(2.2, 0.2, 8.9);
-    plant2.position = new BABYLON.Vector3(-3.2, 0.2, 8.9);
-    plant2.rotation = new BABYLON.Vector3(0, Math.PI / 2, 0);
-    originalPlantRoot.setEnabled(false);
-
-    const originalRecorderBlueRoot = recorderBlueAsset.meshes[0];
-    const recorderBlue1 = originalRecorderBlueRoot.clone("recorderBlue_clone_1", null);
-    const recorderBlue2 = originalRecorderBlueRoot.clone("recorderBlue_clone_2", null);
-    recorderBlue1.position = new BABYLON.Vector3(1.4, 0.09, 8.8);
-    recorderBlue1.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
-    recorderBlue2.position = new BABYLON.Vector3(-1.4, 0, 8.8);
-    recorderBlue2.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
-    originalRecorderBlueRoot.setEnabled(false);
-
-    const originalRecorderOrangeRoot = recorderOrangeAsset.meshes[0];
-    // const recorderOrange1 = originalRecorderOrangeRoot.clone("recorderOrange_clone_1", null);
-    // recorderOrange1.position = new BABYLON.Vector3(-1.4, 0, 8.8);
-    // recorderOrange1.rotation = new BABYLON.Vector3(0, Math.PI * 2, 0);
-    originalRecorderOrangeRoot.setEnabled(false);
-    
-    const originalDrawerRoot = drawerAsset.meshes[0];
-    const drawer1 = originalDrawerRoot.clone("drawer_clone_1", null);
-    const drawer2 = originalDrawerRoot.clone("drawer_clone_2", null);
-    const drawer3 = originalDrawerRoot.clone("drawer_clone_3", null);
-    drawer1.position = new BABYLON.Vector3(-9, 0, 8);
-    drawer2.position = new BABYLON.Vector3(-9, 0, 7);
-    drawer3.position = new BABYLON.Vector3(-0.5, 0, 9);
-    drawer1.rotation = new BABYLON.Vector3(0, -Math.PI / 2, 0);
-    drawer2.rotation = new BABYLON.Vector3(0, -Math.PI / 2, 0);
-    drawer3.rotation = new BABYLON.Vector3(0, -Math.PI * 2, 0);
-    originalDrawerRoot.setEnabled(false);
-
-
-    const originalDrawer2Root = drawerAsset2.meshes[0];
-    const drawer4 = originalDrawer2Root.clone("drawer_clone_4", null);
-    drawer4.position = new BABYLON.Vector3(0.4, 0, 9);
-    drawer4.rotation = new BABYLON.Vector3(0, -Math.PI * 2, 0);
-    originalDrawer2Root.setEnabled(false);
-    
-    const allAssets = [
-        computerAsset, deskAsset, chairAsset, coffeeDeskAsset, clockAsset, waterAsset,
-        plantAsset, recorderBlueAsset, recorderOrangeAsset, drawerAsset
-    ];
-
-    allAssets.forEach(asset => {
-        asset.meshes.forEach(mesh => this.shadowGenerator.addShadowCaster(mesh, true));
-    });
-
-    return screenMesh as BABYLON.Mesh;
 }
-}
-
-        // const plant1 = templates.plant.createInstance("plant1");
-        // plant1.scaling = new BABYLON.Vector3(10,10,10);
-
-        // const officePlantAssetRoot = officePlantAsset.meshes[0];
-        // officePlantAssetRoot.position = new BABYLON.Vector3(2.2, 0.2, 8.9);
-
-                // officePropsAssetRoot.scaling = new BABYLON.Vector3(0.03, 0.03, 0.03);

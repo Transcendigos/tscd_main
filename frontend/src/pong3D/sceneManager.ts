@@ -3,11 +3,13 @@ import { PlayerController } from './playerController';
 import { Environment } from './environment';
 import { Pong3D } from './pong3D';
 import { InteractionManager, GameState } from './interactionManager';
+import { startWebcamFeed } from '../webcam'; // Import startWebcamFeed
 import "@babylonjs/inspector";
 
 export class SceneManager {
     public engine: BABYLON.Engine;
     public scene: BABYLON.Scene;
+    public webcamStream: MediaStream | null = null; // Property to hold the stream
     
     private playerController: PlayerController;
     private environment: Environment;
@@ -27,6 +29,20 @@ export class SceneManager {
         manager.scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
         manager.scene.collisionsEnabled = true;
 
+        // --- Request Webcam Access on Launch ---
+        try {
+            // We use dummy element IDs because we don't need to display the feed here.
+            manager.webcamStream = await startWebcamFeed('dummy-video', 'dummy-error');
+            if (manager.webcamStream) {
+                console.log("Webcam access granted at game launch.");
+            } else {
+                console.warn("Webcam access denied or unavailable at game launch.");
+            }
+        } catch (error) {
+            console.error("Error initializing webcam:", error);
+        }
+        // --- End Webcam Logic ---
+
         manager.environment = new Environment(manager.scene);
         
         const screenMesh = await manager.environment.loadModelsAndGetScreenMesh();
@@ -34,7 +50,8 @@ export class SceneManager {
         manager.playerController = new PlayerController(manager.scene, canvas, manager.debugMode);
         
         manager.pongGame = new Pong3D(manager.scene, screenMesh);
-        manager.interactionManager = new InteractionManager(manager.scene, manager.playerController, manager.pongGame, manager.environment);
+        // Pass the webcam stream to the InteractionManager
+        manager.interactionManager = new InteractionManager(manager.scene, manager.playerController, manager.pongGame, manager.environment, manager.webcamStream);
         
         manager.playerController.enable();
 

@@ -56,6 +56,8 @@ export class Pong3D {
     private readonly playAgainButton = { x: this.canvasSize.width / 2 - 220, y: 450, width: 200, height: 50 };
     private readonly mainMenuButton = { x: this.canvasSize.width / 2 + 20, y: 450, width: 200, height: 50 };
 
+    public onPlayerWin: () => void = () => {};
+
     constructor(scene: BABYLON.Scene, screenMesh: BABYLON.Mesh) {
         // ... (constructor is mostly the same)
         this.scene = scene;
@@ -279,6 +281,7 @@ export class Pong3D {
             this.rightScore++;
             if (this.rightScore >= winningScore) {
                 this.winner = 'AI';
+                this.onPlayerWin();
                 this.enterState('GAME_OVER');
             } else {
                 if (this.aiMode) this.updateDifficulty();
@@ -289,6 +292,7 @@ export class Pong3D {
             if (this.leftScore >= winningScore) {
                 this.winner = 'Player';
                 this.enterState('GAME_OVER');
+                this.onPlayerWin();
             } else {
                 if (this.aiMode) this.updateDifficulty();
                 this.resetPos();

@@ -2,6 +2,7 @@ import * as BABYLON from '@babylonjs/core';
 import { PlayerController } from './playerController';
 import { Pong3D } from './pong3D';
 import { Environment } from './environment';
+import { takePicture, startWebcamFeed } from '../webcam'; // Import takePicture and startWebcamFeed
 
 export enum GameState {
     EXPLORING,
@@ -23,14 +24,20 @@ export class InteractionManager {
 
     private crtPipeline: BABYLON.DefaultRenderingPipeline | null = null;
     private hasPlayedIntro: boolean = false;
-    private hasBootedOnce: boolean = false; // Add this flag
+    private hasBootedOnce: boolean = false;
 
-    constructor(scene: BABYLON.Scene, playerController: PlayerController, pongGame: Pong3D, environment: Environment) {
+    private webcamStream: MediaStream | null;
+
+    constructor(scene: BABYLON.Scene, playerController: PlayerController, pongGame: Pong3D, environment: Environment, webcamStream: MediaStream | null) {
         this.scene = scene;
         this.playerController = playerController;
         this.pongGame = pongGame;
         this.environment = environment;
+        this.webcamStream = webcamStream;
         this.originalFov = this.playerController.camera.fov;
+
+        // Set up the callback for when the player wins
+        this.pongGame.onPlayerWin = this.triggerVictoryPhoto.bind(this);
 
         this.setupInputListeners();
         this.setupPointerObservable();
@@ -42,12 +49,38 @@ export class InteractionManager {
         });
     }
 
+    // --- NEW METHOD TO HANDLE VICTORY PHOTO ---
+    private async triggerVictoryPhoto(): Promise<void> {
+        console.log("Player won! Triggering victory photo...");
+
+        if (!this.webcamStream || this.webcamStream.getTracks().every(track => track.readyState === 'ended')) {
+            console.log("Webcam stream is missing or ended. Requesting a new one.");
+            try {
+                 this.webcamStream = await startWebcamFeed('dummy-video', 'dummy-error');
+                 if (!this.webcamStream) {
+                     console.error("Could not re-acquire webcam for victory photo.");
+                     return;
+                 }
+            } catch (error) {
+                console.error("Error re-acquiring webcam stream:", error);
+                return;
+            }
+        }
+        
+        try {
+            const pictureDataUrl = await takePicture(this.webcamStream);
+            this.environment.updateEmployeeOfMonthPicture(pictureDataUrl);
+            console.log("Employee of the Month photo updated!");
+        } catch (error) {
+            console.error("Failed to take or display victory photo:", error);
+        }
+    }
+
     private sitDown(): void {
         this.currentState = GameState.PLAYING_PONG;
         this.playerController.unlockPointer();
         this.playerController.disable();
         
-        // Decide whether to boot or go straight to desktop
         if (!this.hasBootedOnce) {
             this.pongGame.startBootSequence();
             this.hasBootedOnce = true;
