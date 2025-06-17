@@ -45,10 +45,18 @@ export class PlayerController {
         this.camera.detachControl(this.canvas);
     }
 
-    private setupPointerLock(): void {
-        this.canvas.addEventListener("click", () => {
-            this.canvas.requestPointerLock();
-        });
+    // private setupPointerLock(): void {
+    //     this.canvas.addEventListener("click", () => {
+    //         this.canvas.requestPointerLock();
+    //     });
+    // }
+
+    public lockPointer(): void {
+        this.canvas.requestPointerLock();
+    }
+
+    public unlockPointer(): void {
+        document.exitPointerLock();
     }
 
     public update(): void {
