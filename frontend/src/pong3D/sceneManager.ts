@@ -89,6 +89,8 @@ export class SceneManager {
             this.lastFrameTime = currentTime;
 
             this.playerController.update();
+            this.interactionManager.update();
+            
             
             if (this.interactionManager.currentState === GameState.PLAYING_PONG) {
                 this.pongGame.update(deltaTime);

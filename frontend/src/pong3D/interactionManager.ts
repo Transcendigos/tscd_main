@@ -1,4 +1,5 @@
 import * as BABYLON from '@babylonjs/core';
+import * as GUI from '@babylonjs/gui';
 import { PlayerController } from './playerController';
 import { Pong3D } from './pong3D';
 import { Environment } from './environment';
@@ -28,6 +29,10 @@ export class InteractionManager {
 
     private webcamStream: MediaStream | null;
 
+    private advancedTexture: GUI.AdvancedDynamicTexture;
+    private tipText: GUI.TextBlock;
+    private isTipShowing: boolean = false;
+
     constructor(scene: BABYLON.Scene, playerController: PlayerController, pongGame: Pong3D, environment: Environment, webcamStream: MediaStream | null) {
         this.scene = scene;
         this.playerController = playerController;
@@ -35,6 +40,21 @@ export class InteractionManager {
         this.environment = environment;
         this.webcamStream = webcamStream;
         this.originalFov = this.playerController.camera.fov;
+
+        // --- SETUP GUI ---
+        this.advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+        this.tipText = new GUI.TextBlock("tipText", "Press 'E' to sit");
+        this.tipText.color = "#8be076";
+        this.tipText.fontSize = 30;
+        this.tipText.fontFamily = "Inter, sans-serif";
+        this.tipText.fontWeight = "bold";
+        this.tipText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.tipText.top = "150px";
+        this.tipText.alpha = 0;
+        this.tipText.isVisible = false;
+        this.advancedTexture.addControl(this.tipText);
+        // --- END GUI SETUP ---
 
         // Set up the callback for when the player wins
         this.pongGame.onPlayerWin = this.triggerVictoryPhoto.bind(this);
@@ -81,13 +101,13 @@ export class InteractionManager {
         this.playerController.unlockPointer();
         this.playerController.disable();
         
-        if (!this.hasBootedOnce) {
+        if (this.pongGame.isPaused()) {
+            this.pongGame.resume();
+
+        } else if (!this.hasBootedOnce) {
             this.pongGame.startBootSequence();
             this.hasBootedOnce = true;
-        } else {
-            this.pongGame.enterState('DESKTOP');
         }
-
         const camera = this.playerController.camera;
         const sittingPosition = new BABYLON.Vector3(0, 1.7, 3.7);
         const screenTarget = new BABYLON.Vector3(-0.4, 1.56, 5.05);
@@ -160,6 +180,7 @@ export class InteractionManager {
         camera.rotation = new BABYLON.Vector3(0, camera.rotation.y, 0);
         camera.cameraRotation.x = 0;
         this.playerController.enable();
+        this.pongGame.pause();
         this.disableCRTEffect();
         this.pongGame.updateMousePosition(null);
     }
@@ -216,6 +237,32 @@ export class InteractionManager {
         if (this.crtPipeline) {
             this.crtPipeline.dispose();
             this.crtPipeline = null;
+        }
+    }
+
+    public update(): void {
+        const shouldShowTip = this.currentState === GameState.EXPLORING && this.isPlayerNearComputer() && !this.hasBootedOnce;
+
+        if (shouldShowTip && !this.isTipShowing) {
+            this.isTipShowing = true;
+            this.tipText.isVisible = true;
+            const fadeIn = new BABYLON.Animation("fadeIn", "alpha", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            fadeIn.setKeys([
+                { frame: 0, value: 0 },
+                { frame: 10, value: 1 }
+            ]);
+            this.scene.beginDirectAnimation(this.tipText, [fadeIn], 0, 10, false);
+
+        } else if (!shouldShowTip && this.isTipShowing) {
+            this.isTipShowing = false;
+            const fadeOut = new BABYLON.Animation("fadeOut", "alpha", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            fadeOut.setKeys([
+                { frame: 0, value: 1 },
+                { frame: 10, value: 0 }
+            ]);
+            this.scene.beginDirectAnimation(this.tipText, [fadeOut], 0, 10, false, undefined, () => {
+                this.tipText.isVisible = false; 
+            });
         }
     }
 }
