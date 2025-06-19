@@ -719,6 +719,7 @@ private drawLogoScreen(): void {
                 clearInterval(this.aiUpdateInterval);
                 this.aiUpdateInterval = null;
             }
+
         }
     }
 
