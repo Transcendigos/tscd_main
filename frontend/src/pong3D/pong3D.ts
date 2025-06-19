@@ -394,7 +394,7 @@ export class Pong3D {
         this.ctx.font = '16px monospace';
         this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'top';
-        const bootText = ["TRANSCENDENCE BIOS v1.0", "Initializing USB Controllers ... Done", "Memory Test: 640K OK", "", "Detecting Primary Master ... PONG_AI.SYS", "Detecting Primary Slave ... None", "Detecting Secondary Master ... USER_INPUT.DLL", "Detecting Secondary Slave ... None", "", "Loading PS-DOS...", "HIMEM is testing extended memory...done.","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT","PROOT PROOT PROOT PROOT PROOT PROOT",];
+        const bootText = ["TRANSCENDENCE BIOS v1.0", "Initializing USB Controllers ... Done", "Memory Test: 640K OK", "", "Detecting Primary Master ... PONG_AI.SYS", "Detecting Primary Slave ... None", "Detecting Secondary Master ... USER_INPUT.DLL", "Detecting Secondary Slave ... None", "", "Loading PS-DOS...", "HIMEM is testing extended memory...done.",];
         const elapsedTime = performance.now() - this.stateEntryTime;
         const linesToShow = Math.floor(elapsedTime / 250);
         for(let i = 0; i < linesToShow && i < bootText.length; i++) {
