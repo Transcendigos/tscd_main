@@ -11,7 +11,8 @@
   "dependencies": {
     "@babylonjs/core": "8.11.0",
     "@babylonjs/loaders":"8.11.0",
-    "@babylonjs/inspector": "8.12.1"
+    "@babylonjs/inspector": "8.12.1",
+    "@babylonjs/gui": "8.12.1"
   },
   "devDependencies": {
     "typescript": "latest",
