@@ -156,13 +156,13 @@ export class Environment {
         ceiling.material = ceilingMaterial;
     }
     
-    // --- New method to update the photo frame texture ---
-    public updateEmployeeOfMonthPicture(dataUrl: string): void {
+public updateEmployeeOfMonthPicture(dataUrl: string): void {
         if (this.employeePhotoMaterial) {
             const texture = new BABYLON.Texture(dataUrl, this.scene, false, false);
-            this.employeePhotoMaterial.emissiveTexture = texture;
-            this.employeePhotoMaterial.diffuseTexture = texture;
-            this.employeePhotoMaterial.emissiveColor = BABYLON.Color3.White();
+
+            this.employeePhotoMaterial.albedoTexture = texture;
+
+            this.employeePhotoMaterial.useAlphaFromAlbedoTexture = true;
         }
     }
 
@@ -171,7 +171,7 @@ export class Environment {
         const [
             computerAsset, deskAsset, chairAsset, coffeeDeskAsset, plantAsset,
             recorderBlueAsset, clockAsset, waterAsset, recorderOrangeAsset,
-            drawerAsset, drawerAsset2, keyboardAsset, boardAsset,
+            drawerAsset, drawerAsset2, keyboardAsset, boardAsset, pictureFrame,
         ] = await Promise.all([
             BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "computerFixed.glb", this.scene),
             BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "desk.glb", this.scene),
@@ -186,6 +186,7 @@ export class Environment {
             BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeDrawerA.glb", this.scene),
             BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "keyboard.glb", this.scene),
             BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "officeBoard.glb", this.scene),
+            BABYLON.SceneLoader.ImportMeshAsync(null, "/assets/meshes/", "pictureFrame.glb", this.scene),
         ]);
 
         const computerRoot = computerAsset.meshes[0];
@@ -201,6 +202,11 @@ export class Environment {
         deskAsset.meshes[0].position = new BABYLON.Vector3(0, 0, 4.9);
         deskAsset.meshes[0].scaling = new BABYLON.Vector3(0.006, 0.006, 0.006);
         deskAsset.meshes[0].rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+        const pictureFrameRoot = pictureFrame.meshes[0];
+        pictureFrameRoot.scaling = new BABYLON.Vector3(-0.4, -0.4, -0.4);
+        pictureFrameRoot.rotation = new BABYLON.Vector3(0, Math.PI, Math.PI);
+        pictureFrameRoot.position = new BABYLON.Vector3(9.51, 2, 3.6);
 
         const keyboardAssetRoot = keyboardAsset.meshes[0];
         keyboardAssetRoot.position = new BABYLON.Vector3(-0.6, 1.15, 4.48);
@@ -219,53 +225,16 @@ export class Environment {
         boardAssetRoot.position = new BABYLON.Vector3(6, -0.8, 9.4);
         boardAssetRoot.scaling = new BABYLON.Vector3(2, 2, 2);
 
-        this.employeePhotoFrame = BABYLON.MeshBuilder.CreatePlane("employeePhoto", {width: 0.6, height: 0.8}, this.scene);
-        
-        this.employeePhotoFrame.position = new BABYLON.Vector3(6, 2.4, 9.3);
-        this.employeePhotoFrame.rotation = new BABYLON.Vector3(0, 0, Math.PI);
-        
-        // Create a bright, glowing, unmissable material for debugging
-        this.employeePhotoMaterial = new BABYLON.PBRMaterial("employeePhotoMat_DEBUG", this.scene);
-        this.employeePhotoMaterial.diffuseColor = new BABYLON.Color3(255, 255, 255);
-        this.employeePhotoMaterial.roughness = 1;
+        this.employeePhotoFrame =  BABYLON.MeshBuilder.CreatePlane("employeePhoto", {width: 0.6, height: 0.8}, this.scene);
+        this.employeePhotoFrame.position = new BABYLON.Vector3(9.48, 2.5, 4);
+        this.employeePhotoFrame.rotation = new BABYLON.Vector3(0, Math.PI /2, Math.PI);
+        this.employeePhotoMaterial = new BABYLON.PBRMaterial("employeePhotoMat", this.scene);
+        this.employeePhotoMaterial.albedoColor = new BABYLON.Color3(1, 1, 1);
         this.employeePhotoMaterial.metallic = 0.0;
-        this.employeePhotoMaterial.specularColor = new BABYLON.Color3(0, 0, 0); // No specular reflection
-        this.employeePhotoMaterial.emissiveColor = new BABYLON.Color3(0, 0, 0); // Bright magenta
-        this.employeePhotoFrame.material = this.employeePhotoMaterial;
+        this.employeePhotoMaterial.roughness = 1.0;    
+        this.employeePhotoFrame.material = this.employeePhotoMaterial; 
 
-        // --- Create "Employee of the Month" Text Plaque (PBR Version) ---
-        const plaque = BABYLON.MeshBuilder.CreatePlane("plaque", { width: 1.0, height: 0.2 }, this.scene);
-        plaque.position = new BABYLON.Vector3(6, 2.0, 9.29);
-        plaque.rotation.z = 0; // Using your corrected rotation
 
-        // Create the texture first
-        const plaqueTexture = new BABYLON.DynamicTexture("plaqueTexture", {width: 512, height: 100}, this.scene, true);
-
-        // Create the white, unreflective PBR material
-        const plaqueMaterial = new BABYLON.PBRMaterial("plaquePBRMat", this.scene);
-        plaqueMaterial.albedoColor = new BABYLON.Color3(1, 1, 1); // Plain white base color
-        plaqueMaterial.metallic = 0.0; // Not metallic
-        plaqueMaterial.roughness = 1.0; // Not reflective (fully rough)
-        
-        // Apply the texture and enable its transparency
-        plaqueMaterial.albedoTexture = plaqueTexture;
-        plaqueMaterial.useAlphaFromAlbedoTexture = true;
-        plaque.material = plaqueMaterial;
-
-        // Draw the text onto the texture
-        const font = "bold 24px 'Press Start 2P'";
-        
-        // The 6th parameter (clearColor) is now null for a transparent background
-        plaqueTexture.drawText(
-            "Employee of the Month",
-            null, // Auto-center horizontally
-            60,   // Vertical position
-            font,
-            "black",
-            "white",
-            true,
-            true
-        );
 
 
 

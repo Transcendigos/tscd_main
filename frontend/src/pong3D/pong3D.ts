@@ -420,6 +420,8 @@ export class Pong3D {
         this.ctx.fillStyle = '#4cb4e7';
         this.ctx.textAlign = 'center';
         this.ctx.fillText('TRANSCENDENCE', this.canvasSize.width / 2, 40);
+        let { width } = this.ctx.measureText('TRANSCENDENCE');
+        this.ctx.fillRect(this.canvasSize.width / 3.3, 70, width, 2);
         
         this.ctx.fillStyle = '#d6ecff';
         this.ctx.fillRect(this.pongIcon.x + 15, this.pongIcon.y + 10, 50, 40);
