@@ -1,9 +1,11 @@
+// frontend/src/pong3D/interactionManager.ts
+
 import * as BABYLON from '@babylonjs/core';
 import * as GUI from '@babylonjs/gui';
 import { PlayerController } from './playerController';
 import { Pong3D } from './pong3D';
 import { Environment } from './environment';
-import { takePicture, startWebcamFeed } from '../webcam'; // Import takePicture and startWebcamFeed
+import { takePicture, startWebcamFeed } from '../webcam';
 
 export enum GameState {
     EXPLORING,
@@ -33,6 +35,8 @@ export class InteractionManager {
     private tipText: GUI.TextBlock;
     private isTipShowing: boolean = false;
 
+    private canvasClickListener: () => void;
+
     constructor(scene: BABYLON.Scene, playerController: PlayerController, pongGame: Pong3D, environment: Environment, webcamStream: MediaStream | null) {
         this.scene = scene;
         this.playerController = playerController;
@@ -57,11 +61,22 @@ export class InteractionManager {
         this.setupInputListeners();
         this.setupPointerObservable();
         
-        this.scene.getEngine().getRenderingCanvas()?.addEventListener("click", () => {
+        this.canvasClickListener = () => {
             if (this.currentState === GameState.EXPLORING) {
                 this.playerController.lockPointer();
             }
-        });
+        };
+        this.scene.getEngine().getRenderingCanvas()?.addEventListener("click", this.canvasClickListener);
+    }
+
+    public dispose(): void {
+        const canvas = this.scene.getEngine().getRenderingCanvas();
+        if (canvas && this.canvasClickListener) {
+            canvas.removeEventListener("click", this.canvasClickListener);
+        }
+        if (this.advancedTexture) {
+            this.advancedTexture.dispose();
+        }
     }
 
     private async triggerVictoryPhoto(): Promise<void> {
