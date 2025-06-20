@@ -40,8 +40,6 @@ export class InteractionManager {
         this.environment = environment;
         this.webcamStream = webcamStream;
         this.originalFov = this.playerController.camera.fov;
-
-        // --- SETUP GUI ---
         this.advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
         this.tipText = new GUI.TextBlock("tipText", "Press 'E' to sit");
@@ -54,9 +52,6 @@ export class InteractionManager {
         this.tipText.alpha = 0;
         this.tipText.isVisible = false;
         this.advancedTexture.addControl(this.tipText);
-        // --- END GUI SETUP ---
-
-        // Set up the callback for when the player wins
         this.pongGame.onPlayerWin = this.triggerVictoryPhoto.bind(this);
 
         this.setupInputListeners();
@@ -69,7 +64,6 @@ export class InteractionManager {
         });
     }
 
-    // --- NEW METHOD TO HANDLE VICTORY PHOTO ---
     private async triggerVictoryPhoto(): Promise<void> {
         console.log("Player won! Triggering victory photo...");
 

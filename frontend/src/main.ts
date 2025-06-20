@@ -82,6 +82,15 @@ function stopAnyActiveGame() {
 }
 
 
+function changeTheme(color1: string, color2: string) {
+    document.body.style.backgroundImage = `
+        repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 2px, transparent 2px, transparent 4px),
+        linear-gradient(to bottom, ${color1} 0%, ${color2} 50%, ${color1} 100%)
+    `;
+}
+
+
+
 async function updateUIBasedOnAuth() {
   const isSignedIn = await checkSignedIn();
 
@@ -245,6 +254,18 @@ window.addEventListener("DOMContentLoaded", async () => {
         handleMultiplayerGameOver(winnerId, scores);
         activePongMode = null;
         stopCurrentGame = null;
+    });
+    window.addEventListener('changeTheme', (event: Event) => {
+        const customEvent = event as CustomEvent;
+        const theme = customEvent.detail.theme;
+
+        if (theme === 'blue') {
+            changeTheme('#1e293b', '#1b3F72');
+        } else if (theme === 'pink') {
+            changeTheme('#4d2d3f', '#804c64');
+        } else if (theme === 'green') {
+            changeTheme('#2d4d26', '#4a803d');
+        }
     });
 
     initGoogleSignIn();

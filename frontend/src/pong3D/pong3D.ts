@@ -21,7 +21,8 @@ enum PongGameState {
     GAME_OVER,
     SHOWING_TRUTH_PROMPT,
     PLAYING_TRUTH_GIF,
-    PAUSED
+    PAUSED,
+    THEME_CHOOSER
 }
 
 export class Pong3D {
@@ -63,6 +64,10 @@ export class Pong3D {
     private readonly LOGO_STAY_TIME = 3000;
     private readonly LOGO_FADE_OUT_TIME = 1500;
     private readonly LOGO_TOTAL_DURATION = this.LOGO_FADE_IN_TIME + this.LOGO_STAY_TIME + this.LOGO_FADE_OUT_TIME;
+    private readonly themeIcon = { x: 50, y: 340, width: 80, height: 100 };
+    private readonly themeButtonBlue = { x: 250, y: 250, width: 100, height: 100 };
+    private readonly themeButtonPink = { x: 350, y: 250, width: 100, height: 100 };
+    private readonly themeButtonGreen = { x: 450, y: 250, width: 100, height: 100 };
 
     public onPlayerWin: () => void = () => {};
 
@@ -139,6 +144,10 @@ export class Pong3D {
                     clickY >= this.truthIcon.y && clickY <= this.truthIcon.y + this.truthIcon.height) {
                     this.enterState('SHOWING_TRUTH_PROMPT');
                 }
+                if (clickX >= this.themeIcon.x && clickX <= this.themeIcon.x + this.themeIcon.width &&
+                    clickY >= this.themeIcon.y && clickY <= this.themeIcon.y + this.themeIcon.height) {
+                    this.enterState('THEME_CHOOSER');
+                }
                 break;
             case PongGameState.GAME_OVER:
                 if (clickX >= this.playAgainButton.x && clickX <= this.playAgainButton.x + this.playAgainButton.width &&
@@ -158,6 +167,25 @@ export class Pong3D {
                 break;
             case PongGameState.PLAYING_TRUTH_GIF:
                 this.enterState('DESKTOP');
+                break;
+            case PongGameState.THEME_CHOOSER:
+                const dispatchThemeChangeEvent = (theme: string) => {
+                    window.dispatchEvent(new CustomEvent('changeTheme', { detail: { theme } }));
+                    this.enterState('DESKTOP');
+                };
+
+                if (clickX >= this.themeButtonBlue.x && clickX <= this.themeButtonBlue.x + this.themeButtonBlue.width &&
+                    clickY >= this.themeButtonBlue.y && clickY <= this.themeButtonBlue.y + this.themeButtonBlue.height) {
+                    dispatchThemeChangeEvent('blue');
+                }
+                if (clickX >= this.themeButtonPink.x && clickX <= this.themeButtonPink.x + this.themeButtonPink.width &&
+                    clickY >= this.themeButtonPink.y && clickY <= this.themeButtonPink.y + this.themeButtonPink.height) {
+                    dispatchThemeChangeEvent('pink');
+                }
+                if (clickX >= this.themeButtonGreen.x && clickX <= this.themeButtonGreen.x + this.themeButtonGreen.height &&
+                    clickY >= this.themeButtonGreen.y && clickY <= this.themeButtonGreen.y + this.themeButtonGreen.height) {
+                    dispatchThemeChangeEvent('green');
+                }
                 break;
         }
     }
@@ -200,6 +228,7 @@ export class Pong3D {
             case PongGameState.PLAYING: this.drawGame(); break;
             case PongGameState.GAME_OVER: this.drawGameOverScreen(); break;
             case PongGameState.SHOWING_TRUTH_PROMPT: this.drawTruthPrompt(); break;
+            case PongGameState.THEME_CHOOSER: this.drawThemeChooser(); break;
             case PongGameState.PAUSED:
                 this.drawGame();
                 this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
@@ -308,6 +337,49 @@ export class Pong3D {
         this.ctx.fillText("☕", this.truthIcon.x + 40, this.truthIcon.y + 40);
         this.ctx.font = '14px "Inter"';
         this.ctx.fillText('THE_TRUTH.gif', this.truthIcon.x + this.truthIcon.width / 2, this.truthIcon.y + 70);
+        
+        this.ctx.fillStyle = '#d6ecff';
+        this.ctx.font = 'bold 48px "Press Start 2P"';
+        this.ctx.fillText("T", this.themeIcon.x + 40, this.themeIcon.y + 40);
+        this.ctx.font = '10px "Press Start 2P"';
+        this.ctx.fillText('THEMES.EXE', this.themeIcon.x + this.themeIcon.width / 2, this.themeIcon.y + 85);
+        
+        this.ctx.restore();
+        
+    }
+
+    private drawThemeChooser(): void {
+        this.ctx.save();
+        this.drawDesktop(); // Use the desktop as a background
+        
+        // Dim the background
+        this.ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        this.ctx.fillRect(0, 0, this.canvasSize.width, this.canvasSize.height);
+
+        // Draw the window panel
+        const box = { x: 200, y: 150, width: 400, height: 250 };
+        this.ctx.fillStyle = '#1b3F72';
+        this.ctx.strokeStyle = '#8be076';
+        this.ctx.lineWidth = 2;
+        this.ctx.fillRect(box.x, box.y, box.width, box.height);
+        this.ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+        // Draw title
+        this.ctx.fillStyle = "#d6ecff";
+        this.ctx.font = "bold 24px 'Press Start 2P'";
+        this.ctx.textAlign = "center";
+        this.ctx.fillText("Select a Theme", this.canvasSize.width / 2, box.y + 50);
+
+        // Draw buttons
+        this.ctx.fillStyle = '#4cb4e7';
+        this.ctx.fillRect(this.themeButtonBlue.x, this.themeButtonBlue.y, this.themeButtonBlue.width, this.themeButtonBlue.height);
+        
+        this.ctx.fillStyle = '#f8aab6';
+        this.ctx.fillRect(this.themeButtonPink.x, this.themeButtonPink.y, this.themeButtonPink.width, this.themeButtonPink.height);
+        
+        this.ctx.fillStyle = '#8be076';
+        this.ctx.fillRect(this.themeButtonGreen.x, this.themeButtonGreen.y, this.themeButtonGreen.width, this.themeButtonGreen.height);
+        
         this.ctx.restore();
     }
     
