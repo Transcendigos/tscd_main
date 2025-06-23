@@ -262,7 +262,9 @@ export class Pong3D {
             case PongGameState.GAME_OVER: this.drawGameOverScreen(); break;
             case PongGameState.SHOWING_TRUTH_PROMPT: this.drawTruthPrompt(); break;
             case PongGameState.THEME_CHOOSER: this.drawThemeChooser(); break;
-            case PongGameState.SO_LONG: this.soLongGame?.draw(); break;
+            case PongGameState.SO_LONG:
+                this.soLongGame?.draw();
+                break;
             case PongGameState.PAUSED:
                 this.drawGame();
                 this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
@@ -384,8 +386,6 @@ export class Pong3D {
         this.ctx.font = '14px "Inter"';
         this.ctx.fillStyle = '#d6ecff';
         this.ctx.fillText('ZIZI.ber', this.soLongIcon.x + this.soLongIcon.width / 2, this.soLongIcon.y + 70);
-        this.ctx.restore();
-        
         this.ctx.restore();
         
     }

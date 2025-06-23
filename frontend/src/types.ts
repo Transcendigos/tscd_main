@@ -49,7 +49,7 @@ export const ASSET_PATHS = {
     'WALL1': '/assets/so_long/roid1.png', 'WALL2': '/assets/so_long/roid2.png', 'WALL3': '/assets/so_long/roid3.png',
     'WALL4': '/assets/so_long/roid4.png', 'WALL5': '/assets/so_long/roid5.png', 'WALL6': '/assets/so_long/roid6.png',
     'WALL7': '/assets/so_long/roid7.png', 'WALL8': '/assets/so_long/roid8.png', 'WALL9': '/assets/so_long/roid9.png',
-    'BACK': '/assets/so_long/back.png', 'BACK2': '/assets/so_long/back2.png', 'BACK3': '/assets/so_long/back3.png',
+    'BACK1': '/assets/so_long/back1.png', 'BACK2': '/assets/so_long/back2.png', 'BACK3': '/assets/so_long/back3.png',
     'BACK4': '/assets/so_long/back4.png', 'BACK5': '/assets/so_long/back5.png', 'BACK6': '/assets/so_long/back6.png',
     'BACK7': '/assets/so_long/back7.png', 'BACK8': '/assets/so_long/back8.png', 'BACK9': '/assets/so_long/back9.png',
     'BACK10': '/assets/so_long/back10.png', 'BACK_N': '/assets/so_long/backn.png',
