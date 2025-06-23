@@ -29,7 +29,6 @@ export class SceneManager {
         manager.scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
         manager.scene.collisionsEnabled = true;
 
-        // --- Request Webcam Access on Launch ---
         try {
             // We use dummy element IDs because we don't need to display the feed here.
             manager.webcamStream = await startWebcamFeed('dummy-video', 'dummy-error');
@@ -102,5 +101,22 @@ export class SceneManager {
         window.addEventListener('resize', () => {
             this.engine.resize();
         });
+    }
+
+    public dispose(): void {
+        console.log("Disposing SceneManager and its components.");
+        this.scene.onBeforeRenderObservable.clear();
+
+        if (this.interactionManager) {
+            this.interactionManager.dispose();
+        }
+        if (this.pongGame) {
+            this.pongGame.stop();
+        }
+        if (this.playerController) {
+            this.playerController.disable();
+        }
+        
+        this.engine.dispose();
     }
 }

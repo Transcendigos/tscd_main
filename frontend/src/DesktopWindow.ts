@@ -1,6 +1,4 @@
-// tscd_main/frontend/src/DesktopWindow.ts
-
-interface DesktopWindowOptions {
+export interface DesktopWindowOptions {
   windowId: string;
   dragHandleId: string;
   resizeHandleId: string;
@@ -15,7 +13,7 @@ interface DesktopWindowOptions {
   maxWindowWidth?: number;
   maxWindowHeight?: number;
   initialZIndex?: number;
-  initialShow?: boolean; // Explicit option to show initially
+  initialShow?: boolean;
   onCloseCallback?: () => void;
 }
 
@@ -51,11 +49,10 @@ export class DesktopWindow {
   private static highestZIndex: number = 50;
 
   private onCloseCallback?: () => void;
-  private config: DesktopWindowOptions; // Store config
-
+  private config: DesktopWindowOptions;
 
   constructor(options: DesktopWindowOptions) {
-    this.config = options; // Store options
+    this.config = options;
 
     const windowEl = document.getElementById(options.windowId);
     const dragEl = document.getElementById(options.dragHandleId);
@@ -64,14 +61,7 @@ export class DesktopWindow {
     const visibilityEl = document.getElementById(options.visibilityToggleId);
 
     if (!windowEl || !dragEl || !resizeEl || !boundaryEl || !visibilityEl) {
-      console.error("Missing elements for window:", options.windowId, {
-          windowEl: !!windowEl,
-          dragEl: !!dragEl,
-          resizeEl: !!resizeEl,
-          boundaryEl: !!boundaryEl,
-          visibilityEl: !!visibilityEl
-      });
-      throw new Error(`Essential elements missing for window ${options.windowId}. Check IDs: windowId, dragHandleId, resizeHandleId, boundaryContainerId, visibilityToggleId.`);
+      throw new Error(`Essential elements missing for window ${options.windowId}.`);
     }
     this.element = windowEl;
     this.dragHandleElement = dragEl;
@@ -84,9 +74,6 @@ export class DesktopWindow {
     }
     if (options.closeButtonId) {
       this.closeButtonElement = document.getElementById(options.closeButtonId);
-      if (!this.closeButtonElement) {
-        console.warn(`Close button with ID '${options.closeButtonId}' not found for window '${options.windowId}'.`);
-      }
     }
 
     this.showClasses = options.showClasses || ['opacity-100', 'scale-100', 'visible', 'pointer-events-auto'];
@@ -107,11 +94,6 @@ export class DesktopWindow {
     this._updateMinDimensions();
     this._updateMaxDimensions();
 
-    // --- CORRECTED INITIAL VISIBILITY LOGIC ---
-    // By default, windows start hidden unless explicitly told to show,
-    // or if their openTriggerId is the same as their windowId (implying it's a self-opening/always-present window like a main menu).
-    // The `initialShow` in the constructor of dynamic chat windows in chatClient.ts is set to `false`,
-    // and then `newWindowInstance.open()` is called.
     if (options.initialShow === true || (this.openTriggerElement && this.openTriggerElement.id === this.element.id)) {
         this.visibilityToggleElement.classList.remove(...this.hideClasses);
         this.visibilityToggleElement.classList.add(...this.showClasses);
@@ -127,18 +109,31 @@ export class DesktopWindow {
   private _initEventListeners(): void {
     this.dragHandleElement.addEventListener('mousedown', this._onDragStart);
     this.dragHandleElement.addEventListener('touchstart', this._onDragStart, { passive: false });
-
     this.resizeHandleElement.addEventListener('mousedown', this._onResizeStart);
     this.resizeHandleElement.addEventListener('touchstart', this._onResizeStart, { passive: false });
-
-    if (this.openTriggerElement && this.openTriggerElement.id !== this.element.id) { // Only add listener if trigger is not self
+    if (this.openTriggerElement && this.openTriggerElement.id !== this.element.id) {
       this.openTriggerElement.addEventListener('click', this.open);
     }
     if (this.closeButtonElement) {
       this.closeButtonElement.addEventListener('click', this.close);
     }
-
     this.element.addEventListener('mousedown', this._bringToFront, true);
+  }
+
+  public dispose = (): void => {
+    this.dragHandleElement.removeEventListener('mousedown', this._onDragStart);
+    this.dragHandleElement.removeEventListener('touchstart', this._onDragStart);
+    this.resizeHandleElement.removeEventListener('mousedown', this._onResizeStart);
+    this.resizeHandleElement.removeEventListener('touchstart', this._onResizeStart);
+    if (this.openTriggerElement && this.openTriggerElement.id !== this.element.id) {
+        this.openTriggerElement.removeEventListener('click', this.open);
+    }
+    if (this.closeButtonElement) {
+        this.closeButtonElement.removeEventListener('click', this.close);
+    }
+    this.element.removeEventListener('mousedown', this._bringToFront, true);
+
+    DesktopWindow.activeWindows = DesktopWindow.activeWindows.filter(win => win !== this);
   }
 
   private _bringToFront = (): void => {
@@ -149,7 +144,6 @@ export class DesktopWindow {
         }
     });
     const newZIndex = currentMaxZ + 1;
-    // Ensure newZIndex is at least the base highestZIndex if all other windows are somehow lower
     const trulyHighestZ = Math.max(newZIndex, DesktopWindow.highestZIndex -1);
 
     if (this.zIndex < trulyHighestZ || DesktopWindow.activeWindows.length === 1) {
@@ -210,7 +204,6 @@ export class DesktopWindow {
     this._bringToFront();
 
     this.element.style.transition = 'none';
-    // Ensure window is visible for dragging, if it was hidden
     this.element.classList.remove(...this.hideClasses);
     this.element.classList.add(...this.showClasses);
     void this.element.offsetHeight;
@@ -219,7 +212,6 @@ export class DesktopWindow {
     const parentRect = this.boundaryContainerElement.getBoundingClientRect();
     const visualLeftRelParent = rectBeforeCompensation.left - parentRect.left;
     const visualTopRelParent = rectBeforeCompensation.top - parentRect.top;
-
     const compensatedPixelLeft = visualLeftRelParent + (rectBeforeCompensation.width / 2);
     const compensatedPixelTop = visualTopRelParent + (rectBeforeCompensation.height / 2);
 
@@ -253,18 +245,13 @@ export class DesktopWindow {
     const evt = (event instanceof MouseEvent) ? event : event.touches[0];
     const currentMouseX_v = evt.clientX;
     const currentMouseY_v = evt.clientY;
-
     const parentRect_v = this.boundaryContainerElement.getBoundingClientRect();
-
     const targetVisualLeft_v = currentMouseX_v - this.dragOffsetX;
     const targetVisualTop_v = currentMouseY_v - this.dragOffsetY;
-
     const targetVisualPixelLeft_p = targetVisualLeft_v - parentRect_v.left;
     const targetVisualPixelTop_p = targetVisualTop_v - parentRect_v.top;
-
     const windowWidthCurrent = this.element.offsetWidth;
     const windowHeightCurrent = this.element.offsetHeight;
-
     const styleLeftToSet_p = targetVisualPixelLeft_p + (windowWidthCurrent / 2);
     const styleTopToSet_p = targetVisualPixelTop_p + (windowHeightCurrent / 2);
 
@@ -282,12 +269,10 @@ export class DesktopWindow {
     const parentRect = this.boundaryContainerElement.getBoundingClientRect();
     let finalVisualPixelLeftRelParent = finalRectPxView.left - parentRect.left;
     let finalVisualPixelTopRelParent = finalRectPxView.top - parentRect.top;
-
     const windowWidth = this.element.offsetWidth;
     const windowHeight = this.element.offsetHeight;
     const parentWidth = parentRect.width;
     const parentHeight = parentRect.height;
-
     let boundedVisualPixelLeft = finalVisualPixelLeftRelParent;
     let boundedVisualPixelTop = finalVisualPixelTopRelParent;
 
@@ -348,7 +333,6 @@ export class DesktopWindow {
     const parentRect = this.boundaryContainerElement.getBoundingClientRect();
     const visualLeftRelParent = rectBeforeCompensation.left - parentRect.left;
     const visualTopRelParent = rectBeforeCompensation.top - parentRect.top;
-
     const compensatedPixelLeft = visualLeftRelParent + (rectBeforeCompensation.width / 2);
     const compensatedPixelTop = visualTopRelParent + (rectBeforeCompensation.height / 2);
 
@@ -381,7 +365,6 @@ export class DesktopWindow {
     const evt = (event instanceof MouseEvent) ? event : event.touches[0];
     const currentMouseX = evt.clientX;
     const currentMouseY = evt.clientY;
-
     const deltaX = currentMouseX - this.initialResizeMouseX;
     const deltaY = currentMouseY - this.initialResizeMouseY;
     let newWidth = this.initialWindowWidth + deltaX;
@@ -393,7 +376,6 @@ export class DesktopWindow {
     const parentRect = this.boundaryContainerElement.getBoundingClientRect();
     const currentCssOriginLeft = parseFloat(this.element.style.left || '0');
     const currentCssOriginTop = parseFloat(this.element.style.top || '0');
-
     const visualCurrentLeft = currentCssOriginLeft - (this.element.offsetWidth / 2);
     const visualCurrentTop = currentCssOriginTop - (this.element.offsetHeight / 2);
 
@@ -420,12 +402,10 @@ export class DesktopWindow {
     const parentRect = this.boundaryContainerElement.getBoundingClientRect();
     let finalVisualPixelLeftRelParent = finalRectPxView.left - parentRect.left;
     let finalVisualPixelTopRelParent = finalRectPxView.top - parentRect.top;
-
     const windowWidth = this.element.offsetWidth;
     const windowHeight = this.element.offsetHeight;
     const parentWidth = parentRect.width;
     const parentHeight = parentRect.height;
-
     let boundedVisualPixelLeft = finalVisualPixelLeftRelParent;
     let boundedVisualPixelTop = finalVisualPixelTopRelParent;
 

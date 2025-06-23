@@ -197,7 +197,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         sceneManager = await SceneManager.create(soloPongCanvas);
         stopCurrentGame = () => {
             if (sceneManager) {
-                sceneManager.engine.dispose();
+                sceneManager.dispose();
                 sceneManager = null;
                 console.log("3D Pong scene disposed.");
             }

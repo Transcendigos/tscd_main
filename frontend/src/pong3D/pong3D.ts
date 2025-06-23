@@ -1,4 +1,5 @@
 import * as BABYLON from '@babylonjs/core';
+import { SoLongGame } from '../SoLongGame';
 
 interface IPaddle {
     x: number; y: number; width: number; height: number;
@@ -22,7 +23,8 @@ enum PongGameState {
     SHOWING_TRUTH_PROMPT,
     PLAYING_TRUTH_GIF,
     PAUSED,
-    THEME_CHOOSER
+    THEME_CHOOSER,
+    SO_LONG
 }
 
 export class Pong3D {
@@ -51,12 +53,13 @@ export class Pong3D {
     private aiPrecision = 5;
     private aiUpdateInterval: number | null = null;
     private readonly AI_RATE = 1000;
-    private aiReactionBaseDelay = { 1: 60, 2: 120, 3: 220 };
+    private readonly aiReactionBaseDelay = { 1: 60, 2: 120, 3: 220 };
     private mousePosition: { x: number, y: number } | null = null;
     private stateBeforePause: PongGameState | null = null;
     private readonly cursorSize = 15;
     private readonly pongIcon = { x: 50, y: 100, width: 80, height: 100 };
     private readonly truthIcon = { x: 50, y: 220, width: 80, height: 100 };
+    private readonly soLongIcon = { x: 50, y: 460, width: 80, height: 100 };
     private readonly playAgainButton = { x: this.canvasSize.width / 2 - 220, y: 450, width: 200, height: 50 };
     private readonly mainMenuButton = { x: this.canvasSize.width / 2 + 20, y: 450, width: 200, height: 50 };
     private readonly truthConfirmButton = { x: this.canvasSize.width / 2 - 75, y: 350, width: 150, height: 50 };
@@ -68,6 +71,14 @@ export class Pong3D {
     private readonly themeButtonBlue = { x: 250, y: 250, width: 100, height: 100 };
     private readonly themeButtonPink = { x: 350, y: 250, width: 100, height: 100 };
     private readonly themeButtonGreen = { x: 450, y: 250, width: 100, height: 100 };
+    private bgFirstColor = "#1e293b";
+    private bgSecondColor = "#1b3F72";
+    private soLongGame: SoLongGame | null = null;
+    
+    // --- REACTION DELAY START ---
+    private aiIsActing = false;
+    private aiReactionTimeout: number | null = null;
+    // --- REACTION DELAY END ---
 
     public onPlayerWin: () => void = () => {};
 
@@ -117,6 +128,10 @@ export class Pong3D {
     
     public enterState(newState: keyof typeof PongGameState): void {
         const oldState = this.gameState;
+        if (oldState === PongGameState.SO_LONG) {
+            this.soLongGame?.stop();
+            this.soLongGame = null;
+        }
         if (oldState === PongGameState.PLAYING_TRUTH_GIF) {
             this.stopTruthVideo();
         }
@@ -131,7 +146,7 @@ export class Pong3D {
         }
     }
 
-    public handleClick(uv: BABYLON.Vector2): void {
+    public async handleClick(uv: BABYLON.Vector2): Promise<void> {
         const clickX = uv.x * this.canvasSize.width;
         const clickY = (1 - uv.y) * this.canvasSize.height;
         switch (this.gameState) {
@@ -147,6 +162,14 @@ export class Pong3D {
                 if (clickX >= this.themeIcon.x && clickX <= this.themeIcon.x + this.themeIcon.width &&
                     clickY >= this.themeIcon.y && clickY <= this.themeIcon.y + this.themeIcon.height) {
                     this.enterState('THEME_CHOOSER');
+                }
+                if (clickX >= this.soLongIcon.x && clickX <= this.soLongIcon.x + this.soLongIcon.width &&
+                    clickY >= this.soLongIcon.y && clickY <= this.soLongIcon.y + this.soLongIcon.height) {
+                    this.soLongGame = new SoLongGame(this.ctx.canvas, () => {
+                        this.enterState('DESKTOP');
+                    });
+                    await this.soLongGame.start();
+                    this.enterState('SO_LONG');
                 }
                 break;
             case PongGameState.GAME_OVER:
@@ -177,14 +200,21 @@ export class Pong3D {
                 if (clickX >= this.themeButtonBlue.x && clickX <= this.themeButtonBlue.x + this.themeButtonBlue.width &&
                     clickY >= this.themeButtonBlue.y && clickY <= this.themeButtonBlue.y + this.themeButtonBlue.height) {
                     dispatchThemeChangeEvent('blue');
+                    this.bgFirstColor = '#1e293b';
+                    this.bgSecondColor = '#1b3F72';
+
                 }
                 if (clickX >= this.themeButtonPink.x && clickX <= this.themeButtonPink.x + this.themeButtonPink.width &&
                     clickY >= this.themeButtonPink.y && clickY <= this.themeButtonPink.y + this.themeButtonPink.height) {
                     dispatchThemeChangeEvent('pink');
+                    this.bgFirstColor = '#4d2d3f';
+                    this.bgSecondColor = '#804c64';
                 }
                 if (clickX >= this.themeButtonGreen.x && clickX <= this.themeButtonGreen.x + this.themeButtonGreen.height &&
                     clickY >= this.themeButtonGreen.y && clickY <= this.themeButtonGreen.y + this.themeButtonGreen.height) {
                     dispatchThemeChangeEvent('green');
+                    this.bgFirstColor = '#2d4d26';
+                    this.bgSecondColor = '#4a803d';
                 }
                 break;
         }
@@ -213,6 +243,9 @@ export class Pong3D {
                 if (this.aiMode) this.updateAI(dt);
                 this.updateBall(dt);
                 break;
+            // case PongGameState.SO_LONG:
+            //     this.soLongGame?.update();
+            //     break;
         }
         if (this.gameState !== PongGameState.PLAYING_TRUTH_GIF) this.draw();
     }
@@ -229,6 +262,9 @@ export class Pong3D {
             case PongGameState.GAME_OVER: this.drawGameOverScreen(); break;
             case PongGameState.SHOWING_TRUTH_PROMPT: this.drawTruthPrompt(); break;
             case PongGameState.THEME_CHOOSER: this.drawThemeChooser(); break;
+            case PongGameState.SO_LONG:
+                this.soLongGame?.draw();
+                break;
             case PongGameState.PAUSED:
                 this.drawGame();
                 this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
@@ -316,7 +352,7 @@ export class Pong3D {
     private drawDesktop(): void {
         this.ctx.save();
         const bgGradient = this.ctx.createLinearGradient(0, 0, 0, this.canvasSize.height);
-        bgGradient.addColorStop(0, "#1e293b"); bgGradient.addColorStop(0.5, "#1b3F72"); bgGradient.addColorStop(1, "#1e293b");
+        bgGradient.addColorStop(0, this.bgFirstColor); bgGradient.addColorStop(0.5, this.bgSecondColor); bgGradient.addColorStop(1, this.bgFirstColor);
         this.ctx.fillStyle = bgGradient; this.ctx.fillRect(0, 0, this.canvasSize.width, this.canvasSize.height);
         this.drawVerticalCRTLines();
         this.ctx.font = 'bold 32px "Inter", sans-serif';
@@ -340,23 +376,27 @@ export class Pong3D {
         
         this.ctx.fillStyle = '#d6ecff';
         this.ctx.font = 'bold 48px "Press Start 2P"';
-        this.ctx.fillText("T", this.themeIcon.x + 40, this.themeIcon.y + 40);
-        this.ctx.font = '10px "Press Start 2P"';
-        this.ctx.fillText('THEMES.EXE', this.themeIcon.x + this.themeIcon.width / 2, this.themeIcon.y + 85);
-        
+        this.ctx.fillText("🚥", this.themeIcon.x + 40, this.themeIcon.y + 40);
+        this.ctx.font = '14px "Inter"';
+        this.ctx.fillText('COLOR.exe', this.themeIcon.x + this.themeIcon.width / 2, this.themeIcon.y + 60);
+
+        this.ctx.font = 'bold 48px "Press Start 2P"';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText("👾", this.soLongIcon.x + 40, this.soLongIcon.y + 40);
+        this.ctx.font = '14px "Inter"';
+        this.ctx.fillStyle = '#d6ecff';
+        this.ctx.fillText('ZIZI.ber', this.soLongIcon.x + this.soLongIcon.width / 2, this.soLongIcon.y + 70);
         this.ctx.restore();
         
     }
 
     private drawThemeChooser(): void {
         this.ctx.save();
-        this.drawDesktop(); // Use the desktop as a background
+        this.drawDesktop();
         
-        // Dim the background
         this.ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
         this.ctx.fillRect(0, 0, this.canvasSize.width, this.canvasSize.height);
 
-        // Draw the window panel
         const box = { x: 200, y: 150, width: 400, height: 250 };
         this.ctx.fillStyle = '#1b3F72';
         this.ctx.strokeStyle = '#8be076';
@@ -364,13 +404,11 @@ export class Pong3D {
         this.ctx.fillRect(box.x, box.y, box.width, box.height);
         this.ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-        // Draw title
         this.ctx.fillStyle = "#d6ecff";
         this.ctx.font = "bold 24px 'Press Start 2P'";
         this.ctx.textAlign = "center";
         this.ctx.fillText("Select a Theme", this.canvasSize.width / 2, box.y + 50);
 
-        // Draw buttons
         this.ctx.fillStyle = '#4cb4e7';
         this.ctx.fillRect(this.themeButtonBlue.x, this.themeButtonBlue.y, this.themeButtonBlue.width, this.themeButtonBlue.height);
         
@@ -382,6 +420,7 @@ export class Pong3D {
         
         this.ctx.restore();
     }
+
     
     private drawGameOverScreen(): void {
         this.ctx.save();
@@ -625,9 +664,21 @@ private drawLogoScreen(): void {
             clearInterval(this.aiUpdateInterval);
             this.aiUpdateInterval = null;
         }
+        // --- REACTION DELAY ---
+        if (this.aiReactionTimeout) {
+            clearTimeout(this.aiReactionTimeout);
+            this.aiReactionTimeout = null;
+        }
+        this.soLongGame?.stop();
     }
 
     public handleInput(key: string, isPressed: boolean): void {
+
+        // if (this.gameState === PongGameState.SO_LONG) {
+        //     this.soLongGame?.handleInput(key, isPressed);
+        //     return;
+        // }
+        
         if (this.gameState !== PongGameState.PLAYING && this.gameState !== PongGameState.TITLE) return;
         this.keysPressed[key] = isPressed;
         if (isPressed && key === 'Enter' && this.gameState === PongGameState.TITLE) {
@@ -637,15 +688,32 @@ private drawLogoScreen(): void {
 
     private runAIPrediction(): void {
         if (!this.aiMode || this.gameState !== PongGameState.PLAYING) return;
+        
+        // --- REACTION DELAY START ---
+        if (this.aiReactionTimeout) clearTimeout(this.aiReactionTimeout);
+        this.aiIsActing = false;
+        // --- REACTION DELAY END ---
+
         if (this.ball.vx < 0) {
             this.ball.predictY = this.canvasSize.height / 2;
-            return;
+        } else {
+            this.predictBallPosition();
         }
-        this.predictBallPosition();
         this.ball.paddleCenter = Math.random() * this.rightPaddle.height;
+
+        // --- REACTION DELAY START ---
+        const baseDelay = this.aiReactionBaseDelay[this.aiDifficulty] || 120;
+        const reactionDelay = baseDelay + Math.random() * 50;
+        this.aiReactionTimeout = window.setTimeout(() => {
+            this.aiIsActing = true;
+        }, reactionDelay);
+        // --- REACTION DELAY END ---
     }
 
     private updateAI(dt: number): void {
+        // --- REACTION DELAY ---
+        if (!this.aiIsActing) return;
+
         const paddleSpeed = 500 * dt;
         let aimZone = this.aiPrecision + this.aiPrecision * this.ball.bounce;
         let paddleCenter = this.rightPaddle.y + this.ball.paddleCenter;
@@ -791,7 +859,10 @@ private drawLogoScreen(): void {
                 clearInterval(this.aiUpdateInterval);
                 this.aiUpdateInterval = null;
             }
-
+            if (this.aiReactionTimeout) {
+                clearTimeout(this.aiReactionTimeout);
+                this.aiReactionTimeout = null;
+            }
         }
     }
 
@@ -809,6 +880,5 @@ private drawLogoScreen(): void {
     public isPaused(): boolean {
         return this.gameState === PongGameState.PAUSED;
     }
-
     
 }
