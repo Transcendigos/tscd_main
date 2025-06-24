@@ -8,7 +8,7 @@ import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
 import { setupTournamentButtonBehavior } from "./tournament.ts";
 import { initTournamentCreationLogic } from "./tournament.ts";
-import { resetTournamentData} from "./tournament.ts";
+import { initTournamentWindow, tournamentData } from "./tournament.ts";
 import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile, settingUserSetting } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
@@ -338,53 +338,63 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 // --- Tournament Window ---
 
-try {
-    tournamentCreationWindow = new DesktopWindow({
+  try {
+      tournamentCreationWindow = new DesktopWindow({
       windowId: "tournamentCreationWindow",
       dragHandleId: "tournamentCreationDragHandle",
       resizeHandleId: "tournamentCreationResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "tournamentCreationWindow",
-      closeButtonId: "closeTournamentCreationBtn",
+      openTriggerId: "tournamentLocalBtn",
+      closeButtonId: "closetournamentCreationBtn",
     });
+  } catch (error) {
+    console.error("Failed to initialize 'tournamentCreationWindow':", error);
+  }
 
+  try {
     tournamentPlayersWindow = new DesktopWindow({
-      windowId: "tournamentPlayersWindow",
-      dragHandleId: "tournamentPlayersDragHandle",
-      resizeHandleId: "tournamentPlayersResizeHandle",
-      boundaryContainerId: "main",
-      visibilityToggleId: "tournamentPlayersWindow",
-      closeButtonId: "closeTournamentPlayersBtn",
-    });
-
-    tournamentWindow = new DesktopWindow({
-      windowId: "tournamentWindow",
-      dragHandleId: "tournamentDragHandle",
-      resizeHandleId: "tournamentResizeHandle",
-      boundaryContainerId: "main",
-      visibilityToggleId: "tournamentWindow",
-      closeButtonId: "closetournamentBtn",
-      onCloseCallback: () => {
-        resetTournamentData();
-        // We don't call resetTournamentUI here from the callback directly
-        // because the window is already closed. The UI state will be reset
-        // the next time initTournamentDisplay is called.
-      }
-    });
-
-    // Attacher l'événement au bouton du menu
-    const localTournamentBtn = document.getElementById("tournamentLocalBtn");
-    if (localTournamentBtn) {
-        localTournamentBtn.addEventListener("click", () => {
-            tournamentCreationWindow.open();
-        });
-    }
-    
-    initTournamentCreationLogic(tournamentCreationWindow, tournamentPlayersWindow, tournamentWindow);
-
+    windowId: "tournamentPlayersWindow",
+    dragHandleId: "tournamentPlayersDragHandle",
+    resizeHandleId: "tournamentPlayersResizeHandle",
+    boundaryContainerId: "main",
+    visibilityToggleId: "tournamentPlayersWindow",
+    openTriggerId: "tournamentPlayersBtn",
+    closeButtonId: "closetournamentPlayersBtn",
+  });
+  
 } catch (error) {
-    console.error("Failed to initialize tournament windows:", error);
+  console.error("Failed to initialize 'tournamentPlayersWindow':", error);
 }
+
+try {
+  tournamentWindow = new DesktopWindow({
+    windowId: "tournamentWindow",
+    dragHandleId: "tournamentDragHandle",
+    resizeHandleId: "tournamentResizeHandle",
+    boundaryContainerId: "main",
+    visibilityToggleId: "tournamentWindow",
+    closeButtonId: "closetournamentBtn",
+  });
+} catch (error) {
+  console.error("Failed to initialize 'tournamentWindow':", error);
+}
+
+// // C'est l'écouteur d'événement pour lancer un tournoi de TEST (via le bouton "ONLINE")
+// const tournamentOnlineBtn = document.getElementById("tournamentOnlineBtn")!;
+// tournamentOnlineBtn.addEventListener("click", () => {
+//     // Nettoyer tournamentData avant d'ajouter les joueurs de test
+//     tournamentData.players = []; 
+//     tournamentData.name = "SAUCISSE";
+//     tournamentData.playerCount = 4; // Ou 8 pour tester
+//     tournamentData.players.push({ id: 1, name: "Jules" });
+//     tournamentData.players.push({ id: 2, name: "Guillaume" });
+//     tournamentData.players.push({ id: 3, name: "Florence" });
+//     tournamentData.players.push({ id: 4, name: "Yann" });
+
+//     tournamentWindow.open(); // Ouvre la fenêtre DesktopWindow
+//     initTournamentWindow(); // Initialise le contenu du tournoi avec les données de test
+// });
 
 // --- Chat Window ---
 
@@ -515,6 +525,7 @@ window.addEventListener('pongGameOver', (event: Event) => {
 });
 
 setupTournamentButtonBehavior();
+initTournamentCreationLogic(tournamentCreationWindow, tournamentPlayersWindow);
 initGoogleSignIn();
 settingUserProfile();
 setupSettingForm(settingWindow);
