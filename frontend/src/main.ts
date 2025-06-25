@@ -6,9 +6,7 @@ import { initGoogleSignIn } from "./google_auth.js";
 import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
-import { setupTournamentButtonBehavior } from "./tournament.ts";
-import { initTournamentCreationLogic } from "./tournament.ts";
-import { resetTournamentData} from "./tournament.ts";
+import { TournamentManager, setupTournamentMenuButton } from "./tournament.js";
 import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile, settingUserSetting } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
@@ -28,7 +26,6 @@ let profileWindow: DesktopWindow;
 let settingWindow: DesktopWindow;
 let pongWindow: DesktopWindow;
 let multiplayerPongWindow: DesktopWindow;
-//let tournamentWindow: DesktopWindow;
 let chatWindow: DesktopWindow;
 let statsWindow: DesktopWindow;
 let infoWindow: DesktopWindow;
@@ -38,6 +35,7 @@ let musicWindow: DesktopWindow;
 let tournamentCreationWindow: DesktopWindow;
 let tournamentPlayersWindow: DesktopWindow;
 let tournamentWindow: DesktopWindow;
+let tournamentManager: TournamentManager;
 
 // Utility functions
 function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string, onOpenCallback?: () => void) {
@@ -79,6 +77,16 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(aiWindow, "aiBtn");
     assignOpenTrigger(musicWindow, "musicBtn");
     assignOpenTrigger(weatherWindow, "openWeatherBtn");
+
+    // --- Logique Tournoi ---
+    // Attache la méthode du manager pour démarrer un nouveau tournoi au bouton "LOCAL".
+    const localTournamentTrigger = document.getElementById('tournamentLocalBtn');
+    if (localTournamentTrigger) {
+      localTournamentTrigger.onclick = () => {
+        if (tournamentManager) tournamentManager.startNewTournament();
+      };
+      localTournamentTrigger.classList.remove("opacity-50", "cursor-not-allowed");
+    }
 
     initializeChatSystem();
 
@@ -336,55 +344,61 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize the multiplayer pong window:", error);
   }
 
-// --- Tournament Window ---
-
-try {
-    tournamentCreationWindow = new DesktopWindow({
+// --- Initialisation des fenêtres de Tournoi ---
+  try {
+      tournamentCreationWindow = new DesktopWindow({
       windowId: "tournamentCreationWindow",
       dragHandleId: "tournamentCreationDragHandle",
       resizeHandleId: "tournamentCreationResizeHandle",
       boundaryContainerId: "main",
       visibilityToggleId: "tournamentCreationWindow",
-      closeButtonId: "closeTournamentCreationBtn",
+      closeButtonId: "closetournamentCreationBtn",
     });
-
+  } catch (error) { console.error("Failed to initialize 'tournamentCreationWindow':", error); }
+  try {
     tournamentPlayersWindow = new DesktopWindow({
-      windowId: "tournamentPlayersWindow",
-      dragHandleId: "tournamentPlayersDragHandle",
-      resizeHandleId: "tournamentPlayersResizeHandle",
-      boundaryContainerId: "main",
-      visibilityToggleId: "tournamentPlayersWindow",
-      closeButtonId: "closeTournamentPlayersBtn",
-    });
-
+    windowId: "tournamentPlayersWindow",
+    dragHandleId: "tournamentPlayersDragHandle",
+    resizeHandleId: "tournamentPlayersResizeHandle",
+    boundaryContainerId: "main",
+    visibilityToggleId: "tournamentPlayersWindow",
+    closeButtonId: "closetournamentPlayersBtn",
+  });
+  } catch (error) { console.error("Failed to initialize 'tournamentPlayersWindow':", error); }
+  try {
     tournamentWindow = new DesktopWindow({
-      windowId: "tournamentWindow",
-      dragHandleId: "tournamentDragHandle",
-      resizeHandleId: "tournamentResizeHandle",
-      boundaryContainerId: "main",
-      visibilityToggleId: "tournamentWindow",
-      closeButtonId: "closetournamentBtn",
-      onCloseCallback: () => {
-        resetTournamentData();
-        // We don't call resetTournamentUI here from the callback directly
-        // because the window is already closed. The UI state will be reset
-        // the next time initTournamentDisplay is called.
-      }
-    });
+    windowId: "tournamentWindow",
+    dragHandleId: "tournamentDragHandle",
+    resizeHandleId: "tournamentResizeHandle",
+    boundaryContainerId: "main",
+    visibilityToggleId: "tournamentWindow",
+    closeButtonId: "closetournamentBtn",
+  });
+  } catch (error) { console.error("Failed to initialize 'tournamentWindow':", error); }
 
-    // Attacher l'événement au bouton du menu
-    const localTournamentBtn = document.getElementById("tournamentLocalBtn");
-    if (localTournamentBtn) {
-        localTournamentBtn.addEventListener("click", () => {
-            tournamentCreationWindow.open();
-        });
-    }
-    
-    initTournamentCreationLogic(tournamentCreationWindow, tournamentPlayersWindow, tournamentWindow);
+  // --- Initialisation du Tournament Manager ---
+  try {
+    // On crée l'instance unique du manager en lui passant les fenêtres.
+    tournamentManager = new TournamentManager(
+      tournamentCreationWindow,
+      tournamentPlayersWindow,
+      tournamentWindow
+    );
+  } catch (error) {
+    console.error("Failed to initialize TournamentManager:", error);
+  }
 
-} catch (error) {
-    console.error("Failed to initialize tournament windows:", error);
-}
+  // --- Logique Tournoi ---
+  // On configure le bouton de test "ONLINE" pour utiliser le manager.
+  const tournamentOnlineBtn = document.getElementById("tournamentOnlineBtn");
+  tournamentOnlineBtn?.addEventListener("click", () => {
+      const testPlayers = [
+          { id: 1, name: "Jules" }, { id: 2, name: "Guillaume" },
+          { id: 3, name: "Florence" }, { id: 4, name: "Yann" }
+      ];
+      // On appelle la méthode de test publique du manager.
+      if (tournamentManager) tournamentManager.startTestTournament("TOURNOI DE TEST", testPlayers);
+  });
 
 // --- Chat Window ---
 
@@ -514,7 +528,7 @@ window.addEventListener('pongGameOver', (event: Event) => {
   handleMultiplayerGameOver(winnerId, scores);
 });
 
-setupTournamentButtonBehavior();
+setupTournamentMenuButton();
 initGoogleSignIn();
 settingUserProfile();
 setupSettingForm(settingWindow);
@@ -553,4 +567,3 @@ setupSettingForm(settingWindow);
   //           }
   //       });
   //     }
-

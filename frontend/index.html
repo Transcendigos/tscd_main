@@ -425,96 +425,203 @@
 
     <!-- -------------- TOURNAMENT CREATION WINDOW -------------- -->
 
-    <div id="tournamentCreationWindow"
-      class="border-2 border-[#8be076] w-[400px] text-[#4cb4e7] text-sm flex flex-col bg-slate-900/80 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 350px;">
+    <div id="tournamentCreationWindow" class="border-2 border-[#4cb4e7] w-[300px] text-[#4cb4e7] text-sm flex flex-col
+            bg-slate-900
+            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+            transition-all duration-300 ease-in-out
+            opacity-0 scale-95 invisible pointer-events-none"
+      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
       <div id="tournamentCreationDragHandle"
-        class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#8be076] cursor-grab active:cursor-grabbing">
-        <span class="font-bold">Créer un Tournoi Local</span>
+        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+        <div class="flex items-center space-x-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trophy"
+            viewBox="0 0 16 16">
+            <path
+              d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935M3.504 1q.01.775.056 1.469c.13 2.028.457 3.546.87 4.667C5.294 9.48 6.484 10 7 10a.5.5 0 0 1 .5.5v2.61a1 1 0 0 1-.757.97l-1.426.356a.5.5 0 0 0-.179.085L4.5 15h7l-.638-.479a.5.5 0 0 0-.18-.085l-1.425-.356a1 1 0 0 1-.757-.97V10.5A.5.5 0 0 1 9 10c.516 0 1.706-.52 2.57-2.864.413-1.12.74-2.64.87-4.667q.045-.694.056-1.469z" />
+          </svg>
+          <span class="font-bold">Tournament</span>
+        </div>
         <div class="flex items-center space-x-1">
-          <button disabled class="w-5 h-5 border border-[#8be076] opacity-50 cursor-not-allowed"></button>
-          <button disabled class="w-5 h-5 border border-[#8be076] opacity-50 cursor-not-allowed"></button>
-          <button id="closeTournamentCreationBtn"
-            class="w-5 h-5 border border-[#8be076] flex items-center justify-center font-bold hover:bg-red-500">X</button>
+          <button aria-label="Minimize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
+              <rect width="8" height="2" />
+            </svg>
+          </button>
+          <button aria-label="Maximize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
+              xmlns="http://www.w3.org/2000/svg">
+              <rect x="0.5" y="0.5" width="8" height="8" />
+            </svg>
+          </button>
+          <button aria-label="Close" id="closetournamentCreationBtn"
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+            X
+          </button>
         </div>
       </div>
-      <div class="p-4 flex flex-col space-y-4 flex-grow items-center justify-center">
-        <input type="text" id="tournamentNameInput" placeholder="Nom du tournoi..."
-          class="w-full bg-slate-800 border-2 border-[#4cb4e7] p-2 rounded text-center">
-        <div class="text-center">
-          <p class="mb-2">Nombre de joueurs :</p>
-          <div class="flex justify-center space-x-4">
-            <button class="player-count-btn border border-[#4cb4e7] px-4 py-2 rounded hover:text-green-400">4</button>
-            <button class="player-count-btn border border-[#4cb4e7] px-4 py-2 rounded hover:text-green-400">8</button>
+
+      <div class="flex-grow p-4 overflow-auto bg-slate-800/50 flex flex-col items-center space-y-4">
+        <!-- Titre Tournament Creation -->
+        <h2 class="text-lg font-bold">Tournament Creation</h2>
+
+        <!-- Champ nom du tournoi -->
+        <input id="tournamentNameInput" type="text" placeholder="Tournament name..."
+          class="w-2/3 p-2 text-center bg-slate-700 border border-[#4cb4e7]/50 rounded" />
+
+        <!-- Section nombre de joueurs -->
+        <div class="flex flex-col items-center space-y-2">
+          <label class="font-semibold">Players</label>
+          <div class="flex items-center space-x-2">
+            <button id="btn4"
+              class="player-count-btn px-3 py-1 font-bold rounded bg-transparent text-[#4cb4e7] hover:text-green-400 transition-colors">
+              4
+            </button>
+            <span class="text-[#4cb4e7] font-bold">|</span>
+            <button id="btn8"
+              class="player-count-btn px-3 py-1 font-bold rounded bg-transparent text-[#4cb4e7] hover:text-green-400 transition-colors">
+              8
+            </button>
           </div>
         </div>
-      </div>
-      <div class="p-2 border-t-2 border-[#8be076]">
+
+        <!-- Bouton créer -->
         <button id="tournamentPlayersBtn"
-          class="w-full bg-[#4cb4e7] text-slate-900 font-bold py-2 rounded opacity-50 cursor-not-allowed"
-          disabled>Suivant</button>
+          class="mt-4 w-1/2 bg-[#4cb4e7] text-slate-900 font-bold py-2 rounded hover:bg-green-400 transition-colors">
+          Create
+        </button>
       </div>
-      <button aria-label="Close" id="closeTournamentCreationBtn"
-        class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-        X
-      </button>
-      <div id="tournamentCreationResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
+
+      <div id="tournamentCreationResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+      </div>
     </div>
 
-    <!----------------------- TOURNAMENT PLAYERS WINDOW -------------------->
+    <!-- ---- TOURNAMENT PLAYERS WINDOW ---- -->
 
-    <div id="tournamentPlayersWindow"
-      class="border-2 border-[#8be076] w-[400px] text-[#4cb4e7] text-sm flex flex-col bg-slate-900/80 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 350px;">
+    <div id="tournamentPlayersWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+            bg-slate-900
+            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+            transition-all duration-300 ease-in-out
+            opacity-0 scale-95 invisible pointer-events-none"
+      style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
       <div id="tournamentPlayersDragHandle"
-        class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#8be076] cursor-grab active:cursor-grabbing">
-        <span class="font-bold">Noms des Joueurs</span>
+        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+        <div class="flex items-center space-x-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trophy"
+            viewBox="0 0 16 16">
+            <path
+              d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935M3.504 1q.01.775.056 1.469c.13 2.028.457 3.546.87 4.667C5.294 9.48 6.484 10 7 10a.5.5 0 0 1 .5.5v2.61a1 1 0 0 1-.757.97l-1.426.356a.5.5 0 0 0-.179.085L4.5 15h7l-.638-.479a.5.5 0 0 0-.18-.085l-1.425-.356a1 1 0 0 1-.757-.97V10.5A.5.5 0 0 1 9 10c.516 0 1.706-.52 2.57-2.864.413-1.12.74-2.64.87-4.667q.045-.694.056-1.469z" />
+          </svg>
+          <span class="font-bold">Tournament</span>
+        </div>
         <div class="flex items-center space-x-1">
-          <button disabled class="w-5 h-5 border border-[#8be076] opacity-50 cursor-not-allowed"></button>
-          <button disabled class="w-5 h-5 border border-[#8be076] opacity-50 cursor-not-allowed"></button>
-          <button id="closeTournamentPlayersBtn"
-            class="w-5 h-5 border border-[#8be076] flex items-center justify-center font-bold hover:bg-red-500">X</button>
+          <button aria-label="Minimize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
+              <rect width="8" height="2" />
+            </svg>
+          </button>
+          <button aria-label="Maximize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
+              xmlns="http://www.w3.org/2000/svg">
+              <rect x="0.5" y="0.5" width="8" height="8" />
+            </svg>
+          </button>
+          <button aria-label="Close" id="closetournamentPlayersBtn"
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+            X
+          </button>
         </div>
       </div>
-      <div id="playerInputsContainer" class="p-4 flex flex-col space-y-3">
+
+      <div class="flex-grow p-4 overflow-auto bg-slate-800/50 flex flex-col space-y-4">
+        <!-- Titre -->
+        <h2 class="text-lg font-bold text-center">Participants</h2>
+
+        <!-- Liste verticale des participants -->
+        <div class="flex flex-col space-y-2">
+          <div id="playerInputsContainer" class="flex flex-col gap-2 mt-4"></div>
+        </div>
+
+        <!-- Message bas gauche -->
+        <div class="text-xs italic pt-2">Waiting for all players...</div>
       </div>
-      <div id="tournamentPlayersResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
+      <div id="tournamentPlayersResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
+      </div>
     </div>
 
-    <!----------------------- TOURNAMENT WINDOW -------------------->
+    <!-- ---- TOURNAMENT WINDOW ---- -->
 
-    <div id="tournamentWindow"
-      class="border-2 border-[#8be076] w-[1000px] text-[#4cb4e7] text-sm flex flex-col bg-slate-900/80 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none"
-      style="min-width: 600px; min-height: 400px;">
+    <div id="tournamentWindow" class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
+            bg-slate-900
+            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+            transition-all duration-300 ease-in-out
+            opacity-0 scale-95 invisible pointer-events-none"
+      style="min-width: 900px; min-height: 400px; max-width: 90vw; max-height: 80vh;">
       <div id="tournamentDragHandle"
-        class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#8be076] cursor-grab active:cursor-grabbing">
-        <span id="tournamentName" class="font-bold">Tournoi</span>
+        class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+        <div class="flex items-center space-x-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trophy"
+            viewBox="0 0 16 16">
+            <path
+              d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935M3.504 1q.01.775.056 1.469c.13 2.028.457 3.546.87 4.667C5.294 9.48 6.484 10 7 10a.5.5 0 0 1 .5.5v2.61a1 1 0 0 1-.757.97l-1.426.356a.5.5 0 0 0-.179.085L4.5 15h7l-.638-.479a.5.5 0 0 0-.18-.085l-1.425-.356a1 1 0 0 1-.757-.97V10.5A.5.5 0 0 1 9 10c.516 0 1.706-.52 2.57-2.864.413-1.12.74-2.64.87-4.667q.045-.694.056-1.469z" />
+          </svg>
+          <span class="font-bold">Tournament</span>
+        </div>
         <div class="flex items-center space-x-1">
-          <button disabled class="w-5 h-5 border border-[#8be076] opacity-50 cursor-not-allowed"></button>
-          <button disabled class="w-5 h-5 border border-[#8be076] opacity-50 cursor-not-allowed"></button>
-          <button id="closetournamentBtn"
-            class="w-5 h-5 border border-[#8be076] flex items-center justify-center font-bold hover:bg-red-500">X</button>
+          <button aria-label="Minimize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7" xmlns="http://www.w3.org/2000/svg">
+              <rect width="8" height="2" />
+            </svg>
+          </button>
+          <button aria-label="Maximize" disabled
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#4cb4e7" stroke-width="1"
+              xmlns="http://www.w3.org/2000/svg">
+              <rect x="0.5" y="0.5" width="8" height="8" />
+            </svg>
+          </button>
+          <button aria-label="Close" id="closetournamentBtn"
+            class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
+            X
+          </button>
         </div>
       </div>
 
-      <div class="flex-grow p-4 flex flex-col items-center justify-start">
-        <div id="tournamentBracketContainer"
-          class="w-full flex justify-center items-start overflow-x-auto min-h-[250px]">
+      <div class="flex-grow p-2 bg-slate-800/50 flex flex-col items-center overflow-auto">
+        <h2 id="tournamentName" class="text-lg font-bold mb-4"></h2>
+
+        <div class="flex w-full justify-between items-start mb-4">
+
+          <div id="tournamentBracketContainer"
+            class="flex flex-grow justify-start bg-slate-700/50 p-2 rounded-lg min-h-[300px]">
+            <div id="finalWinnerDisplay" class="hidden"></div>
+          </div>
+
+          <div id="nextMatchButtonContainer"
+            class="flex flex-col items-center justify-center p-4 ml-4 bg-slate-700/50 rounded-lg hidden">
+            <span class="text-lg font-bold text-[#8be076] mb-2 text-center">Prochain Match :</span>
+            <button id="nextMatchButton"
+              class="bg-[#4cb4e7] text-slate-900 font-extrabold py-4 px-8 rounded-lg hover:bg-green-400 transition-colors cursor-pointer text-xl text-center">
+              <span id="player1Name" class="block"></span>
+              <span class="block">vs</span>
+              <span id="player2Name" class="block"></span>
+            </button>
+          </div>
+
+          <button id="launchTournamentBtn"
+            class="bg-[#4cb4e7] text-slate-900 font-bold py-2 px-6 rounded hover:bg-green-400 transition-colors opacity-50 cursor-not-allowed ml-auto">
+            Lancer le Tournoi
+          </button>
         </div>
+
       </div>
 
-      <div class="p-3 border-t-2 border-[#8be076] text-center min-h-[80px] flex items-center justify-center">
-        <div id="tournamentEndScreen" class="hidden flex flex-col items-center justify-center space-y-4">
-          <p id="finalWinnerMessage" class="text-2xl font-bold text-green-400"></p>
-          <button id="closeTournamentEndBtn"
-            class="bg-red-600 text-white font-bold px-6 py-2 rounded hover:bg-red-800 transition-all">Close</button>
-        </div>
+      <div id="tournamentResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
       </div>
-
-      <div class="p-3 border-t-2 border-[#8be076] text-center space-y-2">
-      </div>
-      <div id="tournamentResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
-
     </div>
 
     <!----------------------- SETTING WINDOW -------------------->
