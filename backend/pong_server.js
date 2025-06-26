@@ -1,6 +1,5 @@
-// backend/pong_server.js (Based on your provided stable version, with careful logging)
+// backend/pong_server.js
 
-console.log("!!! PONG_SERVER.JS MODULE EXECUTION STARTED !!!"); 
 
 const PADDLE_WIDTH = 8;
 const PADDLE_HEIGHT = 70;
@@ -12,9 +11,6 @@ const MAX_BALL_SPEED = 500;
 
 const activeGames = new Map();
 const playerCurrentGame = new Map(); //->map of players currently in game Map<playerId, gameId>
-
-
-const INVITATION_TIMEOUT_MS = 10000;
 
 export function isPlayerInActiveGame(playerId)
 {
@@ -69,8 +65,7 @@ function createNewGameState(gameId, player1Id, player2Id, options = {}) {
     lastUpdateTime: Date.now(),
     winningScore: options.winningScore || 5,
     player1Id: player1Id,
-    player2Id: player2Id,
-    invitationTimeoutId: null
+    player2Id: player2Id
   };
   // *** SAFEST LOG: Log initial scores and ball start ***
   console.log(`[pong_server.js - ${initialState.gameId}] CREATED: P1 Score: ${initialState.players[player1Id].score}, P2 Score: ${initialState.players[player2Id].score}, Ball X: ${initialState.ball.x.toFixed(0)}, Ball VX: ${initialState.ball.vx.toFixed(0)}`);
@@ -133,11 +128,6 @@ function updateGameState(gameId) {
             gameState.status = 'in-progress';
             console.log(`[pong_server.js - ${gameId}] All players READY! Game status changing to 'in-progress'.`);
             gameState.lastUpdateTime = Date.now(); 
-            if (gameState.invitationTimeoutId) {
-                clearTimeout(gameState.invitationTimeoutId);
-                delete gameState.invitationTimeoutId;
-                console.log(`[pong_server.js - ${gameId}] All players ready, invitation timeout CLEARED.`);
-            }
         }
     }
 
@@ -232,88 +222,61 @@ function startGame(gameId, player1Id, player2Id, options = {}, broadcasterFromCa
     
     console.log(`[pong_server.js - ${gameId}] LOOP STARTING. P1: ${player1Id}(${newGame.players[player1Id].score}), P2: ${player2Id}(${newGame.players[player2Id].score})`);
 
-        const gameBroadcaster = broadcasterFromCaller;
+    const gameBroadcaster = broadcasterFromCaller;
+
+    newGame.loopInterval = setInterval(() => {
+    const updatedState = updateGameState(gameId);
+
+    if (updatedState && typeof gameBroadcaster === 'function') {
+        
+        const p1Score = updatedState.players[player1Id]?.score;
+        const p2Score = updatedState.players[player2Id]?.score;
 
 
-        // INVITATION TIMEOUT BLOC | WIP | NEEDS REFINING FOR SCORE STATS
-
-        if (newGame.status === 'waiting_for_ready') {
-        newGame.invitationTimeoutId = setTimeout(() => {
-            const gameOnTimeout = activeGames.get(gameId);
-            // Check if game still exists and is still waiting (hasn't been started by ready players or explicitly declined/stopped)
-            if (gameOnTimeout && gameOnTimeout.status === 'waiting_for_ready') {
-                console.log(`--- PONG_SERVER.JS - [${gameId}] Invitation/Ready phase TIMED OUT. Stopping game.`);
-                stopGame(gameId); 
-                // Notification to inviter about timeout will be handled by chat.js,
-                // if chat.js is designed to know the inviter and call a specific notification
-                // For now, stopGame cleans up, inviter is freed.
-                if (typeof gameBroadcaster === 'function') {
-                     // We could send a special "timeout" variant of game over, or specific message.
-                     // This requires chat.js's broadcaster to handle it or new message types.
-                     // For now, the game just aborts.
-                    const inviterId = gameOnTimeout.player1Id; // Assuming player1Id is the inviter
-                    // This broadcaster sends to pongGameConnections. If inviter is not in there yet (if this timeout is fast), they won't get it.
-                    // Better to use Redis to notify inviter.
-                    // This part needs refinement for explicit timeout notification to inviter.
-                }
-            }
-        }, INVITATION_TIMEOUT_MS);
-        console.log(`--- PONG_SERVER.JS - [${gameId}] Invitation/Ready timeout started (${INVITATION_TIMEOUT_MS / 1000}s).`);
-    }
-
-        newGame.loopInterval = setInterval(() => {
-        const updatedState = updateGameState(gameId);
-
-        if (updatedState && typeof gameBroadcaster === 'function') {
-            
-            const p1Score = updatedState.players[player1Id]?.score;
-            const p2Score = updatedState.players[player2Id]?.score;
-
-
-            const stateToSend = {
-                type: 'PONG_GAME_STATE_UPDATE',
-                gameId: updatedState.gameId,
-                ball: {
-                    x: parseFloat(updatedState.ball.x.toFixed(1)), 
-                    y: parseFloat(updatedState.ball.y.toFixed(1)), 
-                    vx: parseFloat(updatedState.ball.vx.toFixed(1)), 
-                    vy: parseFloat(updatedState.ball.vy.toFixed(1)) 
-                },
-                players: updatedState.players,
-                status: updatedState.status
-            };
-            
-            
-            try {
-                gameBroadcaster(gameId, stateToSend);
-            } catch (e) {
-                console.error(`--- PONG_SERVER.JS - [${gameId}] ERROR during game state broadcast: ---`, e);
-            }
-
-            if (updatedState.status === 'finished') {
-                const finalP1s = updatedState.players[player1Id]?.score;
-                const finalP2s = updatedState.players[player2Id]?.score;
-                const winnerId = finalP1s >= updatedState.winningScore ? player1Id : (finalP2s >= updatedState.winningScore ? player2Id : null);
-                
-                const gameOverPayload = {
-                    type: 'PONG_GAME_OVER',
-                    gameId: updatedState.gameId,
-                    winnerId: winnerId,
-                    scores: { [player1Id]: finalP1s, [player2Id]: finalP2s }
-                };
-                try {
-                    gameBroadcaster(gameId, gameOverPayload);
-                } catch (e) {
-                    console.error(`--- PONG_SERVER.JS - [${gameId}] ERROR during GAME_OVER broadcast: ---`, e);
-                }
-                stopGame(gameId);
-            }
-        } else if (!updatedState) {
-            stopGame(gameId); 
-        } else if (typeof gameBroadcaster !== 'function') {
-            console.warn(`--- PONG_SERVER.JS - [${gameId}] Loop: gameBroadcaster is UNDEFINED or NOT A FUNCTION in tick. Type: ${typeof gameBroadcaster} ---`);
+        const stateToSend = {
+            type: 'PONG_GAME_STATE_UPDATE',
+            gameId: updatedState.gameId,
+            ball: {
+                x: parseFloat(updatedState.ball.x.toFixed(1)), 
+                y: parseFloat(updatedState.ball.y.toFixed(1)), 
+                vx: parseFloat(updatedState.ball.vx.toFixed(1)), 
+                vy: parseFloat(updatedState.ball.vy.toFixed(1)) 
+            },
+            players: updatedState.players,
+            status: updatedState.status
+        };
+        
+        
+        try {
+            gameBroadcaster(gameId, stateToSend);
+        } catch (e) {
+            console.error(`--- PONG_SERVER.JS - [${gameId}] ERROR during game state broadcast: ---`, e);
         }
-    }, 1000/30); // => 30 fps / TickRate
+
+        if (updatedState.status === 'finished') {
+            const finalP1s = updatedState.players[player1Id]?.score;
+            const finalP2s = updatedState.players[player2Id]?.score;
+            const winnerId = finalP1s >= updatedState.winningScore ? player1Id : (finalP2s >= updatedState.winningScore ? player2Id : null);
+            
+            const gameOverPayload = {
+                type: 'PONG_GAME_OVER',
+                gameId: updatedState.gameId,
+                winnerId: winnerId,
+                scores: { [player1Id]: finalP1s, [player2Id]: finalP2s }
+            };
+            try {
+                gameBroadcaster(gameId, gameOverPayload);
+            } catch (e) {
+                console.error(`--- PONG_SERVER.JS - [${gameId}] ERROR during GAME_OVER broadcast: ---`, e);
+            }
+            stopGame(gameId);
+        }
+    } else if (!updatedState) {
+        stopGame(gameId); 
+    } else if (typeof gameBroadcaster !== 'function') {
+        console.warn(`--- PONG_SERVER.JS - [${gameId}] Loop: gameBroadcaster is UNDEFINED or NOT A FUNCTION in tick. Type: ${typeof gameBroadcaster} ---`);
+    }
+    }, 1000/60); // => 60 fps / TickRate
 
     return newGame;
 }
@@ -325,13 +288,6 @@ function stopGame(gameId) {
             clearInterval(game.loopInterval);
             game.loopInterval = null; 
         }
-
-        if (game.invitationTimeoutId) {
-            clearTimeout(game.invitationTimeoutId);
-            delete game.invitationTimeoutId;
-            console.log(`[pong_server.js - ${gameId}] Invitation timeout CLEARED during stopGame.`);
-        }
-
         
         if(game.status !== 'finished') game.status = 'aborted'; 
         console.log(`[pong_server.js - ${gameId}] Game loop stopped. Status: ${game.status}`);

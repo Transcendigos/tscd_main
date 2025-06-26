@@ -4,8 +4,6 @@ import jwt from 'jsonwebtoken';
 import { getDB } from './db.js';
 import fp from 'fastify-plugin';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
-
 export default fp(async function twoFASettingRoutes(server, options) {
 
   let db = getDB();
@@ -18,7 +16,7 @@ export default fp(async function twoFASettingRoutes(server, options) {
 
     let user;
     try {
-      user = jwt.verify(token, JWT_SECRET);
+      user = jwt.verify(token, server.jwt_secret);
     }
     catch {
       return reply.code(401).send({ error: 'Invalid token' });
@@ -35,7 +33,7 @@ export default fp(async function twoFASettingRoutes(server, options) {
       const otpAuthUrl = secret.otpauth_url;
       qrCode = await qrcode.toDataURL(otpAuthUrl);
     }
-    catch {
+    catch (err) { // Added err parameter
       console.error("❌ Failed to generate QR code:", err);
       return reply.code(500).send({ error: "QR code generation failed" });
     }
@@ -62,7 +60,7 @@ export default fp(async function twoFASettingRoutes(server, options) {
 
     let user;
     try {
-      user = jwt.verify(jwtToken, JWT_SECRET);
+      user = jwt.verify(jwtToken, server.jwt_secret);
     }
     catch {
       return reply.code(401).send({ error: 'Invalid session token' });
@@ -97,7 +95,7 @@ export default fp(async function twoFASettingRoutes(server, options) {
 
     let user;
     try {
-      user = jwt.verify(token, JWT_SECRET);
+      user = jwt.verify(token, server.jwt_secret);
     } catch {
       return reply.code(401).send({ error: 'Invalid session token' });
     }
@@ -114,6 +112,3 @@ export default fp(async function twoFASettingRoutes(server, options) {
   });
 
 });
-
-
-

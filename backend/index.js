@@ -39,20 +39,25 @@ const server = Fastify({
   }
 });
 
-function overrideConsoleMethods() {
-  const originalConsoleLog = console.log;
-  const originalConsoleInfo = console.info;
-  const originalConsoleWarn = console.warn;
-  const originalConsoleError = console.error;
-  const originalConsoleDebug = console.debug;
+  server.decorate('jwt_secret', process.env.JWT_SECRET || 'super-secret-key');
+  if (server.jwt_secret === 'super-secret-key') {
+      server.log.warn('JWT_SECRET is using the default fallback key. This is not secure for production.');
+  }
 
-  console.log = (...args) => server.log.info(...args);
-  console.info = (...args) => server.log.info(...args);
-  console.warn = (...args) => server.log.warn(...args);
-  console.error = (...args) => server.log.error(...args);
-  console.debug = (...args) => server.log.debug(...args);
-
-}
+  function overrideConsoleMethods() {
+    const originalConsoleLog = console.log;
+    const originalConsoleInfo = console.info;
+    const originalConsoleWarn = console.warn;
+    const originalConsoleError = console.error;
+    const originalConsoleDebug = console.debug;
+  
+    console.log = (...args) => server.log.info(...args);
+    console.info = (...args) => server.log.info(...args);
+    console.warn = (...args) => server.log.warn(...args);
+    console.error = (...args) => server.log.error(...args);
+    console.debug = (...args) => server.log.debug(...args);
+  
+  }
 
 overrideConsoleMethods();
 console.log("Loaded API KEY:", process.env.OPENWEATHER_API_KEY);

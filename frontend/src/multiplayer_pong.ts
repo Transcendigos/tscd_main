@@ -111,7 +111,6 @@ function drawPaddle_Styled_MP(x: number, y: number, width: number, height: numbe
 
 function drawMultiplayerBall(x: number, y: number, color: string) {
     if (!mpCtx) return;
-    console.log(`[MP DrawBall] Drawing at X:${x.toFixed(1)}, Y:${y.toFixed(1)}, W:${BALL_WIDTH}, H:${BALL_HEIGHT}, Color:${color}`);
     mpCtx.fillStyle = color; // This is fine for a simple white ball
     mpCtx.fillRect(x, y, BALL_WIDTH, BALL_HEIGHT);
 }
@@ -123,12 +122,9 @@ function handleReadyUpKeyPress(event: KeyboardEvent) {
             if (mpGameId && sendPlayerReadySignalToServer) {
                 sendPlayerReadySignalToServer(mpGameId);
                 localPlayerHasSignalledReady = true;
-                console.log("[MultiplayerPong] Local player signalled READY.");
                 renderMultiplayerFrame(); 
                 document.removeEventListener('keydown', handleReadyUpKeyPress);
-                console.log("[MultiplayerPong] 'Ready Up' key listener REMOVED.");
                 setupMultiplayerInputHandlers();
-                console.log("[MultiplayerPong] Paddle movement input handlers ADDED after ready up.");
             }
         }
     }
@@ -162,23 +158,16 @@ export function initMultiplayerPong(
     sendPlayerInputToServer = sendInputFunc;
     sendPlayerReadySignalToServer = sendReadyFunc;
     localPlayerHasSignalledReady = false;
-    
-    console.log(
-        `[MultiplayerPong] initMultiplayerPong for game ${mpGameId}. You are ${mpMyPlayerId}. Opponent: ${mpOpponentUsername}. ServerP1 ID: ${mpServerPlayer1Id}, ServerP2 ID: ${mpServerPlayer2Id}`,
-        'INITIAL STATE RECEIVED:', JSON.parse(JSON.stringify(initialState))
-    );
-    
+   
     updateMultiplayerGameState(initialState.ball, initialState.players, initialState.status);
     
     if (initialState.status === 'waiting_for_ready') {
-        console.log("[MultiplayerPong] Game is 'waiting_for_ready'. Adding 'Ready Up' key listener.");
         document.addEventListener('keydown', handleReadyUpKeyPress);
     } else if (initialState.status === 'in-progress') {
-        console.log("[MultiplayerPong] Game is already 'in-progress'. Setting up paddle movement.");
         localPlayerHasSignalledReady = true; 
         setupMultiplayerInputHandlers();
     }
-    renderMultiplayerFrame(); 
+    renderMultiplayerFrame();
 }
 
 export function updateMultiplayerGameState(
@@ -194,9 +183,7 @@ export function updateMultiplayerGameState(
     mpGameStatus = statusData;
 
     if (oldStatus === 'waiting_for_ready' && mpGameStatus === 'in-progress') {
-        console.log("[MultiplayerPong] Game transitioned to 'in-progress'. Ensuring paddle inputs are active.");
         document.removeEventListener('keydown', handleReadyUpKeyPress); 
-        console.log("[MultiplayerPong] 'Ready Up' key listener REMOVED (on game start).");
         if (!localPlayerHasSignalledReady) { 
             localPlayerHasSignalledReady = true; 
         }
@@ -209,7 +196,6 @@ export function updateMultiplayerGameState(
 }
 
 export function handleMultiplayerGameOver(winnerId: string | null, scores: any) {
-    console.log(`[MultiplayerPong] Game Over. Winner: ${winnerId}, Scores:`, scores);
     mpGameStatus = 'finished';
     renderMultiplayerFrame(); 
     
@@ -243,7 +229,6 @@ export function handleMultiplayerGameOver(winnerId: string | null, scores: any) 
     }
     cleanupMultiplayerInputHandlers(); 
     document.removeEventListener('keydown', handleReadyUpKeyPress); 
-    console.log("[MultiplayerPong] 'Ready Up' key listener REMOVED during game over.");
 }
 
 function renderMultiplayerFrame() {
@@ -304,9 +289,6 @@ function renderMultiplayerFrame() {
         return;
     }
     
-    console.log(`[MP Render] Ball State: X=${mpBallState.x.toFixed(1)}, Y=${mpBallState.y.toFixed(1)}, W=${BALL_WIDTH}, H=${BALL_HEIGHT}`);
-    if (mpPlayersState[mpServerPlayer1Id]) console.log(`[MP Render] P1(${mpServerPlayer1Id}) Y:${mpPlayersState[mpServerPlayer1Id]?.paddleY} Score:${mpPlayersState[mpServerPlayer1Id]?.score} Ready:${mpPlayersState[mpServerPlayer1Id]?.isReady}`);
-    if (mpPlayersState[mpServerPlayer2Id]) console.log(`[MP Render] P2(${mpServerPlayer2Id}) Y:${mpPlayersState[mpServerPlayer2Id]?.paddleY} Score:${mpPlayersState[mpServerPlayer2Id]?.score} Ready:${mpPlayersState[mpServerPlayer2Id]?.isReady}`);
 
     const leftPaddleX = 10;
     const rightPaddleX = mpCanvas.width - PADDLE_WIDTH - 10;
@@ -330,14 +312,12 @@ function setupMultiplayerInputHandlers() {
     keysPressed = {};
     document.addEventListener('keydown', boundKeyDownHandler);
     document.addEventListener('keyup', boundKeyUpHandler);
-    console.log("[MultiplayerPong] Paddle Input handlers ADDED.");
 }
 
 function cleanupMultiplayerInputHandlers() {
     document.removeEventListener('keydown', boundKeyDownHandler);
     document.removeEventListener('keyup', boundKeyUpHandler);
     keysPressed = {};
-    console.log("[MultiplayerPong] Paddle Input handlers REMOVED.");
 }
 
 function handleMultiplayerKeyDown(event: KeyboardEvent) {
@@ -367,10 +347,8 @@ function handleMultiplayerKeyUp(event: KeyboardEvent) {
 }
 
 export function cleanupMultiplayerPong() {
-    console.log("[MultiplayerPong] cleanupMultiplayerPong CALLED.");
     cleanupMultiplayerInputHandlers();
     document.removeEventListener('keydown', handleReadyUpKeyPress);
-    console.log("[MultiplayerPong] 'Ready Up' key listener REMOVED during cleanup.");
     
     mpGameId = null; mpMyPlayerId = null; mpOpponentPlayerId = null; mpOpponentUsername = null;
     mpServerPlayer1Id = null; mpServerPlayer2Id = null; mpBallState = null; mpPlayersState = null;

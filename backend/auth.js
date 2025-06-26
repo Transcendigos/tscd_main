@@ -6,10 +6,6 @@ import { getDB } from './db.js'; // Assuming db.js is in the same directory
 import fp from 'fastify-plugin';
 import { setAuthCookie } from './utils.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
-
-
-
 export default fp(async function authRoutes(server, options) {
   const db = getDB();
   const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -59,7 +55,7 @@ export default fp(async function authRoutes(server, options) {
       });
 
       const tokenPayload = { userId: insertedUserId, username, email, method_sign: 'local', picture: null };
-      const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+      const token = jwt.sign(tokenPayload, server.jwt_secret, { expiresIn: '7d' });
 
       reply.clearCookie('session_token', { path: '/' }); // cleanup legacy
       server.log.info({ username, email, userId: insertedUserId }, "User signed up successfully");
@@ -163,7 +159,7 @@ export default fp(async function authRoutes(server, options) {
         server.log.info({ email, username: finalUsername, userId: userIdToSign }, "Existing user signed in via Google");
       }
       const tokenPayload = { userId: userIdToSign, username: finalUsername, email, method_sign: 'google', picture: finalPicture };
-      const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+      const token = jwt.sign(tokenPayload, server.jwt_secret, { expiresIn: '7d' });
       setAuthCookie(reply, token);
 
       return reply.send({ message: 'Google login successful', user: tokenPayload });
@@ -220,7 +216,7 @@ export default fp(async function authRoutes(server, options) {
         picture: user.picture || null,
       };
 
-      const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+      const token = jwt.sign(tokenPayload, server.jwt_secret, { expiresIn: '7d' });
       setAuthCookie(reply, token);
 
       return reply.send({ message: 'Login successful', user: tokenPayload });
@@ -242,7 +238,7 @@ export default fp(async function authRoutes(server, options) {
 
     let payload;
     try {
-      payload = jwt.verify(token, JWT_SECRET);
+      payload = jwt.verify(token, server.jwt_secret);
       if (!payload.userId || !payload.username || !payload.email) {
         server.log.warn({ payload }, 'JWT payload missing expected fields for /api/me');
         reply.clearCookie('auth_token', { path: '/' });

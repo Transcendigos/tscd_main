@@ -1,3 +1,5 @@
+// backend/chat.js
+
 import jwt from "jsonwebtoken";
 import { getDB } from "./db.js";
 import fp from "fastify-plugin";
@@ -9,8 +11,6 @@ import {
 } from "./pong_server.js";
 import { chatMessagesCounter } from './monitoring.js';
 
-
-const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
 
 const activeConnections = new Map();
 const userSubscribers = new Map();
@@ -116,7 +116,7 @@ if (!globalSubscriber) {
       }
 
       try {
-        const payload = jwt.verify(token, JWT_SECRET);
+        const payload = jwt.verify(token, server.jwt_secret);
         if (!payload.userId || !payload.username || !payload.email) {
           ws.send(
             JSON.stringify({
@@ -853,13 +853,15 @@ if (!globalSubscriber) {
             }
           }
           if (ws.currentGameId && pongGameConnections.has(ws.currentGameId)) {
-            pongGameConnections.get(ws.currentGameId).delete(ws);
-            if (pongGameConnections.get(ws.currentGameId).size === 0) {
+            const connections = pongGameConnections.get(ws.currentGameId);
+            connections.delete(ws);
+            if (connections.size === 0) {
               pongGameConnections.delete(ws.currentGameId);
               server.log.info(
                 { gameId: ws.currentGameId },
-                `All players disconnected from Pong game.`
+                `All players disconnected from Pong game. Cleaning up game state.`
               );
+              stopGame(ws.currentGameId); 
             }
           }
           if (userJWTPayload) {
@@ -900,7 +902,7 @@ if (!globalSubscriber) {
       return reply.code(401).send({ error: "Unauthorized" });
     }
     try {
-      const payload = jwt.verify(token, JWT_SECRET);
+      const payload = jwt.verify(token, server.jwt_secret);
       const currentUserRawId = payload.userId;
       const peerUserRawId = parseInt(req.params.peerUserId, 10);
 
@@ -946,7 +948,7 @@ server.get("/api/chat/users", async (req, reply) => {
     if (!token) return reply.code(401).send({ error: "Unauthorized" });
 
     try {
-        const payload = jwt.verify(token, JWT_SECRET);
+        const payload = jwt.verify(token, server.jwt_secret);
         const currentUserRawId = payload.userId;
         const redisPublisher = getRedisPublisher();
 

@@ -1,11 +1,7 @@
-// backend/block_routes.js
-
 import fp from 'fastify-plugin';
 import jwt from 'jsonwebtoken';
 import { getDB } from './db.js';
 import { getRedisPublisher } from './redis.js';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
 export default fp(async function blockRoutes(server, options) {
     const db = getDB();
@@ -18,7 +14,7 @@ export default fp(async function blockRoutes(server, options) {
             return null;
         }
         try {
-            const decoded = jwt.verify(token, JWT_SECRET);
+            const decoded = jwt.verify(token, server.jwt_secret);
             return decoded.userId;
         } catch (err) {
             reply.code(401).send({ error: "Invalid token" });
