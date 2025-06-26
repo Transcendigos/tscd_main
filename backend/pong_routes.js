@@ -1,11 +1,11 @@
 // backend/pong_routes.js
 
-import { startGame, activeGames, isPlayerInActiveGame } from "./pong_server.js";
+import { startGame, stopGame, activeGames, isPlayerInActiveGame } from "./pong_server.js";
 import { getDB } from "./db.js";
 import jwt from "jsonwebtoken";
 import { getRedisPublisher } from "./redis.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
+const INVITATION_TIMEOUT_MS = 20000; // 20 seconds for invitation to expire
 
 function generateGameId() {
   return `game_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -31,7 +31,7 @@ export default async function pongRoutes(server, options) {
     let inviterRawId; 
 
     try {
-      inviterDecoded = jwt.verify(inviterToken, JWT_SECRET);
+      inviterDecoded = jwt.verify(inviterToken, server.jwt_secret);
       inviterRawId = inviterDecoded.userId; 
       inviterUserId = `user_${inviterRawId}`;
     } catch (err) {
@@ -39,8 +39,6 @@ export default async function pongRoutes(server, options) {
       return reply.code(401).send({ error: "Invalid or expired inviter token." });
     }
 
-    // --- MOVED THIS BLOCK UP ---
-    // It must be defined before it is used in the block check.
     let opponentRawId;
     if (typeof opponentPlayerId === 'string' && opponentPlayerId.startsWith('user_')) {
         opponentRawId = parseInt(opponentPlayerId.substring(5), 10);
@@ -52,7 +50,6 @@ export default async function pongRoutes(server, options) {
         server.log.warn({ opponentPlayerIdReceived: opponentPlayerId }, "Could not parse raw numeric ID from opponentPlayerId");
         return reply.code(400).send({ error: "Invalid opponent player ID format." });
     }
-    // --- END MOVED BLOCK ---
 
     if (inviterRawId === opponentRawId) {
       return reply.code(400).send({ error: "Cannot invite yourself to a game." });
@@ -75,7 +72,7 @@ export default async function pongRoutes(server, options) {
         return reply.code(403).send({ error: "Interaction with this user is blocked." });
     }
 
-    if (isPlayerInActiveGame(inviterUserId) || isPlayerInActiveGame(opponentPlayerId)) {
+    if (isPlayerInActiveGame(inviterUserId) || isPlayerInActiveGame(`user_${opponentRawId}`)) {
         return reply.code(409).send({ error: "One or more players are already in a game." });
     }
     
@@ -90,7 +87,7 @@ export default async function pongRoutes(server, options) {
       const newGame = startGame(
         gameId,
         inviterUserId, 
-        opponentPlayerId, 
+        `user_${opponentRawId}`, 
         {
           ...gameOptions,
           player1Username: inviterDecoded.username,
@@ -100,7 +97,7 @@ export default async function pongRoutes(server, options) {
 
       if (newGame) {
         server.log.info(
-          { gameId, inviter: inviterUserId, opponent: opponentPlayerId },
+          { gameId, inviter: inviterUserId, opponent: `user_${opponentRawId}` },
           "New Pong game created via API for chat invite"
         );
         
@@ -115,6 +112,28 @@ export default async function pongRoutes(server, options) {
           opponentChannel,
           JSON.stringify(invitationPayload)
         );
+
+        // --- NEW SMARTER TIMEOUT LOGIC ---
+        setTimeout(async () => {
+            const gameOnTimeout = activeGames.get(gameId);
+            if (gameOnTimeout && gameOnTimeout.status === 'waiting_for_ready') {
+                server.log.info({ gameId }, `Invitation timed out. Cleaning up.`);
+                stopGame(gameId);
+
+                const expirationPayload = JSON.stringify({
+                    type: 'PONG_INVITE_EXPIRED',
+                    gameId: gameId,
+                    message: `The game invitation has expired.`
+                });
+
+                // Notify both the inviter and the invitee
+                const inviterChannel = `user:${inviterRawId}:messages`;
+                await redisPublisher.publish(inviterChannel, expirationPayload);
+                await redisPublisher.publish(opponentChannel, expirationPayload);
+                 server.log.info({ gameId, inviterChannel, opponentChannel }, `Sent expiration notices.`);
+            }
+        }, INVITATION_TIMEOUT_MS);
+        // --- END NEW TIMEOUT LOGIC ---
 
         return reply.code(201).send({
           message: "Game created and invitation sent",

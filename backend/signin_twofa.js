@@ -5,8 +5,6 @@ import { getDB } from './db.js';
 import fp from 'fastify-plugin';
 
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
-
 export default fp(async function twofaRoutes(server, options) {
   let db = getDB();
   // VERIFY SIGN IN ///////////
@@ -57,7 +55,7 @@ export default fp(async function twofaRoutes(server, options) {
         picture: user.picture || null,
       };
 
-      const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+      const token = jwt.sign(tokenPayload, server.jwt_secret, { expiresIn: '7d' });
       setAuthCookie(reply, token);
 
       return reply.send({ message: '2FA verification successful', user: tokenPayload });

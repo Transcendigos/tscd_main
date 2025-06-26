@@ -7,9 +7,6 @@ import path from 'path';
 import fs from 'fs';
 import multipart from '@fastify/multipart';
 
-
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
-
 export default fp(async function profileRoute(server, options) {
     const db = getDB();
 
@@ -22,7 +19,7 @@ export default fp(async function profileRoute(server, options) {
 
         let user;
         try {
-            user = jwt.verify(token, JWT_SECRET);
+            user = jwt.verify(token, server.jwt_secret);
         } catch {
             return reply.code(401).send({ error: 'Invalid token' });
         }
@@ -51,7 +48,7 @@ export default fp(async function profileRoute(server, options) {
         
         let requester;
         try {
-            requester = jwt.verify(token, JWT_SECRET);
+            requester = jwt.verify(token, server.jwt_secret);
         } catch {
             return reply.code(401).send({ error: 'Invalid token' });
         }
@@ -108,7 +105,7 @@ export default fp(async function profileRoute(server, options) {
             const token = req.cookies.auth_token;
             let user;
             try {
-                user = jwt.verify(token, JWT_SECRET);
+                user = jwt.verify(token, server.jwt_secret);
             } catch (err) {
                 console.error("JWT decode failed:", err);
                 return reply.code(401).send({ error: 'Invalid token' });
@@ -154,7 +151,7 @@ export default fp(async function profileRoute(server, options) {
                 picture: user.picture
             };
 
-            const newToken = jwt.sign(newPayload, JWT_SECRET, { expiresIn: '7d' });
+            const newToken = jwt.sign(newPayload, server.jwt_secret, { expiresIn: '7d' });
             setAuthCookie(reply, newToken);
 
             return reply.send({ message: 'Username updated', user: newPayload });
@@ -174,7 +171,7 @@ export default fp(async function profileRoute(server, options) {
             const token = req.cookies.auth_token;
             let user;
             try {
-                user = jwt.verify(token, JWT_SECRET);
+                user = jwt.verify(token, server.jwt_secret);
             } catch {
                 return reply.code(401).send({ error: 'Invalid token' });
             }
@@ -219,7 +216,7 @@ export default fp(async function profileRoute(server, options) {
                 picture: user.picture
             };
 
-            const newToken = jwt.sign(newPayload, JWT_SECRET, { expiresIn: '7d' });
+            const newToken = jwt.sign(newPayload, server.jwt_secret, { expiresIn: '7d' });
             setAuthCookie(reply, newToken);
 
             return reply.send({ message: 'Email updated', user: newPayload });
@@ -239,7 +236,7 @@ export default fp(async function profileRoute(server, options) {
             const token = req.cookies.auth_token;
             let user;
             try {
-                user = jwt.verify(token, JWT_SECRET);
+                user = jwt.verify(token, server.jwt_secret);
             } catch {
                 return reply.code(401).send({ error: 'Invalid token' });
             }
@@ -268,7 +265,7 @@ export default fp(async function profileRoute(server, options) {
             const token = req.cookies.auth_token;
             let user;
             try {
-                user = jwt.verify(token, JWT_SECRET);
+                user = jwt.verify(token, server.jwt_secret);
             } catch {
                 return reply.code(401).send({ error: 'Invalid token' });
             }
@@ -304,7 +301,7 @@ export default fp(async function profileRoute(server, options) {
                 picture: relativePath
             };
 
-            const newToken = jwt.sign(newPayload, JWT_SECRET, { expiresIn: '7d' });
+            const newToken = jwt.sign(newPayload, server.jwt_secret, { expiresIn: '7d' });
             setAuthCookie(reply, newToken);
 
             return reply.send({ message: 'Picture uploaded', user: newPayload });
@@ -325,7 +322,7 @@ export default fp(async function profileRoute(server, options) {
 
         let user;
         try {
-            user = jwt.verify(token, JWT_SECRET);
+            user = jwt.verify(token, server.jwt_secret);
         } catch {
             return reply.code(401).send({ error: 'Invalid token' });
         }
