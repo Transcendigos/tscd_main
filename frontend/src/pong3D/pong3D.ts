@@ -75,10 +75,8 @@ export class Pong3D {
     private bgSecondColor = "#1b3F72";
     private soLongGame: SoLongGame | null = null;
     
-    // --- REACTION DELAY START ---
     private aiIsActing = false;
     private aiReactionTimeout: number | null = null;
-    // --- REACTION DELAY END ---
 
     public onPlayerWin: () => void = () => {};
 
@@ -182,6 +180,11 @@ export class Pong3D {
                     this.enterState('DESKTOP');
                 }
                 break;
+            case PongGameState.SO_LONG:
+                if (this.soLongGame) {
+                    this.soLongGame.handleOverlayClick(uv);
+                }
+                break;
             case PongGameState.SHOWING_TRUTH_PROMPT:
                 if (clickX >= this.truthConfirmButton.x && clickX <= this.truthConfirmButton.x + this.truthConfirmButton.width &&
                     clickY >= this.truthConfirmButton.y && clickY <= this.truthConfirmButton.y + this.truthConfirmButton.height) {
@@ -243,9 +246,6 @@ export class Pong3D {
                 if (this.aiMode) this.updateAI(dt);
                 this.updateBall(dt);
                 break;
-            // case PongGameState.SO_LONG:
-            //     this.soLongGame?.update();
-            //     break;
         }
         if (this.gameState !== PongGameState.PLAYING_TRUTH_GIF) this.draw();
     }
@@ -454,6 +454,7 @@ export class Pong3D {
         this.ctx.restore();
     }
 
+    
 private drawLogoScreen(): void {
         this.ctx.save();
 
@@ -488,28 +489,22 @@ private drawLogoScreen(): void {
         this.ctx.fillStyle = "rgba(0, 0, 255, 0.9)";
         this.ctx.fillText(logoText, x - glitchOffset, y);
         
-        // --- START: NEW Subtitle Logic ---
 
-        // 1. Measure the width of the main logo text
         const logoWidth = this.ctx.measureText(logoText).width;
 
-        // 2. Set the font and text for the subtitle
-        this.ctx.globalCompositeOperation = 'source-over'; // Reset blend mode for subtitle
-        this.ctx.fillStyle = "rgba(214, 236, 255, 0.8)"; // Bright subtitle color
+        this.ctx.globalCompositeOperation = 'source-over'; 
+        this.ctx.fillStyle = "rgba(214, 236, 255, 0.8)";
         this.ctx.font = '20px "Inter", sans-serif';
         const subtitleText = "entertainment";
 
-        // 3. Calculate and apply the required letter spacing
         const subtitleNaturalWidth = this.ctx.measureText(subtitleText).width;
         const requiredSpacing = logoWidth - subtitleNaturalWidth;
         if (requiredSpacing > 0 && subtitleText.length > 1) {
             this.ctx.letterSpacing = `${requiredSpacing / (subtitleText.length - 1)}px`;
         }
 
-        // 4. Draw the subtitle, it will now be stretched to the correct width
         this.ctx.fillText(subtitleText, x + 10, y + 45);
 
-        // --- END: NEW Subtitle Logic ---
 
         this.ctx.filter = 'none';
 
@@ -640,6 +635,11 @@ private drawLogoScreen(): void {
     }
 
     public updateMousePosition(uv: BABYLON.Vector2 | null): void {
+
+        if (this.gameState === PongGameState.SO_LONG) {
+            this.soLongGame?.updateMousePosition(uv);
+            return;
+        }
         if (uv) {
             this.mousePosition = { x: uv.x * this.canvasSize.width, y: (1 - uv.y) * this.canvasSize.height };
         } else {
@@ -664,7 +664,6 @@ private drawLogoScreen(): void {
             clearInterval(this.aiUpdateInterval);
             this.aiUpdateInterval = null;
         }
-        // --- REACTION DELAY ---
         if (this.aiReactionTimeout) {
             clearTimeout(this.aiReactionTimeout);
             this.aiReactionTimeout = null;
@@ -673,12 +672,6 @@ private drawLogoScreen(): void {
     }
 
     public handleInput(key: string, isPressed: boolean): void {
-
-        // if (this.gameState === PongGameState.SO_LONG) {
-        //     this.soLongGame?.handleInput(key, isPressed);
-        //     return;
-        // }
-        
         if (this.gameState !== PongGameState.PLAYING && this.gameState !== PongGameState.TITLE) return;
         this.keysPressed[key] = isPressed;
         if (isPressed && key === 'Enter' && this.gameState === PongGameState.TITLE) {
@@ -689,10 +682,8 @@ private drawLogoScreen(): void {
     private runAIPrediction(): void {
         if (!this.aiMode || this.gameState !== PongGameState.PLAYING) return;
         
-        // --- REACTION DELAY START ---
         if (this.aiReactionTimeout) clearTimeout(this.aiReactionTimeout);
         this.aiIsActing = false;
-        // --- REACTION DELAY END ---
 
         if (this.ball.vx < 0) {
             this.ball.predictY = this.canvasSize.height / 2;
@@ -701,17 +692,14 @@ private drawLogoScreen(): void {
         }
         this.ball.paddleCenter = Math.random() * this.rightPaddle.height;
 
-        // --- REACTION DELAY START ---
         const baseDelay = this.aiReactionBaseDelay[this.aiDifficulty] || 120;
         const reactionDelay = baseDelay + Math.random() * 50;
         this.aiReactionTimeout = window.setTimeout(() => {
             this.aiIsActing = true;
         }, reactionDelay);
-        // --- REACTION DELAY END ---
     }
 
     private updateAI(dt: number): void {
-        // --- REACTION DELAY ---
         if (!this.aiIsActing) return;
 
         const paddleSpeed = 500 * dt;

@@ -26,10 +26,16 @@ export class SoLongGame {
     private isExitOpen: boolean = false;
     public onGameOver: () => void = () => {};
     private animationFrameId: number | null = null;
+    private isRunning: boolean = false;
 
     private originalCanvasWidth: number;
     private originalCanvasHeight: number;
 
+    private gameState: 'PLAYING' | 'WON' | 'LOST' = 'PLAYING';
+    private winMoves: number = 0;
+    private playAgainButton = { x: 0, y: 0, width: 0, height: 0 };
+    private mainMenuButton = { x: 0, y: 0, width: 0, height: 0 };
+    private mousePosition: { x: number, y: number } | null = null;
 
     constructor(canvas: HTMLCanvasElement, onGameOverCallback: () => void) {
         this.canvas = canvas;
@@ -43,6 +49,7 @@ export class SoLongGame {
     }
 
     public async start(): Promise<void> {
+        this.isRunning = true;
         await this.loadAssets();
         this.initializeGame();
         this.setupInputHandlers();
@@ -50,8 +57,10 @@ export class SoLongGame {
     }
 
     public stop(): void {
+        this.isRunning = false;
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
         }
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
@@ -71,6 +80,18 @@ export class SoLongGame {
         window.addEventListener('keyup', this.handleKeyUp);
     }
 
+    
+    public updateMousePosition(uv: { x: number, y: number } | null): void {
+        if (uv) {
+            this.mousePosition = {
+                x: uv.x * this.canvas.width,
+                y: (1 - uv.y) * this.canvas.height
+            };
+        } else {
+            this.mousePosition = null;
+        }
+    }
+
     private loadAssets(): Promise<void> {
         const assetPromises: Promise<void>[] = [];
         for (const key in ASSET_PATHS) {
@@ -83,10 +104,11 @@ export class SoLongGame {
             });
             assetPromises.push(promise);
         }
-        return Promise.all(assetPromises).then(() => console.log("All assets loaded successfully."));
+        return Promise.all(assetPromises).then(() => {});
     }
 
     private initializeGame(): void {
+        this.gameState = 'PLAYING';
         this.isExitOpen = false;
         const mapData = [
             "1111111111111111111111111111111111111111111",
@@ -184,10 +206,13 @@ export class SoLongGame {
     private gameLoop = (): void => {
         this.update();
         this.draw();
-        this.animationFrameId = requestAnimationFrame(this.gameLoop);
+        if (this.isRunning) {
+            this.animationFrameId = requestAnimationFrame(this.gameLoop);
+        }
     }
 
     private update(): void {
+        if (this.gameState !== 'PLAYING') return;
         if (!this.player) return;
         this.handlePlayerInput();
         this.updateProjectiles();
@@ -415,7 +440,7 @@ export class SoLongGame {
                     this.player.hp--;
                     this.player.lastHit = now;
                     if (this.player.hp <= 0) {
-                        this.onGameOver();
+                        this.gameState = 'LOST';
                         return;
                     }
                 }
@@ -435,7 +460,8 @@ export class SoLongGame {
                 this.isExitOpen = true;
             }
             if (playerTileX === this.map.exit.x && playerTileY === this.map.exit.y) {
-                this.onGameOver();
+                this.gameState = 'WON';
+                this.winMoves = this.player.moves;
             }
         }
     }
@@ -491,6 +517,11 @@ export class SoLongGame {
             }
         }
         this.drawHUD();
+
+        if (this.gameState === 'WON' || this.gameState === 'LOST') {
+            this.drawGameOverScreen();
+        }
+
         this.ctx.restore();
     }
 
@@ -517,5 +548,86 @@ export class SoLongGame {
 
         const collectText = `Planets: ${this.player.collectibles} / ${this.map.totalCollectibles}`;
         this.ctx.fillText(collectText, 10 * this.TILE_SIZE, hudY + this.TILE_SIZE / 2);
+    }
+
+    private drawGameOverScreen(): void {
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        const centerX = width / 2;
+
+        // Semi-transparent black overlay
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(0, 0, width, height);
+
+        // Main Title Text
+        this.ctx.font = "60px 'Press Start 2P'";
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillStyle = "#d6ecff";
+        const titleText = this.gameState === 'WON' ? 'YOU WIN!' : 'GAME OVER';
+        this.ctx.fillText(titleText, centerX, height / 2 - 100);
+
+        // Subtitle Text for Win State
+        if (this.gameState === 'WON') {
+            this.ctx.font = "40px 'Press Start 2P'";
+            this.ctx.fillText(`Moves: ${this.winMoves}`, centerX, height / 2 - 20);
+        }
+
+        // Buttons
+        const buttonWidth = 280;
+        const buttonHeight = 50;
+        const playAgainY = height / 2 + 80;
+        const mainMenuY = playAgainY + buttonHeight + 20;
+
+        this.playAgainButton = { x: centerX - buttonWidth / 2, y: playAgainY, width: buttonWidth, height: buttonHeight };
+        this.mainMenuButton = { x: centerX - buttonWidth / 2, y: mainMenuY, width: buttonWidth, height: buttonHeight };
+
+        const buttonsToDraw = [
+            { ...this.playAgainButton, text: 'Play Again' },
+            { ...this.mainMenuButton, text: 'Main Menu' }
+        ];
+
+        buttonsToDraw.forEach(button => {
+            // Hover Logic
+            let isHovered = false;
+            if (this.mousePosition) {
+                isHovered = this.mousePosition.x >= button.x && this.mousePosition.x <= button.x + button.width &&
+                            this.mousePosition.y >= button.y && this.mousePosition.y <= button.y + button.height;
+            }
+
+            // Button Drawing
+            this.ctx.strokeStyle = '#d6ecff';
+            this.ctx.fillStyle = isHovered ? 'rgba(214, 236, 255, 0.2)' : 'rgba(0, 0, 0, 0.5)';
+            this.ctx.lineWidth = 2;
+            this.ctx.fillRect(button.x, button.y, button.width, button.height);
+            this.ctx.strokeRect(button.x, button.y, button.width, button.height);
+
+            // Button Text
+            this.ctx.fillStyle = "#d6ecff";
+            this.ctx.font = "16px 'Press Start 2P'";
+            this.ctx.textAlign = "center";
+            this.ctx.textBaseline = "middle";
+            this.ctx.fillText(button.text, button.x + button.width / 2, button.y + button.height / 2);
+        });
+    }
+    
+    public handleOverlayClick(uv: { x: number, y: number }): void {
+        if (this.gameState !== 'WON' && this.gameState !== 'LOST') return;
+
+        const mouseX = uv.x * this.canvas.width;
+        const mouseY = (1 - uv.y) * this.canvas.height;
+
+        if (mouseX >= this.playAgainButton.x && mouseX <= this.playAgainButton.x + this.playAgainButton.width &&
+            mouseY >= this.playAgainButton.y && mouseY <= this.playAgainButton.y + this.playAgainButton.height) {
+            this.initializeGame();
+            return;
+        }
+
+        if (mouseX >= this.mainMenuButton.x && mouseX <= this.mainMenuButton.x + this.mainMenuButton.width &&
+            mouseY >= this.mainMenuButton.y && mouseY <= this.mainMenuButton.y + this.mainMenuButton.height) {
+            this.stop();
+            this.onGameOver();
+            return;
+        }
     }
 }
