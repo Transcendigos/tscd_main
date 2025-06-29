@@ -5,18 +5,43 @@ services:
     build:
       context: ../..
       dockerfile: infra/prod/Dockerfile_backend
-    container_name: backend
+    container_name: backend_prod
     expose:
       - "3000"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis_chat:6379
+    depends_on:
+      - redis_chat
+    volumes:
+      - sqlite-data:/app/data
+      - ../../logs:/logs
+      - ../../frontend/public/uploads:/app/public/uploads
+
+  redis_chat:
+    image: redis:alpine
+    container_name: redis_chat_prod
+    volumes:
+      - redis-chat-data:/data
     restart: unless-stopped
 
   nginx:
     build:
       context: ../..
       dockerfile: infra/prod/Dockerfile_nginx
-    container_name: nginx
+    container_name: nginx_prod
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     depends_on:
       - backend
     restart: unless-stopped
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+
+volumes:
+  sqlite-data:
+  redis-chat-data:
+  nginx-logs:

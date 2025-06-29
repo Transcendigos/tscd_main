@@ -16,7 +16,6 @@ services:
       - ../../frontend/dev/tsconfig.json:/app/tsconfig.json
       - ../../frontend/dev/vite.config.ts:/app/vite.config.ts
       - ../../frontend/public/:/app/public/
-
     working_dir: /app
     command: npm run dev
     environment:
@@ -40,11 +39,6 @@ services:
     restart: unless-stopped
     environment:
       - REDIS_URL=redis://redis_chat:6379
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   redis_chat:
     image: redis:alpine
@@ -133,18 +127,9 @@ services:
       - redis_chat
     restart: unless-stopped
 
-
-
 volumes:
   sqlite-data:
   esdata:
   redis-chat-data:
   prometheus-data:
   grafana-storage:
-
-# networks:
-#   default:
-#     driver: bridge
-#     ipam:
-#       config:
-#         - subnet: 172.20.0.0/16
