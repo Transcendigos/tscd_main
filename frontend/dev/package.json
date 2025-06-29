@@ -1,24 +1,25 @@
 {
-  "name": "tscd_devmode",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite --host",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@babylonjs/core": "8.11.0",
-    "@babylonjs/loaders":"8.11.0",
-    "@babylonjs/inspector": "8.12.1",
-    "@babylonjs/gui": "8.12.1"
-  },
-  "devDependencies": {
-    "typescript": "latest",
-    "vite": "latest",
-    "@tailwindcss/vite": "latest",
-    "autoprefixer": "latest",
-    "dotenv":"^16.5.0"
+	"name": "tscd_devmode",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+	  "dev": "vite --host",
+	  "build": "tsc && vite build",
+	  "preview": "vite preview"
+	},
+	"dependencies": {
+	  "@babylonjs/core": "8.11.0",
+	  "@babylonjs/loaders":"8.11.0",
+	  "@babylonjs/inspector": "8.12.1",
+	  "@babylonjs/gui": "8.12.1"
+	},
+	"devDependencies": {
+	  "typescript": "^5.0.0",
+	  "vite": "^5.0.0",
+	  "@tailwindcss/vite": "^4.0.0",
+	  "autoprefixer": "^10.0.0",
+	  "dotenv":"^16.5.0"
+	}
   }
-}
+  

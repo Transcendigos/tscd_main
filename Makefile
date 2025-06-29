@@ -1,63 +1,60 @@
-DOCKER_COMPOSE=docker-compose -f infra/prod/docker-compose.yml
+DOCKER_COMPOSE_PROD=docker-compose -f infra/prod/docker-compose.yml
 DOCKER_COMPOSE_DEV=docker-compose -f infra/dev/docker-compose.yml
 PROJECT_DIR = $(shell pwd)
 
+# ==================== PRODUCTION ====================
 build:
-	$(DOCKER_COMPOSE) build
+	$(DOCKER_COMPOSE_PROD) build
 
 up:
-	$(DOCKER_COMPOSE) up
+	$(DOCKER_COMPOSE_PROD) up
 
 run: clean build up 
 
 down:
-	$(DOCKER_COMPOSE) down
+	$(DOCKER_COMPOSE_PROD) down
 
 logs:
-	$(DOCKER_COMPOSE) logs -f
+	$(DOCKER_COMPOSE_PROD) logs -f
 
 clean:
-	$(DOCKER_COMPOSE) down -v
+	$(DOCKER_COMPOSE_PROD) down -v
 
-# -------------------- DEV --------------------
-dev_init:
-	@if [ ! -f frontend/dev/package.json ]; then \
-		echo "Error: package.json not found. Please create it first."; \
-		exit 1; \
-	fi
-	@rm -f "$(PROJECT_DIR)/frontend/dev/package-lock.json"
-	@touch "$(PROJECT_DIR)/frontend/dev/package-lock.json"
-	@docker run --rm \
-		-v "$(PROJECT_DIR)/frontend/dev/package.json:/app/package.json" \
-		-v "$(PROJECT_DIR)/frontend/dev/package-lock.json:/app/package-lock.json" \
-		-v "$(PROJECT_DIR)/frontend/dev/node_modules:/app/node_modules" \
-		-w /app node:20 \
-		npm install --no-audit --no-progress
-	@echo "Host node_modules and package-lock.json are ready."
-
+# ==================== DEVELOPMENT ====================
 dev_up:
 	$(DOCKER_COMPOSE_DEV) up --build -d
 
 dev_down:
 	$(DOCKER_COMPOSE_DEV) down --remove-orphans
 
-dev_logs:
-	$(DOCKER_COMPOSE_DEV) logs -f web
+dev_logs_front:
+	$(DOCKER_COMPOSE_DEV) logs -f frontend
 
-dev_logs_backend:
+dev_logs_back:
 	$(DOCKER_COMPOSE_DEV) logs -f backend
 
-dev_shell:
-	$(DOCKER_COMPOSE_DEV) exec web sh
+dev_logs_all:
+	$(DOCKER_COMPOSE_DEV) logs -f
+
+dev_shell_front:
+	$(DOCKER_COMPOSE_DEV) exec frontend sh
+
+dev_shell_back:
+	$(DOCKER_COMPOSE_DEV) exec backend sh
+
+dev_status:
+	$(DOCKER_COMPOSE_DEV) ps
+
+dev_rebuild:
+	$(DOCKER_COMPOSE_DEV) up --build --force-recreate -d
 
 dev_clean:
-	$(DOCKER_COMPOSE_DEV) down -v --rmi local # -v removes volumes, --rmi local removes images for services without custom names
+	$(DOCKER_COMPOSE_DEV) down -v --rmi local
 	rm -rf "$(PROJECT_DIR)/frontend/dev/node_modules"
-	rm -f "$(PROJECT_DIR)/frontend/dev/package-lock.json"
+	rm -rf "$(PROJECT_DIR)/backend/node_modules"
 	rm -f "$(PROJECT_DIR)/logs/backend.log"
 
-dev_restart: dev_down dev_clean dev_init dev_up
+dev_restart: dev_down dev_clean dev_up
 
 
-
-.PHONY: build up down logs clean dev_init dev_up dev_down dev_logs dev_shell dev_clean dev_restart
+.PHONY: build up down logs clean dev_up dev_down dev_logs_front dev_logs_back dev_logs_all dev_shell_front dev_shell_back dev_status dev_rebuild dev_clean dev_restart
