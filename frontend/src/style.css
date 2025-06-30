@@ -24,3 +24,84 @@
   transition: height 0.3s ease, max-height 0.3s ease;
   overflow: hidden;
 }
+
+/* frontend/src/style.css */
+
+#bracketContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 20px;
+}
+
+.round {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    flex-grow: 1;
+}
+
+.match {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    margin: 30px 15px; /* Provides space for connecting lines */
+    padding: 10px;
+    border: 1px solid #4cb4e7;
+    background-color: #1e293b;
+}
+
+/* Lines connecting players within a match */
+.match:before {
+    content: '';
+    position: absolute;
+    background-color: #4cb4e7;
+    width: 2px;
+    left: -16px;
+    top: 25%;
+    bottom: 25%;
+}
+
+/* Lines connecting matches to the next round */
+.match:after {
+    content: '';
+    position: absolute;
+    background-color: #4cb4e7;
+    height: 2px;
+    width: 15px;
+    right: -16px;
+    top: 50%;
+}
+
+/* Remove lines from the final match */
+.round.final .match:after {
+    display: none;
+}
+
+/* Adjust lines for first round */
+.round:first-child .match:before {
+    display: none;
+}
+
+.player {
+    padding: 5px;
+    width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player.winner {
+    font-weight: bold;
+    color: #8be076;
+}
+
+.player-top {
+    border-bottom: 1px solid #4a5568;
+}
+
+.tbd {
+    color: #a0aec0;
+    font-style: italic;
+}
