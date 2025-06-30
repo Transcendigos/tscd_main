@@ -21,6 +21,8 @@ import { startPongGame as startRemotePong, setCanvas as setRemotePongCanvas, sto
 import { startPongGame as startLocalPong, setCanvas as setLocalPongCanvas, stopPongGame as stopLocalPong } from "./localmultipong.js";
 // *** CHANGE: Import the new exported function
 import { setupTournamentSystem, fetchAndDisplayTournaments, showTournamentBracket } from "./tournament.ts";
+import { setupDashboard, fetchData } from './dashboard.ts'; 
+
 
 // ... (variable declarations are unchanged)
 let signinWindow: DesktopWindow;
@@ -99,7 +101,7 @@ async function updateUIBasedOnAuth() {
 
     assignOpenTrigger(chatWindow, "chatBtn");
     assignOpenTrigger(infoWindow, "infoTab");
-    assignOpenTrigger(statsWindow, "statsTab");
+    assignOpenTrigger(statsWindow, "statsTab", fetchData);
     assignOpenTrigger(aiWindow, "aiBtn", commandWindow.open);
     assignOpenTrigger(musicWindow, "musicBtn");
     

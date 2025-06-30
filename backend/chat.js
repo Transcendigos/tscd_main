@@ -13,7 +13,7 @@ import {
   isPlayerInActiveGame
 } from "./pong_server.js";
 import { chatMessagesCounter } from './monitoring.js';
-import { processMatchWinner } from "./tournament_logic.js";
+import { processGameCompletion } from "./tournament_logic.js";
 
 
 const activeConnections = new Map();
@@ -45,33 +45,43 @@ if (!globalSubscriber) {
 
 server.decorate("broadcastPongGameState", (gameId, statePayload) => {
     if (statePayload.type === 'PONG_GAME_OVER' && statePayload.winnerId) {
-        const winnerRawId = parseInt(String(statePayload.winnerId).replace('user_', ''), 10);
-        if (winnerRawId) {
-            processMatchWinner(gameId, winnerRawId).catch(err => {
-                server.log.error({ err, gameId }, "Error processing tournament match winner.");
-            });
-        }
-    }
+        
+        // This logic is now async to check the game type
+        (async () => {
+            try {
+                const db = getDB();
+                const match = await new Promise((res, rej) => 
+                    db.get('SELECT id FROM tournament_matches WHERE game_id = ?', [gameId], (err, row) => err ? rej(err) : res(row))
+                );
+                
+                // Determine the mode based on whether it was found in tournament_matches
+                const gameMode = match ? 'Tournament' : '1v1 Remote';
 
+                await processGameCompletion(gameId, statePayload.winnerId, statePayload.finalScores, gameMode);
+            } catch (err) {
+                server.log.error({ err, gameId }, "Error processing game completion.");
+            }
+        })();
+    }
     const connections = pongGameConnections.get(gameId);
     if (connections) {
-      server.log.info(
-        { gameId, connectionCount: connections.size, type: statePayload.type },
-        "Broadcasting to connections ================="
-      );
+      // server.log.info(
+      //   { gameId, connectionCount: connections.size, type: statePayload.type },
+      //   "Broadcasting to connections ================="
+      // );
       const payloadString = JSON.stringify(statePayload);
       connections.forEach((ws) => {
         if (ws.readyState === 1) {
           try {
             ws.send(payloadString);
-            server.log.info(
-              {
-                gameId,
-                userId: ws.authenticatedUserId,
-                type: statePayload.type,
-              },
-              "Message sent to client"
-            );
+            // server.log.info(
+            //   {
+            //     gameId,
+            //     userId: ws.authenticatedUserId,
+            //     type: statePayload.type,
+            //   },
+            //   "Message sent to client"
+            // );
           } catch (e) {
             server.log.error(
               { gameId, userId: ws.authenticatedUserId, err: e },

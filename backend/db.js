@@ -144,6 +144,30 @@ export function initializeDB(logger) {
             }
         });
 
+        db.run(`
+            CREATE TABLE IF NOT EXISTS match_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                game_mode TEXT NOT NULL,
+                player1_id INTEGER NOT NULL,
+                player2_id INTEGER NOT NULL,
+                player1_score INTEGER NOT NULL,
+                player2_score INTEGER NOT NULL,
+                winner_id INTEGER NOT NULL,
+                played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                tournament_id INTEGER,
+                FOREIGN KEY (player1_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (player2_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE
+            )
+        `, (err) => {
+            if (err) {
+                if (logger) logger.error({ err }, "Error creating match_history table");
+            } else {
+                if (logger) logger.info("match_history table checked/created successfully.");
+            }
+        });
+
         // Create tournament_matches table
         db.run(`
             CREATE TABLE IF NOT EXISTS tournament_matches (
