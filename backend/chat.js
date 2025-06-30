@@ -266,46 +266,29 @@ if (!globalSubscriber) {
         return;
       }
 
-      ws.on("message", async (messageBuffer) => {
-        if (!rawAuthenticatedUserId || !userJWTPayload) {
-          ws.send(
-            JSON.stringify({ type: "error", message: "Not authenticated." })
-          );
-          ws.close(1008, "Policy Violation: Unauthenticated message");
-          return;
+ws.on("message", async (messageBuffer) => {
+    if (!rawAuthenticatedUserId || !userJWTPayload) {
+        ws.send(JSON.stringify({ type: "error", message: "Not authenticated." }));
+        ws.close(1008, "Policy Violation: Unauthenticated message");
+        return;
+    }
+
+    const messageString = messageBuffer.toString();
+    let data;
+    try {
+        data = JSON.parse(messageString);
+    } catch (parseError) {
+        server.log.warn({ rawMessage: messageString, error: parseError, userId: rawAuthenticatedUserId, }, "WebSocket: Received non-JSON message");
+        if (ws.readyState === 1) {
+            ws.send(JSON.stringify({ type: "error", message: "Invalid message format." }));
         }
+        return;
+    }
 
-        const messageString = messageBuffer.toString();
-        let data;
-        try {
-          data = JSON.parse(messageString);
-        } catch (parseError) {
-          server.log.warn(
-            {
-              rawMessage: messageString,
-              error: parseError,
-              userId: rawAuthenticatedUserId,
-            },
-            "WebSocket: Received non-JSON message"
-          );
-          if (ws.readyState === 1) {
-            ws.send(
-              JSON.stringify({
-                type: "error",
-                message: "Invalid message format.",
-              })
-            );
-          }
-          return;
-        }
+    server.log.info({ userId: rawAuthenticatedUserId, parsedData: data }, ">>> WebSocket: Parsed message data (post-auth).");
 
-        server.log.info(
-          { userId: rawAuthenticatedUserId, parsedData: data },
-          ">>> WebSocket: Parsed message data (post-auth)."
-        );
-
-        try {
-          if (data.type === "privateMessage") {
+    try {
+        if (data.type === "privateMessage") {
             const senderRawId = ws.rawAuthenticatedUserId;
             const senderPrefixedId = ws.authenticatedUserId;
             const { toUserId, content, drawingDataUrl } = data;
@@ -379,7 +362,6 @@ if (!globalSubscriber) {
               server.log.info({ sender: senderRawId, toUserId: recipientRawId}, "Received a message with a drawing (DB save skipped for MVP).");
             }
 
-            //TO STORE THE METRIC IN PROMETHEUS
             chatMessagesCounter.inc({
               sender_id: senderRawId.toString(),
               receiver_id: recipientRawId.toString(),
@@ -419,7 +401,8 @@ if (!globalSubscriber) {
                 }
               }
             );
-          } else if (data.type === 'publicMessage') {
+
+        } else if (data.type === 'publicMessage') {
             const senderUsername = ws.userJWTPayload?.username || 'Anonymous';
             const content = data.content;
 
@@ -437,8 +420,7 @@ if (!globalSubscriber) {
 
             await redisPublisher.publish('chat:general', publicMessagePayload);
 
-          // NEW LOGIC: Handle game acceptance and creation
-          } else if (data.type === "PONG_ACCEPT_INVITE") {
+        } else if (data.type === "PONG_ACCEPT_INVITE") {
             const { inviterId, inviterUsername } = data;
             const inviteeId = ws.authenticatedUserId;
             const inviteeUsername = ws.userJWTPayload.username;
@@ -489,7 +471,6 @@ if (!globalSubscriber) {
                 ws.currentGameId = gameId;
                 inviterWs.currentGameId = gameId;
 
-                // --- FIX: Create a clean state object for the client ---
                 const cleanInitialState = {
                     gameId: newGame.gameId,
                     players: newGame.players,
@@ -504,14 +485,12 @@ if (!globalSubscriber) {
                     player1Id: newGame.player1Id,
                     player2Id: newGame.player2Id,
                 };
-                // --- END FIX ---
 
                 gameConnections.forEach(clientWs => {
                     const yourPlayerId = clientWs.authenticatedUserId;
                     const opponentId = (yourPlayerId === inviterId) ? inviteeId : inviterId;
                     const opponentUsername = (yourPlayerId === inviterId) ? inviteeUsername : inviterUsername;
                     
-                    // Use the clean state object here
                     const payloadWithPlayerInfo = {
                         type: "PONG_GAME_STARTED",
                         gameId: gameId,
@@ -534,7 +513,7 @@ if (!globalSubscriber) {
                 }
             }
 
-          } else if (data.type === "PONG_PLAYER_INPUT") {
+        } else if (data.type === "PONG_PLAYER_INPUT") {
             const { gameId, input } = data;
             if (!gameId || typeof input === "undefined") {
               ws.send(
@@ -556,85 +535,78 @@ if (!globalSubscriber) {
               return;
             }
             handlePlayerInput(gameId, ws.authenticatedUserId, input);
-          } else if (data.type === "PONG_PLAYER_READY") {
+
+        } else if (data.type === "PONG_PLAYER_READY") {
+            // ... (your existing PONG_PLAYER_READY logic is correct)
             const { gameId } = data;
-            const playerPrefixedId = ws.authenticatedUserId; // This is "user_X"
+            const playerPrefixedId = ws.authenticatedUserId;
 
             if (!gameId) {
-              server.log.warn(
-                { userId: playerPrefixedId },
-                "PONG_PLAYER_READY: No gameId provided."
-              );
-              ws.send(
-                JSON.stringify({
-                  type: "PONG_ERROR",
-                  message: "Missing gameId for ready signal.",
-                })
-              );
+              server.log.warn({ userId: playerPrefixedId }, "PONG_PLAYER_READY: No gameId provided.");
+              ws.send(JSON.stringify({ type: "PONG_ERROR", message: "Missing gameId for ready signal."}));
               return;
             }
 
             const gameInstance = pongActiveGames.get(gameId);
             if (!gameInstance) {
-              server.log.warn(
-                { userId: playerPrefixedId, gameId },
-                "PONG_PLAYER_READY: gameInstance not found."
-              );
-              ws.send(
-                JSON.stringify({
-                  type: "PONG_ERROR",
-                  gameId,
-                  message: "Game not found for ready signal.",
-                })
-              );
+              server.log.warn({ userId: playerPrefixedId, gameId }, "PONG_PLAYER_READY: gameInstance not found.");
+              ws.send(JSON.stringify({ type: "PONG_ERROR", gameId, message: "Game not found for ready signal."}));
               return;
             }
             if (gameInstance.players[playerPrefixedId]) {
               if (gameInstance.players[playerPrefixedId].isReady) {
-                server.log.info(
-                  { userId: playerPrefixedId, gameId },
-                  "PONG_PLAYER_READY: Player already marked as ready."
-                );
+                server.log.info({ userId: playerPrefixedId, gameId }, "PONG_PLAYER_READY: Player already marked as ready.");
               } else {
                 gameInstance.players[playerPrefixedId].isReady = true;
-                server.log.info(
-                  {
-                    userId: playerPrefixedId,
-                    gameId,
-                    playerReadyState: gameInstance.players[playerPrefixedId],
-                  },
-                  `Player marked as ready.`
-                );
+                server.log.info({ userId: playerPrefixedId, gameId, playerReadyState: gameInstance.players[playerPrefixedId],}, `Player marked as ready.`);
               }
             } else {
-              server.log.warn(
-                { userId: playerPrefixedId, gameId },
-                "PONG_PLAYER_READY: Player not found in this game instance."
-              );
-              ws.send(
-                JSON.stringify({
-                  type: "PONG_ERROR",
-                  gameId,
-                  message: "You are not a player in this game.",
-                })
-              );
+              server.log.warn({ userId: playerPrefixedId, gameId }, "PONG_PLAYER_READY: Player not found in this game instance.");
+              ws.send(JSON.stringify({ type: "PONG_ERROR", gameId, message: "You are not a player in this game."}));
             }
-          // MODIFIED LOGIC: Simplified decline handling
-          } else if (data.type === "PONG_INVITE_DECLINED") {
-            const { inviterId } = data; // gameId is no longer sent from the client
+
+        } else if (data.type === 'PONG_LEAVE_GAME') {
+            const { gameId } = data;
+            const leavingPlayerId = ws.authenticatedUserId;
+
+            server.log.info({ gameId, userId: leavingPlayerId }, "Player intentionally left game via window close.");
+            const connections = pongGameConnections.get(gameId);
+            const gameInstance = pongActiveGames.get(gameId);
+
+            if (connections && gameInstance) {
+                connections.delete(ws); // Remove leaver
+
+                // If a player remains, they are the winner
+                if (connections.size === 1) {
+                    const remainingPlayerWs = connections.values().next().value;
+                    const winnerId = remainingPlayerWs.authenticatedUserId;
+
+                    const scores = {
+                        [winnerId]: gameInstance.players[winnerId]?.score || 0,
+                        [leavingPlayerId]: gameInstance.players[leavingPlayerId]?.score || 0,
+                    };
+
+                    if (remainingPlayerWs.readyState === 1) {
+                        remainingPlayerWs.send(JSON.stringify({
+                            type: 'PONG_GAME_OVER',
+                            gameId,
+                            winnerId,
+                            scores,
+                            reason: 'Opponent left the match.'
+                        }));
+                    }
+                }
+                stopGame(gameId);
+                pongGameConnections.delete(gameId);
+            }
+
+        } else if (data.type === "PONG_INVITE_DECLINED") {
+            const { inviterId } = data;
             const declinerUsername = userJWTPayload.username;
 
             if (!inviterId) {
-              server.log.warn(
-                { userId: ws.authenticatedUserId, data },
-                "PONG_INVITE_DECLINED: Missing inviterId."
-              );
-              ws.send(
-                JSON.stringify({
-                  type: "PONG_ERROR",
-                  message: "Invalid decline message.",
-                })
-              );
+              server.log.warn({ userId: ws.authenticatedUserId, data }, "PONG_INVITE_DECLINED: Missing inviterId.");
+              ws.send(JSON.stringify({ type: "PONG_ERROR", message: "Invalid decline message." }));
               return;
             }
 
@@ -655,47 +627,24 @@ if (!globalSubscriber) {
                     inviterChannel,
                     JSON.stringify(declineNotification)
                 );
-                server.log.info(
-                    { inviterChannel, payload: declineNotification },
-                    "Notified inviter of declined Pong invitation."
-                );
+                server.log.info({ inviterChannel, payload: declineNotification }, "Notified inviter of declined Pong invitation.");
             } else {
-                server.log.warn(
-                    { inviterIdReceived: inviterId },
-                    "Could not parse numeric ID for inviter to send decline notification."
-                );
+                server.log.warn({ inviterIdReceived: inviterId }, "Could not parse numeric ID for inviter to send decline notification.");
             }
 
-          } else {
-            server.log.warn(
-              { userId: ws.authenticatedUserId, data },
-              "Unhandled WebSocket message type."
-            );
+        } else {
+            server.log.warn({ userId: ws.authenticatedUserId, data }, "Unhandled WebSocket message type.");
             if (ws.readyState === 1) {
-              ws.send(
-                JSON.stringify({
-                  type: "error",
-                  message: "Unhandled type: " + data.type,
-                })
-              );
+                ws.send(JSON.stringify({ type: "error", message: "Unhandled type: " + data.type, }));
             }
-          }
-        } catch (error) {
-          server.log.error(
-            {
-              error: error.message,
-              raw: messageString,
-              userId: ws.authenticatedUserId,
-            },
-            "WebSocket message processing error."
-          );
-          if (ws.readyState === 1) {
-            ws.send(
-              JSON.stringify({ type: "error", message: "Processing error." })
-            );
-          }
         }
-      });
+    } catch (error) {
+        server.log.error({ error: error.message, raw: messageString, userId: ws.authenticatedUserId, }, "WebSocket message processing error.");
+        if (ws.readyState === 1) {
+            ws.send(JSON.stringify({ type: "error", message: "Processing error." }));
+        }
+    }
+});
 
       ws.on("close", async (code, reason) => {
         const reasonString = reason ? reason.toString() : "N/A";
@@ -704,8 +653,56 @@ if (!globalSubscriber) {
           `WebSocket client disconnected.`
         );
         if (ws.authenticatedUserId) {
+          // --- Handle Pong Game Disconnection ---
+          if (ws.currentGameId && pongGameConnections.has(ws.currentGameId)) {
+            const connections = pongGameConnections.get(ws.currentGameId);
+            const gameInstance = pongActiveGames.get(ws.currentGameId);
+            connections.delete(ws);
 
+            // If one player remains, they are the winner.
+            if (connections.size === 1 && gameInstance) {
+              const remainingPlayerWs = connections.values().next().value;
+              const winnerId = remainingPlayerWs.authenticatedUserId;
+              const disconnectedPlayerId = ws.authenticatedUserId;
 
+              server.log.info(
+                { gameId: ws.currentGameId, winner: winnerId, disconnected: disconnectedPlayerId },
+                `Pong player disconnected. Declaring winner.`
+              );
+
+              // Construct final scores from the game state before stopping it
+              const scores = {
+                [winnerId]: gameInstance.players[winnerId]?.score || 0,
+                [disconnectedPlayerId]: gameInstance.players[disconnectedPlayerId]?.score || 0
+              };
+              
+              // Notify the winner
+              if (remainingPlayerWs.readyState === 1) {
+                remainingPlayerWs.send(JSON.stringify({
+                  type: 'PONG_GAME_OVER',
+                  gameId: ws.currentGameId,
+                  winnerId: winnerId,
+                  scores: scores,
+                  reason: `Opponent disconnected.`
+                }));
+              }
+              
+              // Clean up the game immediately
+              pongGameConnections.delete(ws.currentGameId);
+              stopGame(ws.currentGameId); //
+
+            } else if (connections.size === 0) {
+              // This case handles if the last player disconnects
+              pongGameConnections.delete(ws.currentGameId);
+              server.log.info(
+                { gameId: ws.currentGameId },
+                `All players disconnected from Pong game. Cleaning up game state.`
+              );
+              stopGame(ws.currentGameId); //
+            }
+          }
+
+          // --- Original disconnection logic for chat status and subscribers ---
           await redisPublisher.srem('online_users', ws.authenticatedUserId);
 
           const userOfflineNotification = JSON.stringify({
@@ -714,10 +711,10 @@ if (!globalSubscriber) {
           });
           await redisPublisher.publish('chat:status', userOfflineNotification);
 
-
           if (activeConnections.get(ws.authenticatedUserId) === ws) {
             activeConnections.delete(ws.authenticatedUserId);
           }
+
           if (
             ws.rawAuthenticatedUserId &&
             userSubscribers.has(ws.rawAuthenticatedUserId)
@@ -736,41 +733,12 @@ if (!globalSubscriber) {
               dedicatedSubscriber = null;
             }
           }
-          if (ws.currentGameId && pongGameConnections.has(ws.currentGameId)) {
-            const connections = pongGameConnections.get(ws.currentGameId);
-            connections.delete(ws);
-            if (connections.size === 0) {
-              pongGameConnections.delete(ws.currentGameId);
-              server.log.info(
-                { gameId: ws.currentGameId },
-                `All players disconnected from Pong game. Cleaning up game state.`
-              );
-              stopGame(ws.currentGameId);
-            }
-          }
-          if (userJWTPayload) {
-            const userOfflineNotification = JSON.stringify({
-              type: "userOffline",
-              user: {
-                id: prefixedAuthenticatedUserId,
-                username: userJWTPayload.username,
-              },
-            });
-            activeConnections.forEach((clientWs, clientPrefixedId) => {
-              if (clientWs.readyState === 1) {
-                try {
-                  clientWs.send(userOfflineNotification);
-                } catch (e) {
-                  server.log.error(
-                    { err: e, notifiedClientId: clientPrefixedId },
-                    "Error sending userOffline."
-                  );
-                }
-              }
-            });
-          }
         }
       });
+
+
+
+
       ws.on("error", (err) => {
         server.log.error(
           { err, userId: ws.authenticatedUserId },
