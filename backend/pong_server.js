@@ -198,7 +198,7 @@ function updateGameState(gameId) {
 
     const p1 = gameState.players[gameState.player1Id];
     const p2 = gameState.players[gameState.player2Id];
-    console.log(`[pong_server.js - ${gameId}] UPDATE_GameStateEnd: Ball(${gameState.ball.x.toFixed(0)},${gameState.ball.y.toFixed(0)}) P1(R:${p1.isReady},S:${p1.score}) P2(R:${p2.isReady},S:${p2.score}) Status:${gameState.status}`);
+    // console.log(`[pong_server.js - ${gameId}] UPDATE_GameStateEnd: Ball(${gameState.ball.x.toFixed(0)},${gameState.ball.y.toFixed(0)}) P1(R:${p1.isReady},S:${p1.score}) P2(R:${p2.isReady},S:${p2.score}) Status:${gameState.status}`);
 
     return gameState;
 }
@@ -264,12 +264,16 @@ function startGame(gameId, player1Id, player2Id, options = {}, broadcasterFromCa
             const finalP2s = updatedState.players[player2Id]?.score;
             const winnerId = finalP1s >= updatedState.winningScore ? player1Id : (finalP2s >= updatedState.winningScore ? player2Id : null);
 
-            const gameOverPayload = {
-                type: 'PONG_GAME_OVER',
-                gameId: updatedState.gameId,
-                winnerId: winnerId,
-                scores: { [player1Id]: finalP1s, [player2Id]: finalP2s }
-            };
+                const gameOverPayload = {
+                    type: 'PONG_GAME_OVER',
+                    gameId: updatedState.gameId,
+                    winnerId: winnerId,
+                    finalScores: {
+                        [player1Id]: finalP1s,
+                        [player2Id]: finalP2s
+                    }
+                };
+                
             try {
                 gameBroadcaster(gameId, gameOverPayload);
             } catch (e) {

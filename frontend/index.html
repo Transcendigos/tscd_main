@@ -58,6 +58,7 @@
     }
   </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body
@@ -824,61 +825,57 @@
 
       <!-- STATS WINDOW -->
       <div id="statsWindow"
-        class="border-2 border-[#4cb4e7] w-[450px] text-[#4cb4e7] text-sm flex flex-col
-            bg-slate-900
-            absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
-            transition-all duration-300 ease-in-out
-            opacity-0 scale-95 invisible pointer-events-none"
-        style="min-width: 250px; min-height: 200px; max-width: 90vw; max-height: 80vh;">
-        <div id="statsDragHandle"
-          class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
-          <div class="flex items-center space-x-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-              fill="currentColor"
-              class="bi bi-clipboard-data" viewBox="0 0 16 16">
-              <path
-                d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0z" />
-              <path
-                d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
-              <path
-                d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
-            </svg>
-            <span class="font-bold">My Dashboard</span>
+          class="border-2 border-[#4cb4e7] w-[600px] text-[#4cb4e7] text-sm flex flex-col bg-slate-900 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none"
+          style="min-width: 550px; min-height: 500px; max-width: 90vw; max-height: 80vh;">
+          <div id="statsDragHandle"
+              class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
+              <div class="flex items-center space-x-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard-data" viewBox="0 0 16 16">
+                      <path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0z" />
+                      <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
+                      <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
+                  </svg>
+                  <span id="dashboard-username" class="font-bold">My Dashboard</span>
+              </div>
+              <button aria-label="Close" id="closestatsBtn" class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">X</button>
           </div>
-          <div class="flex items-center space-x-1">
-            <button aria-label="Minimize" disabled
-              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-              <svg width="8" height="2" viewBox="0 0 8 2" fill="#4cb4e7"
-                xmlns="http://www.w3.org/2000/svg">
-                <rect width="8" height="2" />
-              </svg>
-            </button>
-            <button aria-label="Maximize" disabled
-              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center hover-important opacity-50 cursor-not-allowed">
-              <svg width="9" height="9" viewBox="0 0 9 9" fill="none"
-                stroke="#4cb4e7" stroke-width="1"
-                xmlns="http://www.w3.org/2000/svg">
-                <rect x="0.5" y="0.5" width="8" height="8" />
-              </svg>
-            </button>
-            <button aria-label="Close" id="closestatsBtn"
-              class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover-important">
-              X
-            </button>
+        
+          <div class="flex-grow p-4 overflow-auto bg-slate-800/50 space-y-4">
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                  <div class="bg-slate-900 p-3 border border-slate-700"><p class="text-xs text-slate-400">WINS</p><p id="stats-wins" class="text-2xl font-bold text-green-400">0</p></div>
+                  <div class="bg-slate-900 p-3 border border-slate-700"><p class="text-xs text-slate-400">LOSSES</p><p id="stats-losses" class="text-2xl font-bold text-red-400">0</p></div>
+                  <div class="bg-slate-900 p-3 border border-slate-700"><p class="text-xs text-slate-400">W/L RATIO</p><p id="stats-winRatio" class="text-2xl font-bold">0.0</p></div>
+                  <div class="bg-slate-900 p-3 border border-slate-700"><p class="text-xs text-slate-400">TOURNAMENTS WON</p><p id="stats-tournamentsWon" class="text-2xl font-bold text-yellow-400">0</p></div>
+              </div>
+
+              <div class="bg-slate-900 p-4 border border-slate-700">
+                  <h3 class="font-bold text-white mb-2">Win / Loss Breakdown</h3>
+                  <div class="h-48 flex justify-center items-center">
+                      <canvas id="winLossChart"></canvas>
+                  </div>
+              </div>
+            
+              <div class="bg-slate-900 p-4 border border-slate-700">
+                  <h3 class="font-bold text-white mb-2">Recent Match History</h3>
+                  <div class="overflow-y-auto max-h-64">
+                      <table class="w-full text-left text-xs">
+                          <thead class="sticky top-0 bg-slate-800">
+                              <tr>
+                                  <th class="p-2">MODE</th>
+                                  <th class="p-2">OPPONENT</th>
+                                  <th class="p-2">SCORE</th>
+                                  <th class="p-2">RESULT</th>
+                              </tr>
+                          </thead>
+                          <tbody id="matchHistoryBody">
+                              </tbody>
+                      </table>
+                  </div>
+              </div>
           </div>
-        </div>
-
-        <div class="flex-grow p-2 overflow-auto bg-slate-800/50">
-          <p>This is the content of statsWindow.</p>
-          <p>Replace this with actual application content.</p>
-          <input type="text" placeholder="Sample input..."
-            class="mt-2 p-1 w-full bg-slate-700 border border-[#4cb4e7]/50 rounded" />
-        </div>
-
-        <div id="statsResizeHandle"
-          class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10">
-        </div>
+          <div id="statsResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
       </div>
+
 
       <!-- WEATHER WINDOW -->
 
