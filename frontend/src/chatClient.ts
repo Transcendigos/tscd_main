@@ -1,4 +1,6 @@
 import { DesktopWindow } from "./DesktopWindow.js";
+import { fetchAndDisplayTournaments, showTournamentBracket } from "./tournament.ts";
+
 
 interface User {
   id: number;
@@ -56,6 +58,8 @@ interface ChatMessage {
   winnerId?: string | null;
   scores?: any;
   declinedByUsername?: string;
+  tournamentId?: string;
+  matchId?: number;
 }
 
 const userPlaceholderColors: string[] = [
@@ -68,9 +72,9 @@ const userPlaceholderColors: string[] = [
 const openProfileWindows = new Map<number, DesktopWindow>();
 const blockedSet = new Set<number>();
 
-let socket: WebSocket | null = null;
-let currentUserId: number | null = null;
-let currentUsername: string | null = null;
+export let socket: WebSocket | null = null;
+export let currentUserId: number | null = null;
+export let currentUsername: string | null = null;
 
 let chatUserListEl: HTMLElement | null;
 let chatWithUserEl: HTMLElement | null;
@@ -418,6 +422,37 @@ function connectWebSocket() {
         if (message.message && (message.message.toLowerCase().includes("authentication required") || message.message.toLowerCase().includes("authentication failed"))) {
           alert("Chat session could not be established or was terminated. Please ensure you are logged in.");
         }
+      } else if (message.type === 'TOURNAMENT_LOBBY_UPDATE') {
+        console.log("Received TOURNAMENT_LOBBY_UPDATE, refreshing lobby...");
+        // Check if the tournament window is currently visible before refreshing
+        const tournamentWindow = document.getElementById('tournamentWindow');
+        if (tournamentWindow && !tournamentWindow.classList.contains('invisible')) {
+            fetchAndDisplayTournaments();
+        }
+
+      } else if (message.type === 'TOURNAMENT_STARTED') {
+        const tournamentId = message.tournamentId;
+        if (tournamentId) {
+            console.log(`[ChatClient] Announcing tournament start for ID: ${tournamentId}`);
+            // Fire a global event that main.ts can listen for
+            const event = new CustomEvent('tournament:start', { detail: { tournamentId } });
+            window.dispatchEvent(event);
+        }
+      
+      } else if (message.type === 'MATCH_READY') {
+          console.log("Received MATCH_READY, refreshing bracket to show button.");
+          const tournamentWindow = document.getElementById('tournamentWindow');
+          if (tournamentWindow && !tournamentWindow.classList.contains('invisible')) {
+              showTournamentBracket(message.tournamentId!);
+          }
+
+      } else if (message.type === 'BRACKET_UPDATE') {
+          console.log("Received BRACKET_UPDATE, refreshing bracket.");
+          const tournamentWindow = document.getElementById('tournamentWindow');
+          if (tournamentWindow && !tournamentWindow.classList.contains('invisible') && message.tournamentId) {
+              showTournamentBracket(message.tournamentId);
+          }
+
       } else {
         console.warn("Received unhandled message type from server:", message.type, message);
       }

@@ -1293,6 +1293,51 @@
 
         <!-- --------------PUT NEW WINDOW BELOW -------------- -->
 
+  <div id="tournamentWindow" class="border-2 border-[#8be076] w-[500px] text-[#4cb4e7] text-sm flex flex-col bg-slate-900/80 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none" style="min-width: 550px;">
+    <div id="tournamentDragHandle" class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#8be076] cursor-grab active:cursor-grabbing select-none">
+        <span class="font-bold">Pong Tournaments</span>
+        <button id="closeTournamentBtn" class="w-5 h-5 border border-[#8be076] flex items-center justify-center font-bold hover:bg-[#f8aab6] hover:text-slate-900 transition-colors">X</button>
+    </div>
+    
+    <div id="tournamentLobbyView" class="flex-grow p-4 flex flex-col space-y-4 bg-slate-800/50">
+        <div class="border border-slate-600 p-3">
+            <h3 class="font-bold text-lg mb-2 text-white">Create New Tournament</h3>
+            <form id="createTournamentForm" class="space-y-3">
+                <div>
+                    <label for="tournamentName" class="block text-xs font-medium text-slate-300">Tournament Name</label>
+                    <input type="text" id="tournamentName" name="name" required class="mt-1 block w-full p-1.5 bg-slate-900 border border-slate-500 text-xs focus:ring-1 focus:ring-[#4cb4e7] focus:border-[#4cb4e7] outline-none">
+                </div>
+                <div>
+                    <label for="tournamentSize" class="block text-xs font-medium text-slate-300">Players</label>
+                    <select id="tournamentSize" name="size" class="mt-1 block w-full p-1.5 bg-slate-900 border border-slate-500 text-xs">
+                        <option value="4">4 Players</option>
+                        <option value="8">8 Players</option>
+                    </select>
+                </div>
+                <button type="submit" id="createTournamentBtn" class="border px-4 py-1.5 font-bold tracking-wider hover:bg-[#8be076] hover:text-slate-900 transition-colors text-xs w-full">Create</button>
+            </form>
+            <p id="tournamentError" class="text-red-400 text-xs mt-2"></p>
+        </div>
+        <div class="flex-grow">
+            <h3 class="font-bold text-lg mb-2 text-white">Available Tournaments</h3>
+            <div id="tournamentLobbyList" class="space-y-2 overflow-y-auto max-h-60 pr-2">
+                <p class="text-slate-400 text-xs">Loading tournaments...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="tournamentBracketView" class="flex-grow p-4 flex-col space-y-4 bg-slate-800/50 hidden">
+        <div class="flex justify-between items-center">
+            <h3 id="bracketTournamentName" class="font-bold text-lg text-white">Tournament Bracket</h3>
+            <button id="backToLobbyBtn" class="border px-3 py-1 font-bold hover:bg-[#4cb4e7] hover:text-slate-900 text-xs transition-colors">Back to Lobby</button>
+        </div>
+        <div id="bracketContainer" class="flex justify-center items-center text-xs text-white">
+            </div>
+    </div>
+    
+    <div id="tournamentResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
+</div>
+
       </main>
 
       <footer class="flex items-center text-center justify-center py-auto mb-5">

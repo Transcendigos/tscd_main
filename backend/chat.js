@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import { getDB } from "./db.js";
 import fp from "fastify-plugin";
 import { getRedisPublisher, createNewRedisSubscriber } from "./redis.js";
-// NEW LOGIC: Import startGame and other necessary functions from pong_server
 import {
   startGame,
   stopGame,
@@ -14,11 +13,13 @@ import {
   isPlayerInActiveGame
 } from "./pong_server.js";
 import { chatMessagesCounter } from './monitoring.js';
+import { processMatchWinner } from "./tournament_logic.js";
 
 
 const activeConnections = new Map();
 const userSubscribers = new Map();
 const pongGameConnections = new Map();
+const matchReadyState = new Map();
 
 let globalSubscriber;
 
@@ -42,7 +43,16 @@ if (!globalSubscriber) {
   }
 
 
-  server.decorate("broadcastPongGameState", (gameId, statePayload) => {
+server.decorate("broadcastPongGameState", (gameId, statePayload) => {
+    if (statePayload.type === 'PONG_GAME_OVER' && statePayload.winnerId) {
+        const winnerRawId = parseInt(String(statePayload.winnerId).replace('user_', ''), 10);
+        if (winnerRawId) {
+            processMatchWinner(gameId, winnerRawId).catch(err => {
+                server.log.error({ err, gameId }, "Error processing tournament match winner.");
+            });
+        }
+    }
+
     const connections = pongGameConnections.get(gameId);
     if (connections) {
       server.log.info(
@@ -82,10 +92,11 @@ if (!globalSubscriber) {
     } else {
       server.log.warn(
         { gameId, type: statePayload.type },
-        "No connections found in pongGameConnections to broadcast to for this gameId."
+        "No connections found for this gameId to broadcast to."
       );
     }
   });
+
 
 
   server.route({
@@ -294,130 +305,34 @@ ws.on("message", async (messageBuffer) => {
             const { toUserId, content, drawingDataUrl } = data;
 
             if (!toUserId || (typeof content === "undefined" && typeof drawingDataUrl === "undefined")) {
-              if (ws.readyState === 1) {
-                ws.send(
-                  JSON.stringify({
-                    type: "error",
-                    message: "Missing toUserId or content.",
-                  })
-                );
-              }
+              if (ws.readyState === 1) { ws.send(JSON.stringify({ type: "error", message: "Missing toUserId or content." })); }
               return;
             }
-
             const recipientRawId = parseInt(toUserId, 10);
             if (isNaN(recipientRawId)) {
-              if (ws.readyState === 1) {
-                ws.send(
-                  JSON.stringify({
-                    type: "error",
-                    message: "Invalid recipient ID.",
-                  })
-                );
-              }
+              if (ws.readyState === 1) { ws.send(JSON.stringify({ type: "error", message: "Invalid recipient ID."})); }
               return;
             }
-
             const isBlocked = await new Promise((resolve, reject) => {
-              db.get(`SELECT 1 FROM blocked_users
-                WHERE (blocker_id = ? AND blocked_id = ?)
-                OR (blocker_id = ? AND blocked_id = ?)
-                LIMIT 1`,
+              db.get(`SELECT 1 FROM blocked_users WHERE (blocker_id = ? AND blocked_id = ?) OR (blocker_id = ? AND blocked_id = ?) LIMIT 1`,
                 [senderRawId, recipientRawId, recipientRawId, senderRawId],
-                (err, row) => {
-                  if (err) return reject(err);
-                  resolve(!!row);
-                      }
-                  );
-              });
-
-            if (isBlocked) {
-                if (ws.readyState === 1) {
-                    ws.send(JSON.stringify({ type: "error", message: "You cannot message this user." }));
-                }
-                return;
-              }
-
-            const recipientChannel = `user:${recipientRawId}:messages`;
-
-            const messageDataToSend = {
-              type: "newMessage",
-              fromUserId: senderPrefixedId,
-              fromUsername: userJWTPayload.username,
-              toUserId: `user_${recipientRawId}`,
-              content: content,
-              drawingDataUrl: drawingDataUrl,
-              timestamp: new Date().toISOString(),
-            };
-            const messageToSendString = JSON.stringify(messageDataToSend);
-
-            await redisPublisher.publish(recipientChannel, messageToSendString);
-            server.log.info(
-              { sender: senderPrefixedId, recipientChannel, content, hasDrawing: !!drawingDataUrl },
-              "Chat message published to Redis"
-            );
-
-
-            if (drawingDataUrl) {
-              server.log.info({ sender: senderRawId, toUserId: recipientRawId}, "Received a message with a drawing (DB save skipped for MVP).");
-            }
-
-            chatMessagesCounter.inc({
-              sender_id: senderRawId.toString(),
-              receiver_id: recipientRawId.toString(),
+                (err, row) => { if (err) return reject(err); resolve(!!row); });
             });
-
-
-            db.run(
-              "INSERT INTO chat_messages (sender_id, receiver_id, message_content) VALUES (?, ?, ?)",
-              [senderRawId, recipientRawId, content],
-              function (dbErr) {
-                if (dbErr) {
-                  server.log.error(
-                    {
-                      err: dbErr,
-                      senderId: senderRawId,
-                      toUserId: recipientRawId,
-                    },
-                    "Failed to save chat message to DB"
-                  );
-                  if (ws.readyState === 1) {
-                    ws.send(
-                      JSON.stringify({ type: "error", message: "DB error." })
-                    );
-                  }
-                } else {
-                  if (ws.readyState === 1) {
-                    ws.send(
-                      JSON.stringify({
-                        type: "message_sent_ack",
-                        toUserId: `user_${recipientRawId}`,
-                        content,
-                        messageId: this.lastID,
-                        timestamp: messageDataToSend.timestamp,
-                      })
-                    );
-                  }
-                }
-              }
-            );
+            if (isBlocked) {
+                if (ws.readyState === 1) { ws.send(JSON.stringify({ type: "error", message: "You cannot message this user." }));}
+                return;
+            }
+            const recipientChannel = `user:${recipientRawId}:messages`;
+            const messageDataToSend = { type: "newMessage", fromUserId: senderPrefixedId, fromUsername: userJWTPayload.username, toUserId: `user_${recipientRawId}`, content: content, drawingDataUrl: drawingDataUrl, timestamp: new Date().toISOString() };
+            await redisPublisher.publish(recipientChannel, JSON.stringify(messageDataToSend));
+            chatMessagesCounter.inc({ sender_id: senderRawId.toString(), receiver_id: recipientRawId.toString() });
+            db.run("INSERT INTO chat_messages (sender_id, receiver_id, message_content) VALUES (?, ?, ?)", [senderRawId, recipientRawId, content], function (dbErr) { /* ... */ });
 
         } else if (data.type === 'publicMessage') {
             const senderUsername = ws.userJWTPayload?.username || 'Anonymous';
             const content = data.content;
-
-            if (!content || typeof content !== 'string' || content.trim().length === 0) {
-                return;
-            }
-
-            const publicMessagePayload = JSON.stringify({
-                type: 'newPublicMessage',
-                fromUsername: senderUsername,
-                fromUserId: ws.authenticatedUserId,
-                content: content.trim(),
-                timestamp: new Date().toISOString()
-            });
-
+            if (!content || typeof content !== 'string' || content.trim().length === 0) { return; }
+            const publicMessagePayload = JSON.stringify({ type: 'newPublicMessage', fromUsername: senderUsername, fromUserId: ws.authenticatedUserId, content: content.trim(), timestamp: new Date().toISOString() });
             await redisPublisher.publish('chat:general', publicMessagePayload);
 
         } else if (data.type === "PONG_ACCEPT_INVITE") {
@@ -426,174 +341,66 @@ ws.on("message", async (messageBuffer) => {
             const inviteeUsername = ws.userJWTPayload.username;
 
             if (isPlayerInActiveGame(inviterId) || isPlayerInActiveGame(inviteeId)) {
-                server.log.warn({ inviterId, inviteeId }, "PONG_ACCEPT_INVITE rejected: A player is already in a game.");
                 ws.send(JSON.stringify({ type: "PONG_ERROR", message: "A player is already in a game." }));
                 const inviterWs = activeConnections.get(inviterId);
-                if (inviterWs && inviterWs.readyState === 1) {
-                    inviterWs.send(JSON.stringify({ type: "PONG_ERROR", message: "Your opponent accepted an invite but one of you is already in a game." }));
-                }
+                if (inviterWs && inviterWs.readyState === 1) { inviterWs.send(JSON.stringify({ type: "PONG_ERROR", message: "Your opponent accepted an invite but one of you is already in a game." }));}
                 return;
             }
-
-            if (!inviterId) {
-                ws.send(JSON.stringify({ type: "PONG_ERROR", message: "Missing inviterId." }));
-                return;
-            }
-
+            
             const inviterWs = activeConnections.get(inviterId);
             if (!inviterWs || inviterWs.readyState !== 1) {
                 ws.send(JSON.stringify({ type: "PONG_ERROR", message: "Inviter is no longer online." }));
                 return;
             }
-
             const gameId = generateGameId();
-            const gameOptions = {
-                canvasWidth: 800,
-                canvasHeight: 600,
-                winningScore: 5,
-                player1Username: inviterUsername,
-                player2Username: inviteeUsername
-            };
-
-            const newGame = startGame(
-                gameId,
-                inviterId,
-                inviteeId,
-                gameOptions,
-                server.broadcastPongGameState
-            );
-
+            const gameOptions = { canvasWidth: 800, canvasHeight: 600, winningScore: 5, player1Username: inviterUsername, player2Username: inviteeUsername };
+            const newGame = startGame(gameId, inviterId, inviteeId, gameOptions, server.broadcastPongGameState);
             if (newGame) {
-                server.log.info({ gameId, inviter: inviterId, invitee: inviteeId }, "New Pong game created on acceptance");
-
                 const gameConnections = new Set([ws, inviterWs]);
                 pongGameConnections.set(gameId, gameConnections);
                 ws.currentGameId = gameId;
                 inviterWs.currentGameId = gameId;
-
-                const cleanInitialState = {
-                    gameId: newGame.gameId,
-                    players: newGame.players,
-                    ball: newGame.ball,
-                    status: newGame.status,
-                    canvasWidth: newGame.canvasWidth,
-                    canvasHeight: newGame.canvasHeight,
-                    ballStartX: newGame.ballStartX,
-                    ballStartY: newGame.ballStartY,
-                    paddleStartY: newGame.paddleStartY,
-                    winningScore: newGame.winningScore,
-                    player1Id: newGame.player1Id,
-                    player2Id: newGame.player2Id,
-                };
-
+                
+                const cleanInitialState = { gameId: newGame.gameId, players: newGame.players, ball: newGame.ball, status: newGame.status, canvasWidth: newGame.canvasWidth, canvasHeight: newGame.canvasHeight, ballStartX: newGame.ballStartX, ballStartY: newGame.ballStartY, paddleStartY: newGame.paddleStartY, winningScore: newGame.winningScore, player1Id: newGame.player1Id, player2Id: newGame.player2Id };
                 gameConnections.forEach(clientWs => {
                     const yourPlayerId = clientWs.authenticatedUserId;
                     const opponentId = (yourPlayerId === inviterId) ? inviteeId : inviterId;
                     const opponentUsername = (yourPlayerId === inviterId) ? inviteeUsername : inviterUsername;
-                    
-                    const payloadWithPlayerInfo = {
-                        type: "PONG_GAME_STARTED",
-                        gameId: gameId,
-                        initialState: cleanInitialState,
-                        yourPlayerId,
-                        opponentId,
-                        opponentUsername
-                    };
-                    
+                    const payloadWithPlayerInfo = { type: "PONG_GAME_STARTED", gameId, initialState: cleanInitialState, yourPlayerId, opponentId, opponentUsername };
                     clientWs.send(JSON.stringify(payloadWithPlayerInfo));
                 });
-
-                server.log.info({ gameId }, "Sent PONG_GAME_STARTED to both players.");
-
             } else {
-                server.log.error({ inviter: inviterId, invitee: inviteeId }, "Failed to start game on acceptance");
                 ws.send(JSON.stringify({ type: "PONG_ERROR", message: "Failed to create game session." }));
-                if (inviterWs) {
-                    inviterWs.send(JSON.stringify({ type: "PONG_ERROR", message: "Failed to create game session with opponent." }));
-                }
+                if (inviterWs) { inviterWs.send(JSON.stringify({ type: "PONG_ERROR", message: "Failed to create game session with opponent." })); }
             }
 
         } else if (data.type === "PONG_PLAYER_INPUT") {
             const { gameId, input } = data;
-            if (!gameId || typeof input === "undefined") {
-              ws.send(
-                JSON.stringify({
-                  type: "PONG_ERROR",
-                  message: "Missing gameId/input.",
-                })
-              );
-              return;
-            }
-            if (ws.currentGameId !== gameId) {
-              ws.send(
-                JSON.stringify({
-                  type: "PONG_ERROR",
-                  gameId,
-                  message: "Not joined.",
-                })
-              );
-              return;
-            }
+            if (!gameId || typeof input === "undefined" || ws.currentGameId !== gameId) { return; }
             handlePlayerInput(gameId, ws.authenticatedUserId, input);
 
         } else if (data.type === "PONG_PLAYER_READY") {
-            // ... (your existing PONG_PLAYER_READY logic is correct)
             const { gameId } = data;
             const playerPrefixedId = ws.authenticatedUserId;
-
-            if (!gameId) {
-              server.log.warn({ userId: playerPrefixedId }, "PONG_PLAYER_READY: No gameId provided.");
-              ws.send(JSON.stringify({ type: "PONG_ERROR", message: "Missing gameId for ready signal."}));
-              return;
-            }
-
+            if (!gameId) { return; }
             const gameInstance = pongActiveGames.get(gameId);
-            if (!gameInstance) {
-              server.log.warn({ userId: playerPrefixedId, gameId }, "PONG_PLAYER_READY: gameInstance not found.");
-              ws.send(JSON.stringify({ type: "PONG_ERROR", gameId, message: "Game not found for ready signal."}));
-              return;
-            }
-            if (gameInstance.players[playerPrefixedId]) {
-              if (gameInstance.players[playerPrefixedId].isReady) {
-                server.log.info({ userId: playerPrefixedId, gameId }, "PONG_PLAYER_READY: Player already marked as ready.");
-              } else {
+            if (gameInstance && gameInstance.players[playerPrefixedId]) {
                 gameInstance.players[playerPrefixedId].isReady = true;
-                server.log.info({ userId: playerPrefixedId, gameId, playerReadyState: gameInstance.players[playerPrefixedId],}, `Player marked as ready.`);
-              }
-            } else {
-              server.log.warn({ userId: playerPrefixedId, gameId }, "PONG_PLAYER_READY: Player not found in this game instance.");
-              ws.send(JSON.stringify({ type: "PONG_ERROR", gameId, message: "You are not a player in this game."}));
             }
 
         } else if (data.type === 'PONG_LEAVE_GAME') {
             const { gameId } = data;
             const leavingPlayerId = ws.authenticatedUserId;
-
-            server.log.info({ gameId, userId: leavingPlayerId }, "Player intentionally left game via window close.");
             const connections = pongGameConnections.get(gameId);
             const gameInstance = pongActiveGames.get(gameId);
-
             if (connections && gameInstance) {
-                connections.delete(ws); // Remove leaver
-
-                // If a player remains, they are the winner
+                connections.delete(ws);
                 if (connections.size === 1) {
                     const remainingPlayerWs = connections.values().next().value;
                     const winnerId = remainingPlayerWs.authenticatedUserId;
-
-                    const scores = {
-                        [winnerId]: gameInstance.players[winnerId]?.score || 0,
-                        [leavingPlayerId]: gameInstance.players[leavingPlayerId]?.score || 0,
-                    };
-
+                    const scores = { [winnerId]: gameInstance.players[winnerId]?.score || 0, [leavingPlayerId]: gameInstance.players[leavingPlayerId]?.score || 0, };
                     if (remainingPlayerWs.readyState === 1) {
-                        remainingPlayerWs.send(JSON.stringify({
-                            type: 'PONG_GAME_OVER',
-                            gameId,
-                            winnerId,
-                            scores,
-                            reason: 'Opponent left the match.'
-                        }));
+                        remainingPlayerWs.send(JSON.stringify({ type: 'PONG_GAME_OVER', gameId, winnerId, scores, reason: 'Opponent left the match.' }));
                     }
                 }
                 stopGame(gameId);
@@ -603,48 +410,85 @@ ws.on("message", async (messageBuffer) => {
         } else if (data.type === "PONG_INVITE_DECLINED") {
             const { inviterId } = data;
             const declinerUsername = userJWTPayload.username;
-
-            if (!inviterId) {
-              server.log.warn({ userId: ws.authenticatedUserId, data }, "PONG_INVITE_DECLINED: Missing inviterId.");
-              ws.send(JSON.stringify({ type: "PONG_ERROR", message: "Invalid decline message." }));
-              return;
-            }
-
+            if (!inviterId) { return; }
             let inviterNumericId = null;
-            if (typeof inviterId === "string" && inviterId.startsWith("user_")) {
-              inviterNumericId = parseInt(inviterId.substring(5), 10);
-            } else {
-              inviterNumericId = parseInt(inviterId, 10);
-            }
+            if (typeof inviterId === "string" && inviterId.startsWith("user_")) { inviterNumericId = parseInt(inviterId.substring(5), 10); } 
+            else { inviterNumericId = parseInt(inviterId, 10); }
 
             if (inviterNumericId && !isNaN(inviterNumericId)) {
                 const inviterChannel = `user:${inviterNumericId}:messages`;
-                const declineNotification = {
-                    type: "PONG_INVITE_WAS_DECLINED",
-                    declinedByUsername: declinerUsername,
-                };
-                await redisPublisher.publish(
-                    inviterChannel,
-                    JSON.stringify(declineNotification)
-                );
-                server.log.info({ inviterChannel, payload: declineNotification }, "Notified inviter of declined Pong invitation.");
-            } else {
-                server.log.warn({ inviterIdReceived: inviterId }, "Could not parse numeric ID for inviter to send decline notification.");
+                const declineNotification = { type: "PONG_INVITE_WAS_DECLINED", declinedByUsername: declinerUsername };
+                await redisPublisher.publish(inviterChannel, JSON.stringify(declineNotification));
             }
+            
+        } else if (data.type === 'PLAYER_READY_FOR_MATCH') {
+            const { matchId } = data;
+            const userId = ws.rawAuthenticatedUserId;
 
+            if (!matchReadyState.has(matchId)) {
+                matchReadyState.set(matchId, new Set());
+            }
+            const readyPlayers = matchReadyState.get(matchId);
+            readyPlayers.add(userId);
+            
+            server.log.info({ matchId, userId, readyCount: readyPlayers.size }, "Player is ready for tournament match");
+
+            if (readyPlayers.size === 2) {
+                server.log.info({ matchId }, "Both players ready. Starting tournament game.");
+
+                const match = await new Promise((res, rej) => db.get('SELECT * FROM tournament_matches WHERE id = ?', [matchId], (err, row) => err ? rej(err) : res(row)));
+                
+                if (match && match.status === 'pending') {
+                    const player1Id = `user_${match.player1_id}`;
+                    const player2Id = `user_${match.player2_id}`;
+
+                    const player1Ws = activeConnections.get(player1Id);
+                    const player2Ws = activeConnections.get(player2Id);
+
+                    if (!player1Ws || !player2Ws) {
+                        server.log.error({ matchId, p1_online: !!player1Ws, p2_online: !!player2Ws }, "One or more tournament players are not connected.");
+                        matchReadyState.delete(matchId);
+                        return;
+                    }
+
+                    const p1 = await new Promise((res, rej) => db.get('SELECT username FROM users WHERE id = ?', [match.player1_id], (err, row) => err ? rej(err) : res(row)));
+                    const p2 = await new Promise((res, rej) => db.get('SELECT username FROM users WHERE id = ?', [match.player2_id], (err, row) => err ? rej(err) : res(row)));
+
+                    const gameId = generateGameId();
+                    const gameOptions = { canvasWidth: 800, canvasHeight: 600, winningScore: 5, player1Username: p1.username, player2Username: p2.username };
+                    const newGame = startGame(gameId, player1Id, player2Id, gameOptions, server.broadcastPongGameState);
+
+                    if (newGame) {
+                        const gameConnections = new Set([player1Ws, player2Ws]);
+                        pongGameConnections.set(gameId, gameConnections);
+                        player1Ws.currentGameId = gameId;
+                        player2Ws.currentGameId = gameId;
+
+                        await new Promise((res, rej) => db.run('UPDATE tournament_matches SET status = ?, game_id = ? WHERE id = ?', ['in_progress', gameId, matchId], (err) => err ? rej(err) : res()));
+                        
+                        const cleanInitialState = { gameId: newGame.gameId, players: newGame.players, ball: newGame.ball, status: newGame.status, canvasWidth: newGame.canvasWidth, canvasHeight: newGame.canvasHeight, ballStartX: newGame.ballStartX, ballStartY: newGame.ballStartY, paddleStartY: newGame.paddleStartY, winningScore: newGame.winningScore, player1Id: newGame.player1Id, player2Id: newGame.player2Id };
+                        
+                        gameConnections.forEach(clientWs => {
+                            const yourPlayerId = clientWs.authenticatedUserId;
+                            const opponentId = (yourPlayerId === player1Id) ? player2Id : player1Id;
+                            const opponentUsername = (yourPlayerId === player1Id) ? p2.username : p1.username;
+                            clientWs.send(JSON.stringify({ type: "PONG_GAME_STARTED", gameId, initialState: cleanInitialState, yourPlayerId, opponentId, opponentUsername }));
+                        });
+                        
+                        // TODO: Broadcast a BRACKET_UPDATE to all tournament participants
+                    }
+                    
+                    matchReadyState.delete(matchId);
+                }
+            }
         } else {
             server.log.warn({ userId: ws.authenticatedUserId, data }, "Unhandled WebSocket message type.");
-            if (ws.readyState === 1) {
-                ws.send(JSON.stringify({ type: "error", message: "Unhandled type: " + data.type, }));
-            }
         }
     } catch (error) {
         server.log.error({ error: error.message, raw: messageString, userId: ws.authenticatedUserId, }, "WebSocket message processing error.");
-        if (ws.readyState === 1) {
-            ws.send(JSON.stringify({ type: "error", message: "Processing error." }));
-        }
     }
 });
+
 
       ws.on("close", async (code, reason) => {
         const reasonString = reason ? reason.toString() : "N/A";

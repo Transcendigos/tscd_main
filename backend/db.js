@@ -26,99 +26,149 @@ export function initializeDB(logger) {
         if (logger) logger.info({ dbPath }, `Database opened successfully`);
     });
 
-    // Create users table
-    const usersTableStmt = db.prepare(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL UNIQUE,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        method_sign TEXT NOT NULL,
-        picture TEXT,
-        totp_secret TEXT
-      )
-    `);
-    usersTableStmt.run((err) => {
-        if (err) {
-            console.error("Error running CREATE TABLE users statement:", err.message);
-            if (logger) logger.error({ err }, "Error creating users table");
-        } else {
-            console.log("Users table checked/created successfully.");
-            if (logger) logger.info("Users table checked/created successfully.");
-        }
-    });
-    usersTableStmt.finalize((err) => {
-      if (err) {
-        console.error("Error finalizing CREATE TABLE users statement:", err.message);
-      }
-    });
+    // Use serialize to ensure tables are created in order
+    db.serialize(() => {
+        // Create users table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                email TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                method_sign TEXT NOT NULL,
+                picture TEXT,
+                totp_secret TEXT
+            )
+        `, (err) => {
+            if (err) {
+                if (logger) logger.error({ err }, "Error creating users table");
+            } else {
+                if (logger) logger.info("Users table checked/created successfully.");
+            }
+        });
 
-    // Create chat_messages table
-    const chatMessagesTable = db.prepare(`
-      CREATE TABLE IF NOT EXISTS chat_messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender_id INTEGER NOT NULL,
-        receiver_id INTEGER NOT NULL,
-        message_content TEXT NOT NULL,
-        drawing_data_url TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `);
-    chatMessagesTable.run((err) => {
-        if (err) {
-            console.error("Error creating chat_messages table:", err.message);
-            if (logger) logger.error({ err }, "Error creating chat_messages table");
-        } else {
-            console.log("chat_messages table checked/created successfully.");
-            if (logger) logger.info("chat_messages table checked/created successfully.");
-        }
+        // Create chat_messages table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sender_id INTEGER NOT NULL,
+                receiver_id INTEGER NOT NULL,
+                message_content TEXT NOT NULL,
+                drawing_data_url TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        `, (err) => {
+            if (err) {
+                if (logger) logger.error({ err }, "Error creating chat_messages table");
+            } else {
+                if (logger) logger.info("chat_messages table checked/created successfully.");
+            }
+        });
+
+        // Create scores table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS scores (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tournament_id INTEGER,
+                user_id INTEGER NOT NULL,
+                score INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        `, (err) => {
+            if (err) {
+                if (logger) logger.error({ err }, "Error creating scores table");
+            } else {
+                if (logger) logger.info("scores table checked/created successfully.");
+            }
+        });
+
+        // Create blocked users table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS blocked_users (
+                blocker_id INTEGER NOT NULL,
+                blocked_id INTEGER NOT NULL,
+                FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE,
+                PRIMARY KEY (blocker_id, blocked_id)
+            )
+        `, (err) => {
+            if (err) {
+                if (logger) logger.error({ err }, "Error creating blocked_users table");
+            } else {
+                if (logger) logger.info("blocked_users table checked/created successfully.");
+            }
+        });
+
+        // --- NEW TOURNAMENT TABLES ---
+
+        // Create tournaments table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS tournaments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                creator_id INTEGER NOT NULL,
+                size INTEGER NOT NULL CHECK(size IN (4, 8)),
+                status TEXT NOT NULL DEFAULT 'waiting' CHECK(status IN ('waiting', 'in_progress', 'finished', 'aborted')),
+                winner_id INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (creator_id) REFERENCES users(id),
+                FOREIGN KEY (winner_id) REFERENCES users(id)
+            )
+        `, (err) => {
+            if (err) {
+                if (logger) logger.error({ err }, "Error creating tournaments table");
+            } else {
+                if (logger) logger.info("Tournaments table checked/created successfully.");
+            }
+        });
+
+        // Create tournament_participants table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS tournament_participants (
+                tournament_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                join_order INTEGER NOT NULL,
+                PRIMARY KEY (tournament_id, user_id),
+                FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        `, (err) => {
+            if (err) {
+                if (logger) logger.error({ err }, "Error creating tournament_participants table");
+            } else {
+                if (logger) logger.info("Tournament participants table checked/created successfully.");
+            }
+        });
+
+        // Create tournament_matches table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS tournament_matches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tournament_id INTEGER NOT NULL,
+                round INTEGER NOT NULL,
+                match_in_round INTEGER NOT NULL,
+                player1_id INTEGER,
+                player2_id INTEGER,
+                winner_id INTEGER,
+                status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'in_progress', 'finished')),
+                game_id TEXT,
+                FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE,
+                FOREIGN KEY (player1_id) REFERENCES users(id),
+                FOREIGN KEY (player2_id) REFERENCES users(id),
+                FOREIGN KEY (winner_id) REFERENCES users(id)
+            )
+        `, (err) => {
+            if (err) {
+                if (logger) logger.error({ err }, "Error creating tournament_matches table");
+            } else {
+                if (logger) logger.info("Tournament matches table checked/created successfully.");
+            }
+        });
     });
-    chatMessagesTable.finalize();
-
-	// Create scores table
-	const scoresTable = db.prepare(`
-	CREATE TABLE IF NOT EXISTS scores (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		tournament_id INTEGER,
-		user_id INTEGER NOT NULL,
-		score INTEGER NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (user_id) REFERENCES users(id)
-	)
-	`);
-	scoresTable.run((err) => {
-	if (err) {
-		console.error("Error creating scores table:", err.message);
-		if (logger) logger.error({ err }, "Error creating scores table");
-	} else {
-		console.log("scores table checked/created successfully.");
-		if (logger) logger.info("scores table checked/created successfully.");
-	}
-	});
-	scoresTable.finalize();
-
-    // Create blocked users table
-    const blockedUsersTable = db.prepare(`
-      CREATE TABLE IF NOT EXISTS blocked_users (
-        blocker_id INTEGER NOT NULL,
-        blocked_id INTEGER NOT NULL,
-        FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE,
-        PRIMARY KEY (blocker_id, blocked_id)
-      )
-    `);
-    blockedUsersTable.run((err) => {
-        if (err) {
-            if (logger) logger.error({ err }, "Error creating blocked_users table");
-        } else {
-            if (logger) logger.info("blocked_users table checked/created successfully.");
-        }
-    });
-    blockedUsersTable.finalize();
-
 
     dbInstance = db;
     return dbInstance;
