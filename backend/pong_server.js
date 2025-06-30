@@ -1,4 +1,5 @@
 // backend/pong_server.js
+// chatMulti
 
 
 const PADDLE_WIDTH = 8;
@@ -11,6 +12,11 @@ const MAX_BALL_SPEED = 500;
 
 const activeGames = new Map();
 const playerCurrentGame = new Map(); //->map of players currently in game Map<playerId, gameId>
+
+// NEW: Add the generateGameId function here
+export function generateGameId() {
+  return `game_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+}
 
 export function isPlayerInActiveGame(playerId)
 {
@@ -74,7 +80,7 @@ function createNewGameState(gameId, player1Id, player2Id, options = {}) {
 
 function resetPositionsAfterScore(gameState, scoredOnRight) {
   const { ball, players, ballStartX, ballStartY, paddleStartY, player1Id, player2Id } = gameState;
-  
+
   players[player1Id].paddleY = paddleStartY;
   players[player2Id].paddleY = paddleStartY;
 
@@ -98,8 +104,8 @@ function handlePaddleCollision(ballState, paddleY) {
   ballState.vx = Math.max(Math.min(ballState.vx, MAX_BALL_SPEED), -MAX_BALL_SPEED);
   const hitZone = (ballState.y + ballState.height / 2 - paddleY) / PADDLE_HEIGHT;
   const maxAngleDeflection = Math.PI / 4;
-  let normalizedHitZone = (hitZone - 0.5) * 2; 
-  normalizedHitZone = Math.max(-0.85, Math.min(0.85, normalizedHitZone)); 
+  let normalizedHitZone = (hitZone - 0.5) * 2;
+  normalizedHitZone = Math.max(-0.85, Math.min(0.85, normalizedHitZone));
   const ballSpeedMagnitude = Math.sqrt(ballState.vx**2 + ballState.vy**2); // Use previous vx for speed calc before modifying vy too much
   ballState.vy = Math.sin(normalizedHitZone * maxAngleDeflection) * ballSpeedMagnitude * 0.8; // factor to control influence
 }
@@ -127,7 +133,7 @@ function updateGameState(gameId) {
         if (allPlayersReady) {
             gameState.status = 'in-progress';
             console.log(`[pong_server.js - ${gameId}] All players READY! Game status changing to 'in-progress'.`);
-            gameState.lastUpdateTime = Date.now(); 
+            gameState.lastUpdateTime = Date.now();
         }
     }
 
@@ -155,7 +161,7 @@ function updateGameState(gameId) {
 
         if (ball.y <= 0) { ball.y = 0; ball.vy *= -1; }
         else if (ball.y + ball.height >= canvasHeight) { ball.y = canvasHeight - ball.height; ball.vy *= -1; }
-        
+
         const p1 = players[player1Id];
         const p2 = players[player2Id];
         const PADDLE1_X = 10;
@@ -189,11 +195,11 @@ function updateGameState(gameId) {
           }
         }
     }
-    
+
     const p1 = gameState.players[gameState.player1Id];
     const p2 = gameState.players[gameState.player2Id];
     console.log(`[pong_server.js - ${gameId}] UPDATE_GameStateEnd: Ball(${gameState.ball.x.toFixed(0)},${gameState.ball.y.toFixed(0)}) P1(R:${p1.isReady},S:${p1.score}) P2(R:${p2.isReady},S:${p2.score}) Status:${gameState.status}`);
-    
+
     return gameState;
 }
 
@@ -219,7 +225,7 @@ function startGame(gameId, player1Id, player2Id, options = {}, broadcasterFromCa
 
     playerCurrentGame.set(player1Id, gameId);
     playerCurrentGame.set(player2Id, gameId);
-    
+
     console.log(`[pong_server.js - ${gameId}] LOOP STARTING. P1: ${player1Id}(${newGame.players[player1Id].score}), P2: ${player2Id}(${newGame.players[player2Id].score})`);
 
     const gameBroadcaster = broadcasterFromCaller;
@@ -228,7 +234,7 @@ function startGame(gameId, player1Id, player2Id, options = {}, broadcasterFromCa
     const updatedState = updateGameState(gameId);
 
     if (updatedState && typeof gameBroadcaster === 'function') {
-        
+
         const p1Score = updatedState.players[player1Id]?.score;
         const p2Score = updatedState.players[player2Id]?.score;
 
@@ -237,16 +243,16 @@ function startGame(gameId, player1Id, player2Id, options = {}, broadcasterFromCa
             type: 'PONG_GAME_STATE_UPDATE',
             gameId: updatedState.gameId,
             ball: {
-                x: parseFloat(updatedState.ball.x.toFixed(1)), 
-                y: parseFloat(updatedState.ball.y.toFixed(1)), 
-                vx: parseFloat(updatedState.ball.vx.toFixed(1)), 
-                vy: parseFloat(updatedState.ball.vy.toFixed(1)) 
+                x: parseFloat(updatedState.ball.x.toFixed(1)),
+                y: parseFloat(updatedState.ball.y.toFixed(1)),
+                vx: parseFloat(updatedState.ball.vx.toFixed(1)),
+                vy: parseFloat(updatedState.ball.vy.toFixed(1))
             },
             players: updatedState.players,
             status: updatedState.status
         };
-        
-        
+
+
         try {
             gameBroadcaster(gameId, stateToSend);
         } catch (e) {
@@ -257,7 +263,7 @@ function startGame(gameId, player1Id, player2Id, options = {}, broadcasterFromCa
             const finalP1s = updatedState.players[player1Id]?.score;
             const finalP2s = updatedState.players[player2Id]?.score;
             const winnerId = finalP1s >= updatedState.winningScore ? player1Id : (finalP2s >= updatedState.winningScore ? player2Id : null);
-            
+
             const gameOverPayload = {
                 type: 'PONG_GAME_OVER',
                 gameId: updatedState.gameId,
@@ -272,7 +278,7 @@ function startGame(gameId, player1Id, player2Id, options = {}, broadcasterFromCa
             stopGame(gameId);
         }
     } else if (!updatedState) {
-        stopGame(gameId); 
+        stopGame(gameId);
     } else if (typeof gameBroadcaster !== 'function') {
         console.warn(`--- PONG_SERVER.JS - [${gameId}] Loop: gameBroadcaster is UNDEFINED or NOT A FUNCTION in tick. Type: ${typeof gameBroadcaster} ---`);
     }
@@ -286,10 +292,10 @@ function stopGame(gameId) {
     if (game) {
         if (game.loopInterval) {
             clearInterval(game.loopInterval);
-            game.loopInterval = null; 
+            game.loopInterval = null;
         }
-        
-        if(game.status !== 'finished') game.status = 'aborted'; 
+
+        if(game.status !== 'finished') game.status = 'aborted';
         console.log(`[pong_server.js - ${gameId}] Game loop stopped. Status: ${game.status}`);
 
         if (game.player1Id) playerCurrentGame.delete(game.player1Id);
