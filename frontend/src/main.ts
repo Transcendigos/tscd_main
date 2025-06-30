@@ -9,7 +9,7 @@ import { setupInfoWindow } from "./infowindow.ts";
 import { settingUserProfile, settingUserSetting } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
 import { setupSpotifySearch } from './music.ts';
-import { initializeChatSystem, resetChatSystem, sendPongPlayerInput, sendPongPlayerReady } from "./chatClient.js";
+import { initializeChatSystem, resetChatSystem, sendPongPlayerInput, sendPongPlayerReady, sendPongLeaveGame } from "./chatClient.js";
 import {
   initMultiplayerPong,
   updateMultiplayerGameState,
@@ -41,6 +41,7 @@ let aboutWindow: DesktopWindow;
 let aiWindow: DesktopWindow;
 let musicWindow: DesktopWindow;
 let sceneManager: SceneManager | null = null;
+let activeRemoteGameId: string | null = null;
 
 // --- State Management for Games ---
 let activePongMode: 'solo_3d' | 'remote_2d' | 'local_2d' | null = null;
@@ -177,7 +178,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         multiplayerPongWindow = new DesktopWindow({
             windowId: "multiplayerPongWindow", dragHandleId: "multiplayerPongDragHandle", resizeHandleId: "multiplayerPongResizeHandle",
             boundaryContainerId: "main", visibilityToggleId: "multiplayerPongWindow", closeButtonId: "closeMultiplayerPongBtn",
-            onCloseCallback: () => stopAnyActiveGame() // Generic cleanup
+            onCloseCallback: () => {
+              if (activePongMode === 'remote_2d' && activeRemoteGameId) {
+                sendPongLeaveGame(activeRemoteGameId);
+            }
+              stopAnyActiveGame()}
         });
     } catch (e) { console.error("Pong windows init failed:", e); }
 
@@ -237,6 +242,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         stopAnyActiveGame(); // Stop any local game before starting a remote one
         const customEvent = event as CustomEvent;
         const { gameId, initialState, yourPlayerId, opponentId, opponentUsername } = customEvent.detail;
+        activeRemoteGameId = gameId;
+
+
         pongWindow.close();
         multiplayerPongWindow.open();
         initMultiplayerPong(gameId, initialState, yourPlayerId, opponentId, opponentUsername, multiPongCanvas, sendPongPlayerInput, sendPongPlayerReady);
@@ -252,6 +260,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     window.addEventListener('pongGameOver', (event: Event) => {
         const { winnerId, scores } = (event as CustomEvent).detail;
         handleMultiplayerGameOver(winnerId, scores);
+        activeRemoteGameId = null;
         activePongMode = null;
         stopCurrentGame = null;
     });
@@ -278,6 +287,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         .then(text => setupAIWindow(musicWindow, text))
         .catch(err => console.error("Failed to load AI prompt:", err));
 });
+
+
+
 
 
 // ----------------WINDOW TEMPLATE----------------

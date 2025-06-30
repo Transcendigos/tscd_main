@@ -983,3 +983,13 @@ export function resetChatSystem() {
   if (chatUserListEl) chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs">Logged out.</li>';
   if (chatWithUserEl) chatWithUserEl.textContent = "Log in to chat";
 }
+
+export function sendPongLeaveGame(gameId: string) {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    const payload = { type: 'PONG_LEAVE_GAME', gameId };
+    socket.send(JSON.stringify(payload));
+    console.log(`[CHATCLIENT] Sent PONG_LEAVE_GAME for gameId: ${gameId}`);
+  } else {
+    console.error('[CHATCLIENT] WebSocket not connected. Cannot send PONG_LEAVE_GAME.');
+  }
+}
