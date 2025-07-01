@@ -105,3 +105,28 @@
     color: #a0aec0;
     font-style: italic;
 }
+
+
+
+.scanline-texture {
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 1px,
+        rgba(76, 180, 231, 0.1) 1px,
+        rgba(76, 180, 231, 0.1) 2px
+    );
+    background-size: 100% 3px;
+}
+
+.info-grid-button {
+    @apply flex flex-col items-center justify-center p-4;
+    @apply border border-slate-700 bg-slate-800/50;
+    @apply text-center text-[#4cb4e7] transition-all duration-300;
+    @apply hover:bg-seLightRed hover:text-slate-900 hover:border-[#4cb4e7] hover:scale-105;
+}
+
+.forecast-day-card {
+    @apply flex flex-col items-center p-1 bg-slate-900/50 rounded-md text-xs border border-slate-700/80;
+    @apply space-y-1;
+}

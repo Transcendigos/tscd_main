@@ -21,7 +21,8 @@ import { startPongGame as startRemotePong, setCanvas as setRemotePongCanvas, sto
 import { startPongGame as startLocalPong, setCanvas as setLocalPongCanvas, stopPongGame as stopLocalPong } from "./localmultipong.js";
 // *** CHANGE: Import the new exported function
 import { setupTournamentSystem, fetchAndDisplayTournaments, showTournamentBracket } from "./tournament.ts";
-import { setupDashboard, fetchData } from './dashboard.ts'; 
+import { setupDashboard, fetchData } from './dashboard.ts';
+
 
 
 // ... (variable declarations are unchanged)
@@ -143,6 +144,8 @@ async function updateUIBasedOnAuth() {
 
 
 window.addEventListener("DOMContentLoaded", async () => {
+
+    
     // ... (All window initializations are unchanged)
     try { new DesktopWindow({ windowId: "dragWindow", dragHandleId: "dragHandle", resizeHandleId: "menuResize", boundaryContainerId: "main", visibilityToggleId: "dragWindow", openTriggerId: "menuShortcut", closeButtonId: "closeMenuBtn" }); } catch (e) { console.error("Menu init failed:", e); }
     try { signinWindow = new DesktopWindow({ windowId: "signinWindow", dragHandleId: "signinDragHandle", resizeHandleId: "signinResizeHandle", boundaryContainerId: "main", visibilityToggleId: "signinWindow", closeButtonId: "closesigninBtn" }); setupSigninForm(signinWindow); } catch (e) { console.error("Signin init failed:", e); }
