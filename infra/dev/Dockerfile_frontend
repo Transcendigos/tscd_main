@@ -13,11 +13,9 @@ COPY dev/tsconfig.json ./
 
 COPY src/ /app/src/
 COPY index.html ./
-COPY pong_dev.html ./
-COPY solong_dev.html ./
+# COPY pong_dev.html ./
+# COPY solong_dev.html ./
 
 EXPOSE 5173
 
 CMD ["npm", "run", "dev"]
-
-

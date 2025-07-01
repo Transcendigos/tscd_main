@@ -273,7 +273,10 @@ function connectWebSocket() {
     return;
   }
   console.log("Chat: Attempting to establish WebSocket connection...");
-  socket = new WebSocket("ws://localhost:3000/ws/chat");
+  const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const wsHost = window.location.host;
+  const WEBSOCKET_URL = `${wsProtocol}://${wsHost}/ws/chat`;
+  socket = new WebSocket(WEBSOCKET_URL);
 
   socket.onopen = () => {
     console.log("Chat: WebSocket Connection Opened! Waiting for server to authenticate via cookie.");

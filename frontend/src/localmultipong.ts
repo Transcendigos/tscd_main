@@ -30,9 +30,14 @@ interface UserInfo {
 
 let currentUser: UserInfo = { signedIn: false };
 
+function getApiUrl(path: string) {
+  const base = import.meta.env.VITE_API_URL || '';
+  return base + path;
+}
+
 async function fetchCurrentUser() {
   try {
-    const response = await fetch("http://localhost:3000/api/me", {
+    const response = await fetch(getApiUrl("/api/me"), {
       credentials: "include",
     });
     if (!response.ok) {
@@ -56,7 +61,7 @@ async function fetchCurrentUser() {
 
 async function postScore(tournamentId: number, userId: number, score: number) {
   try {
-    const response = await fetch("http://localhost:3000/api/scores", {
+    const response = await fetch(getApiUrl("/api/scores"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

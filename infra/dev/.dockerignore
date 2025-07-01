@@ -11,4 +11,5 @@ frontend/dev/
 !frontend/
 .git
 .gitignore
-README.md 
+README.md
+frontend/public/uploads/ 

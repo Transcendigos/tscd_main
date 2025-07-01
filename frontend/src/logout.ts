@@ -1,6 +1,11 @@
 import { DesktopWindow } from "./DesktopWindow.js";
 import { resetAIWindow } from "./aiassistant.js";
 
+function getApiUrl(path: string) {
+  const base = import.meta.env.VITE_API_URL || '';
+  return base + path;
+}
+
 export function setupLogoutForm(logoutWindow: DesktopWindow) {
 
   const logoutUsername = document.getElementById("logoutUsername") as HTMLDivElement;
@@ -10,7 +15,7 @@ export function setupLogoutForm(logoutWindow: DesktopWindow) {
 
   logoutWindow.open = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+      const res = await fetch(getApiUrl("/api/me"), { credentials: "include" });
       const data = await res.json();
       console.log("🧾 /api/me response:", data);
 
@@ -30,7 +35,7 @@ export function setupLogoutForm(logoutWindow: DesktopWindow) {
   // Handle logout
   const logoutBtn = document.getElementById("logoutBtn");
   logoutBtn?.addEventListener("click", async () => {
-    await fetch("http://localhost:3000/api/logout", {
+    await fetch(getApiUrl("/api/logout"), {
       method: "POST",
       credentials: "include",
     });

@@ -4,8 +4,13 @@ declare global {
   }
 }
 
+function getApiUrl(path: string) {
+  const base = import.meta.env.VITE_API_URL || '';
+  return base + path;
+}
+
 function handleCredentialResponse(response: any) {
-  fetch("http://localhost:3000/api/google-login", {
+  fetch(getApiUrl("/api/google-login"), {
     method: "POST",
     credentials: "include",
     headers: {

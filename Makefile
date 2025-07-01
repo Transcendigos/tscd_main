@@ -68,7 +68,7 @@ dev_shell_back:
 	$(DOCKER_COMPOSE_DEV) exec backend sh
 
 dev_status:
-	$(DOCKER_COMPOSE_DEV) ps
+	$(DOCKER_COMPOSE_DEV) ps 
 
 dev_rebuild:
 	$(DOCKER_COMPOSE_DEV) up --build --force-recreate -d

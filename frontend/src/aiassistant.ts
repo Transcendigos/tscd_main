@@ -136,6 +136,10 @@ function setupUnifiedMic(inputEl: HTMLInputElement) {
   };
 }
 
+function getApiUrl(path: string) {
+  const base = import.meta.env.VITE_API_URL || '';
+  return base + path;
+}
 
 export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string) {
   const form = document.getElementById("chatForm") as HTMLFormElement;
@@ -223,7 +227,7 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
         finalText = "Opening/closing the proper window - See ya soon";
       }
       if (matchedMood) {
-        const musicRes = await fetch(`http://localhost:3000/api/spotify/search?q=${encodeURIComponent(matchedMood)}`);
+        const musicRes = await fetch(getApiUrl(`/api/spotify/search?q=${encodeURIComponent(matchedMood)}`));
         const musicData = await musicRes.json();
         if (musicData.embed) {
           const iframe = document.getElementById("spotifyIframe") as HTMLIFrameElement;
@@ -234,7 +238,7 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
       else if (matchedWebsite) {
       }
       else {
-        const res = await fetch("http://localhost:3000/api/gpt", {
+        const res = await fetch(getApiUrl("/api/gpt"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ system: systemMessage, message: translatedInput }),
