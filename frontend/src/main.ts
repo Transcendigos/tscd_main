@@ -116,13 +116,15 @@ async function updateUIBasedOnAuth() {
     disableTrigger("profileBtn");
     disableTrigger("settingTab");
     disableTrigger("logoutTab");
+    disableTrigger("darkBtn");
+    disableTrigger("clickMeBtn");
     
     document.getElementById("clickMeBtn")?.classList.add("opacity-50", "cursor-not-allowed");
     document.getElementById("darkBtn")?.classList.add("opacity-50", "cursor-not-allowed");
     disableTrigger("tournamentBtn");
 
     disableTrigger("chatBtn");
-    disableTrigger("infoWindow");
+    disableTrigger("infoTab");
     disableTrigger("statsTab");
     disableTrigger("aiBtn");
     disableTrigger("musicBtn");

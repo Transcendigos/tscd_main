@@ -16,7 +16,6 @@ export function resetAIWindow() {
   window.speechSynthesis.cancel(); // Stop any ongoing speech
 }
 
-
 async function detectLanguage(text: string): Promise<string> {
   const res = await fetch("https://libretranslate.de/detect", {
     method: "POST",
@@ -49,102 +48,12 @@ function speak(text: string, lang = "en") {
   synth.speak(utter);
 }
 
-function setupUnifiedMic(inputEl: HTMLInputElement) {
-  const micBtn = document.createElement("button");
-  micBtn.type = "button";
-  micBtn.textContent = "🎤";
-  micBtn.className = "ml-2 bg-[#4cb4e7] text-black px-2 py-1 rounded font-bold";
-  inputEl.parentElement?.appendChild(micBtn);
-
-  const recognition = new (window as any).webkitSpeechRecognition();
-  recognition.lang = "en-US";
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-  let isRecording = false;
-
-  const voiceCommands: Record<string, () => void> = {
-    "play music": () => { document.getElementById("musicBtn")?.click() },
-    "play pong": () => { document.getElementById("clickMeBtn")?.click(); (window as any).aiWindow?.close?.() },
-    "play multiplayer": () => alert("multiplayer feature is coming soon!"),
-    "play tournament": () => alert("Tournament feature is coming soon!"),
-    "open weather": () => { document.getElementById("openWeatherBtn")?.click() },
-    "open settings": () => { document.getElementById("settingTab")?.click() },
-    "open profile": () => { document.getElementById("profileBtn")?.click() },
-    "open info": () => { document.getElementById("infoTab")?.click() },
-    "open logout": () => { document.getElementById("logoutTab")?.click() },
-    "open system": () => { document.getElementById("openGrafanaBtn")?.click() },
-    "open about": () => { document.getElementById("openAboutBtn")?.click() },
-    "open chat": () => { document.getElementById("chatBtn")?.click() },
-    "open command": () => { document.getElementById("openCommandBtn")?.click() },
-    "open stats": () => { document.getElementById("statsTab")?.click() },
-
-    "close music": () => { document.getElementById("closemusicBtn")?.click() },
-    "close pong": () => { document.getElementById("closepongBtn")?.click(); (window as any).aiWindow?.close?.() },
-    "close multiplayer": () => alert("multiplayer feature is coming soon!"),
-    "close tournament": () => alert("Tournament feature is coming soon!"),
-    "close weather": () => { document.getElementById("closeweatherBtn")?.click() },
-    "close settings": () => { document.getElementById("closesettingBtn")?.click() },
-    "close profile": () => { document.getElementById("closeprofileBtn")?.click() },
-    "close info": () => { document.getElementById("closeinfoBtn")?.click() },
-    "close logout": () => { document.getElementById("closelogoutBtn")?.click() },
-    "close system": () => { document.getElementById("closegrafanaBtn")?.click() },
-    "close about": () => { document.getElementById("closeaboutBtn")?.click() },
-    "close chat": () => { document.getElementById("closeChatBtn")?.click() },
-    "close command": () => { document.getElementById("closecommandBtn")?.click() },
-    "close stats": () => { document.getElementById("closestatsBtn")?.click() },
-  };
-
-  micBtn.onclick = () => {
-    if (isRecording) {
-      console.warn("Already recording");
-      return;
-    }
-    isRecording = true;
-    micBtn.textContent = "🎙️";
-    recognition.start();
-  };
-
-  recognition.onresult = (event: any) => {
-    const transcript = event.results[0][0].transcript.toLowerCase().trim();
-    console.log("🎤 Recognized:", transcript);
-
-    if (voiceCommands[transcript]) {
-      voiceCommands[transcript]();
-    } else {
-      inputEl.value = transcript;
-      inputEl.form?.requestSubmit();
-    }
-
-    isRecording = false;
-    micBtn.textContent = "🎤";
-  };
-
-  recognition.onerror = (event: any) => {
-    console.error("Speech recognition error:", event.error);
-    micBtn.textContent = "❌";
-    isRecording = false;
-    setTimeout(() => {
-      micBtn.textContent = "🎤";
-    }, 1500);
-  };
-
-  recognition.onend = () => {
-    isRecording = false;
-    if (micBtn.textContent !== "❌") {
-      micBtn.textContent = "🎤";
-    }
-  };
-}
-
-
 export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string) {
   const form = document.getElementById("chatForm") as HTMLFormElement;
   const input = document.getElementById("chatInput") as HTMLInputElement;
-  const messages = document.getElementById("chatMessages");
+  const messages = document.getElementById("chatMessages") as HTMLElement;
 
   if (!form || !input || !messages) return;
-
-  setupUnifiedMic(input);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -180,7 +89,6 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
       "open chat": () => { document.getElementById("chatBtn")?.click() },
       "open command": () => { document.getElementById("openCommandBtn")?.click() },
       "open stats": () => { document.getElementById("statsTab")?.click() },
-
       "close music": () => { document.getElementById("closemusicBtn")?.click() },
       "close pong": () => { document.getElementById("closepongBtn")?.click(); (window as any).aiWindow?.close?.() },
       "close multiplayer": () => alert("multiplayer feature is coming soon!"),
@@ -204,16 +112,14 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
     }
 
     try {
-      const userLang = "en" //await detectLanguage(userMsg);
-      const translatedInput = userMsg; //userLang !== "en" ? await translateText(userMsg, userLang, "en") : userMsg;
-
+      const userLang = "en"
+      const translatedInput = userMsg;
 
       const moodKeywords = ["chill", "sad", "happy", "focus", "jazz", "epic", "lofi", "gaming", "romantic"];
       const websiteKeywords = ["open", "play", "close"];
 
       const matchedMood = moodKeywords.find(mood => translatedInput.toLowerCase().includes(mood));
       const matchedWebsite = websiteKeywords.find(web => translatedInput.toLowerCase().includes(web));
-
 
       let finalText = "waiting AI bot";
       if (matchedMood) {
@@ -261,7 +167,6 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
       }
 
       typeCharByChar(finalText, () => speak(finalText, userLang));
-
 
     } catch (err) {
       const errorDiv = document.createElement("div");

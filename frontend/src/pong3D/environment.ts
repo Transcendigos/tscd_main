@@ -39,9 +39,9 @@ export class Environment {
         this.spotLight.intensity = 2000;
         this.spotLight.shadowEnabled = true;
 
-        const small = new BABYLON.PointLight("small", new BABYLON.Vector3(0, 2, 3.8), this.scene);
-        small.range = 0.5;
-        small.intensity = 0.1;
+        // const small = new BABYLON.PointLight("small", new BABYLON.Vector3(0, 2, 3.8), this.scene);
+        // small.range = 0.5;
+        // small.intensity = 0.1;
 
         const spotLightHeight = 8;
         const pointLightHeight = 2.5;
