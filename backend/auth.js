@@ -239,8 +239,8 @@ export default fp(async function authRoutes(server, options) {
     let payload;
     try {
       payload = jwt.verify(token, server.jwt_secret);
-      if (!payload.userId || !payload.username || !payload.email) {
-        server.log.warn({ payload }, 'JWT payload missing expected fields for /api/me');
+      if (!payload.userId) { // Simplified check
+        server.log.warn({ payload }, 'JWT payload missing userId for /api/me');
         reply.clearCookie('auth_token', { path: '/' });
         return reply.send({ signedIn: false, error: 'Invalid session data.' });
       }
@@ -250,7 +250,7 @@ export default fp(async function authRoutes(server, options) {
       return reply.send({ signedIn: false });
     }
 
-    // 🔍 Fetch user’s 2FA status from DB
+    // Fetch user from DB
     const userRow = await new Promise((resolve, reject) => {
       db.get(
         'SELECT * FROM users WHERE id = ?',
@@ -262,15 +262,22 @@ export default fp(async function authRoutes(server, options) {
       );
     });
 
+    if (!userRow) {
+      server.log.warn({ userId: payload.userId }, 'User from valid token not found in DB.');
+      reply.clearCookie('auth_token', { path: '/' }); // Clear the bad cookie
+      return reply.send({ signedIn: false, error: 'User not found.' });
+    }
+
     reply.send({
       signedIn: true,
       user: {
-        userId: userRow?.id, 
-        username: userRow?.username, 
-        email: userRow?.email, 
-        picture: userRow?.picture,
-        totp_enabled: Boolean(userRow?.totp_secret),
-        method_sign: userRow?.method_sign,
+        userId: userRow.id,
+        username: userRow.username,
+        email: userRow.email,
+
+        picture: userRow.picture,
+        totp_enabled: Boolean(userRow.totp_secret),
+        method_sign: userRow.method_sign,
       },
     });
   });
