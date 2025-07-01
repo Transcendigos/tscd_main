@@ -1,3 +1,5 @@
+import { currentUserId as myUserId } from './chatClient.js';
+
 const hide = (id: string) => document.getElementById(id)!.classList.add("hidden");
 
 async function resetAllForms() {
@@ -170,4 +172,85 @@ export async function settingUserProfile() {
         console.error("Error loading user profile:", error);
     }
 }
+
+export async function populateUserProfile() {
+    if (!myUserId) {
+        console.error("Profile: User not authenticated.");
+        document.getElementById('profileUsername')!.textContent = "Error: Not Signed In";
+        return;
+    }
+    
+    const prefixedId = `user_${myUserId}`;
+
+    try {
+        // Fetch all necessary data in parallel for maximum speed
+        const [profileRes, summaryRes, historyRes] = await Promise.all([
+            fetch('http://localhost:3000/api/profile', { credentials: 'include' }),
+            fetch(`/api/stats/summary/${prefixedId}`),
+            fetch(`/api/stats/match-history/${prefixedId}`)
+            // Note: You will need to create an endpoint to fetch friends list
+            // fetch(`/api/friends/${prefixedId}`)
+        ]);
+
+        if (!profileRes.ok || !summaryRes.ok || !historyRes.ok) {
+            throw new Error('Failed to fetch all profile data.');
+        }
+
+        const { profile } = await profileRes.json();
+        const summary = await summaryRes.json();
+        const history = await historyRes.json();
+        // const friends = await friendsRes.json(); // Uncomment when you have a friends endpoint
+
+        // --- Populate Header ---
+        (document.getElementById('profileImage') as HTMLImageElement).src = profile.picture || '/favicon.jpg';
+        document.getElementById('profileUsername')!.textContent = profile.username;
+        document.getElementById('profileEmail')!.textContent = profile.email;
+
+        // --- Populate Stats Bar ---
+        document.getElementById('profileWins')!.textContent = summary.wins;
+        document.getElementById('profileLosses')!.textContent = summary.losses;
+        document.getElementById('profileWinRatio')!.textContent = summary.winRatio;
+
+        // --- Populate Friends List (Example) ---
+        // This part is a placeholder until you create the backend endpoint for it.
+        const friendsList = document.getElementById('profileFriendsList')!;
+        friendsList.innerHTML = `<li class="opacity-50 text-xs">Friends list coming soon...</li>`; 
+        // Once you have the data, you would use a map function like this:
+        /*
+        friendsList.innerHTML = friends.map(friend => `
+            <li class="flex items-center justify-between text-xs p-1 bg-slate-900/50">
+                <span>${friend.username}</span>
+                <span class="text-${friend.is_online ? 'green' : 'gray'}-400">${friend.is_online ? 'Online' : 'Offline'}</span>
+            </li>
+        `).join('') || `<li class="opacity-50 text-xs">No friends added yet.</li>`;
+        */
+
+        // --- Populate Match History ---
+        const historyBody = document.getElementById('profileMatchHistory');
+        if (historyBody) {
+            historyBody.innerHTML = ''; // Clear previous history
+            if (history.length === 0) {
+                historyBody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-slate-400">No match history found.</td></tr>`;
+            } else {
+                history.forEach(match => {
+                    const resultClass = match.result === 'Win' ? 'text-green-400' : 'text-red-400';
+                    const row = document.createElement('tr');
+                    row.className = 'border-t border-slate-700/50';
+                    row.innerHTML = `
+                        <td class="p-2">${match.opponent}</td>
+                        <td class="p-2">${match.yourScore} - ${match.opponentScore}</td>
+                        <td class="p-2 font-bold ${resultClass}">${match.result}</td>
+                        <td class="p-2 opacity-70">${new Date(match.date).toLocaleDateString()}</td>
+                    `;
+                    historyBody.appendChild(row);
+                });
+            }
+        }
+
+    } catch (error) {
+        console.error("Error populating user profile:", error);
+        document.getElementById('profileUsername')!.textContent = "Failed to load data";
+    }
+}
+
 

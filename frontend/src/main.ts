@@ -22,6 +22,7 @@ import { startPongGame as startLocalPong, setCanvas as setLocalPongCanvas, stopP
 // *** CHANGE: Import the new exported function
 import { setupTournamentSystem, fetchAndDisplayTournaments, showTournamentBracket } from "./tournament.ts";
 import { setupDashboard, fetchData } from './dashboard.ts';
+import { populateUserProfile } from './profile.js'; 
 
 
 
@@ -91,7 +92,7 @@ async function updateUIBasedOnAuth() {
   const isSignedIn = await checkSignedIn();
 
   if (isSignedIn) {
-    assignOpenTrigger(profileWindow, "profileBtn", settingUserProfile);
+    assignOpenTrigger(profileWindow, "profileBtn", populateUserProfile);
     assignOpenTrigger(settingWindow, "settingTab", settingUserSetting);
     assignOpenTrigger(logoutWindow, "logoutTab");
     
@@ -144,7 +145,6 @@ async function updateUIBasedOnAuth() {
 
 
 window.addEventListener("DOMContentLoaded", async () => {
-
     
     // ... (All window initializations are unchanged)
     try { new DesktopWindow({ windowId: "dragWindow", dragHandleId: "dragHandle", resizeHandleId: "menuResize", boundaryContainerId: "main", visibilityToggleId: "dragWindow", openTriggerId: "menuShortcut", closeButtonId: "closeMenuBtn" }); } catch (e) { console.error("Menu init failed:", e); }
