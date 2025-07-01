@@ -1,9 +1,10 @@
-FROM node:20-slim
+FROM node:20-alpine
 
 WORKDIR /app
 
 # Installer sqlite3 CLI pour les backups
-RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache sqlite
 
 COPY ./backend/package*.json ./
 COPY ./backend/.env ./

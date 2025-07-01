@@ -3,7 +3,7 @@
 ## 📋 Checklist Production
 - [x] **Nginx** avec HTTPS et optimisations
 - [x] **Vite build** optimisé pour la production
-- [x] **Ports sécurisés** (seulement 80/443 exposés)
+- [x] **Ports sécurisés** (seulement 8080/443 exposés)
 - [x] **Health checks** sur tous les services
 - [x] **Volumes persistants** pour les données
 - [x] **Headers de sécurité** dans Nginx

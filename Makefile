@@ -1,5 +1,6 @@
 DOCKER_COMPOSE_PROD=docker-compose -f infra/prod/docker-compose.yml
 DOCKER_COMPOSE_DEV=docker-compose -f infra/dev/docker-compose.yml
+DOCKER_COMPOSE_MONITORING=docker-compose -f infra/prod/docker-compose.monitoring.yml
 PROJECT_DIR = $(shell pwd)
 
 # ==================== PRODUCTION ====================
@@ -7,7 +8,10 @@ prod_build:
 	$(DOCKER_COMPOSE_PROD) build
 
 prod_up:
+	$(DOCKER_COMPOSE_DEV) down --remove-orphans
 	$(DOCKER_COMPOSE_PROD) up -d
+	@echo "🌐 Serving HTTPS at: https://localhost"
+	@echo "🌐 HTTP→HTTPS redirect at: http://localhost:8080"
 
 prod_run: prod_clean prod_build prod_up 
 
@@ -16,12 +20,12 @@ prod_down:
 
 prod_down_all:
 	$(DOCKER_COMPOSE_PROD) down
-	docker-compose -f infra/prod/docker-compose.monitoring.yml down
+	$(DOCKER_COMPOSE_MONITORING) down
 
 prod_nuke:
 	@echo "🧨 NUKE MODE: Shutting down and cleaning everything..."
 	$(DOCKER_COMPOSE_PROD) down -v --rmi all --remove-orphans
-	docker-compose -f infra/prod/docker-compose.monitoring.yml down -v --rmi all --remove-orphans
+	$(DOCKER_COMPOSE_MONITORING) down -v --rmi all --remove-orphans
 	docker system prune -f
 	docker volume prune -f
 	docker network prune -f
@@ -40,7 +44,10 @@ prod_restart: prod_down prod_up
 
 # ==================== DEVELOPMENT ====================
 dev_up:
+	$(DOCKER_COMPOSE_PROD) down --remove-orphans
 	$(DOCKER_COMPOSE_DEV) up --build -d
+	@echo "🌐 Frontend (Vite) at: http://localhost:5173"
+	@echo "🌐 Backend (API) at: http://localhost:3000"
 
 dev_down:
 	$(DOCKER_COMPOSE_DEV) down --remove-orphans
@@ -91,4 +98,14 @@ nuke_all:
 	$(MAKE) prod_nuke
 	@echo "🔥 Everything has been completely nuked!"
 
-.PHONY: prod_build prod_up prod_down prod_down_all prod_nuke prod_logs prod_clean prod_run prod_status prod_restart dev_up dev_down dev_logs_front dev_logs_back dev_logs_all dev_shell_front dev_shell_back dev_status dev_rebuild dev_clean dev_restart dev_nuke nuke_all
+destroyer_of_worlds:
+	docker-compose -f $(DOCKER_COMPOSE_DEV) down -v --remove-orphans || true
+	docker-compose -f $(DOCKER_COMPOSE_PROD) down -v --remove-orphans || true
+	$(DOCKER_COMPOSE_MONITORING) down -v --remove-orphans || true
+	docker system prune -af --volumes || true
+	docker network prune -f || true
+	docker volume prune -f || true
+	docker image prune -af || true
+	@echo "💥 All Docker containers, images, volumes, and networks have been destroyed. You are now in a clean state!"
+
+.PHONY: prod_build prod_up prod_down prod_down_all prod_nuke prod_logs prod_clean prod_run prod_status prod_restart dev_up dev_down dev_logs_front dev_logs_back dev_logs_all dev_shell_front dev_shell_back dev_status dev_rebuild dev_clean dev_restart dev_nuke nuke_all destroyer_of_worlds
