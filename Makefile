@@ -10,7 +10,7 @@ prod_build:
 prod_up:
 	$(DOCKER_COMPOSE_DEV) down --remove-orphans
 	$(DOCKER_COMPOSE_PROD) up -d
-	@echo "🌐 Serving HTTPS at: https://localhost"
+	@echo "🌐 Serving HTTPS at: https://localhost:8443"
 	@echo "🌐 HTTP→HTTPS redirect at: http://localhost:8080"
 
 prod_run: prod_clean prod_build prod_up 
