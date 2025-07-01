@@ -21,43 +21,35 @@ async function renderWeatherData() {
     const response = await fetch("http://localhost:3000/api/weather/paris");
     const data = await response.json();
 
-    // Set city
-    document.getElementById("weatherCity")!.textContent = "PARIS";
+    // --- Compartment 1: Main Display ---
+    document.getElementById("weatherCity")!.textContent = "PARIS, FR";
+    (document.getElementById("weatherIcon") as HTMLImageElement).src = data.current.icon;
+    document.getElementById("weatherTemp")!.textContent = `${data.current.temp.toFixed(1)}°C`;
+    document.getElementById("weatherDescription")!.textContent = data.current.description;
 
+    // --- Compartment 2: Detailed Stats ---
+    document.getElementById("weatherFeels_Like")!.textContent = `${data.current.feels_like.toFixed(1)}°C`;
+    document.getElementById("humidity")!.textContent = `${data.current.humidity}%`;
+    document.getElementById("wind")!.textContent = `${data.current.wind.toFixed(1)} km/h`;
+    document.getElementById("weatherAQI")!.textContent = aqiMeaning(data.air);
 
-    // Set current icon and temperature
-    const iconImg = document.getElementById("weatherIcon") as HTMLImageElement;
-    iconImg.src = data.current.icon;
-    iconImg.alt = data.current.description;
-
-    document.getElementById("weatherTemp")!.textContent = `Weather : ${data.current.temp.toFixed(1)}°C - ${data.current.description}`;
-    document.getElementById("weatherFeels_Like")!.textContent = `But feels like ${data.current.feels_like.toFixed(1)}°C`;
-
-    // Set air quality
-    const aqiDescription = aqiMeaning(data.air);
-    document.getElementById("weatherAQI")!.textContent = `Air Quality Index: ${data.air} - ${aqiDescription}`;
-    document.getElementById("humidity")!.textContent = `Humidity: ${data.current.humidity} %`;
-    document.getElementById("wind")!.textContent = `Wind speed: ${data.current.wind} km/h`;
-
-    // Forecast rendering
+    // --- Compartment 3: Forecast Rendering ---
     const weatherForecast = document.getElementById("weatherForecast")!;
-    weatherForecast.innerHTML = "";
+    weatherForecast.innerHTML = ""; // Clear previous forecast
 
     weatherForecast.innerHTML = data.forecast.map(f => {
       const date = new Date(f.time);
-      const day = date.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      });
+      // Get the short day name (e.g., "TUE")
+      const day = date.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
 
+      // This creates the individual card for each forecast day
       return `
-    <div class="flex flex-col items-center space-y-1">
-      <span class="font-semibold">${day}</span>
-      <img src="${f.icon}" class="w-14 h-14 -mt-3" alt="icon" />
-      <span class="text-sm -mt-3">${Math.round(f.temp)}°C</span>
-    </div>
-  `;
+        <div class="forecast-day-card">
+          <span class="font-bold">${day}</span>
+          <img src="${f.icon}" class="w-12 h-12" alt="icon" />
+          <span class="text-sm">${Math.round(f.temp)}°C</span>
+        </div>
+      `;
     }).join("");
 
   } catch (error) {
@@ -66,7 +58,6 @@ async function renderWeatherData() {
     if (cityEl) cityEl.textContent = "Failed to load weather data.";
   }
 }
-
 
 ///MAIN SECTION
 

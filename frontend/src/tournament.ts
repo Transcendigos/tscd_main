@@ -126,8 +126,8 @@ export async function fetchAndDisplayTournaments() {
         }
         tournaments.forEach((tournament: any) => {
             const tournamentItem = document.createElement('div');
-            tournamentItem.className = 'bg-slate-900/50 p-2.5 border border-slate-700 flex justify-between items-center';
-            const buttonHtml = tournament.is_participant ? `<button data-tournament-id="${tournament.id}" class="view-bracket-btn border px-3 py-1 font-bold bg-indigo-600 hover:bg-indigo-500 text-xs transition-colors">View</button>` : `<button data-tournament-id="${tournament.id}" class="join-tournament-btn border px-3 py-1 font-bold hover:bg-[#4cb4e7] hover:text-slate-900 text-xs transition-colors">Join</button>`;
+            tournamentItem.className = 'bg-slate-800/50 drop-shadow-xl/30 backdrop-blur-xs p-2.5 border border-slate-700 flex justify-between items-center';
+            const buttonHtml = tournament.is_participant ? `<button data-tournament-id="${tournament.id}" class="view-bracket-btn border px-3 py-1 font-bold bg-[#4cb4e7] hover:bg-[#f8aab6] text-slate-900 text-xs transition-colors">View</button>` : `<button data-tournament-id="${tournament.id}" class="join-tournament-btn border px-3 py-1 font-bold hover:bg-[#4cb4e7] hover:text-slate-900 text-xs transition-colors">Join</button>`;
             tournamentItem.innerHTML = `
                 <div>
                     <p class="font-bold text-white">${tournament.name}</p>
