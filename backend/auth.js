@@ -57,7 +57,7 @@ export default fp(async function authRoutes(server, options) {
       const tokenPayload = { userId: insertedUserId, username, email, method_sign: 'local', picture: null };
       const token = jwt.sign(tokenPayload, server.jwt_secret, { expiresIn: '7d' });
 
-      reply.clearCookie('session_token', { path: '/' }); // cleanup legacy
+      reply.clearCookie('session_token', { path: '/' });
       server.log.info({ username, email, userId: insertedUserId }, "User signed up successfully");
       setAuthCookie(reply, token);
 
