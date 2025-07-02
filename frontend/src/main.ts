@@ -49,7 +49,38 @@ let activeRemoteGameId: string | null = null;
 let activePongMode: 'solo_3d' | 'remote_2d' | 'local_2d' | null = null;
 let stopCurrentGame: (() => void) | null = null;
 
-// ... (assignOpenTrigger, disableTrigger, stopAnyActiveGame, changeTheme functions are unchanged)
+
+async function startSolo3DPong() {
+    stopAnyActiveGame();
+    multiplayerPongWindow.close(); 
+    const soloPongCanvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
+    if (!soloPongCanvas) {
+        console.error("Solo Pong canvas not found!");
+        return;
+    }
+    activePongMode = 'solo_3d';
+    const sceneManager = await SceneManager.create(soloPongCanvas);
+    stopCurrentGame = () => {
+        if (sceneManager) {
+            sceneManager.dispose();
+        }
+    };
+}
+
+function startRemote2DPong() {
+    stopAnyActiveGame();
+    pongWindow.close();
+    const multiPongCanvas = document.getElementById('multiplayerPongCanvas') as HTMLCanvasElement;
+    if (!multiPongCanvas) {
+        console.error("Multiplayer Pong canvas not found!");
+        return;
+    }
+    activePongMode = 'remote_2d';
+    setRemotePongCanvas(multiPongCanvas);
+    startRemotePong();
+    stopCurrentGame = stopRemotePong;
+}
+
 function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string, onOpenCallback?: () => void) {
   const trigger = document.getElementById(triggerId);
   if (trigger) {
@@ -87,7 +118,6 @@ function changeTheme(color1: string, color2: string) {
     `;
 }
 
-// ... (updateUIBasedOnAuth is unchanged)
 async function updateUIBasedOnAuth() {
   const isSignedIn = await checkSignedIn();
 
@@ -99,8 +129,10 @@ async function updateUIBasedOnAuth() {
     document.getElementById("clickMeBtn")?.classList.remove("opacity-50", "cursor-not-allowed");
     document.getElementById("darkBtn")?.classList.remove("opacity-50", "cursor-not-allowed");
     
-    assignOpenTrigger(tournamentWindow, "tournamentBtn", fetchAndDisplayTournaments);
+    assignOpenTrigger(pongWindow, "clickMeBtn", startSolo3DPong);
+    assignOpenTrigger(multiplayerPongWindow, "darkBtn", startRemote2DPong);
 
+    assignOpenTrigger(tournamentWindow, "tournamentBtn", fetchAndDisplayTournaments);
     assignOpenTrigger(chatWindow, "chatBtn");
     assignOpenTrigger(infoWindow, "infoTab");
     assignOpenTrigger(statsWindow, "statsTab", fetchData);
@@ -118,11 +150,11 @@ async function updateUIBasedOnAuth() {
     disableTrigger("profileBtn");
     disableTrigger("settingTab");
     disableTrigger("logoutTab");
-    disableTrigger("darkBtn");
-    disableTrigger("clickMeBtn");
     
     document.getElementById("clickMeBtn")?.classList.add("opacity-50", "cursor-not-allowed");
     document.getElementById("darkBtn")?.classList.add("opacity-50", "cursor-not-allowed");
+    disableTrigger("darkBtn");
+    disableTrigger("clickMeBtn");
     disableTrigger("tournamentBtn");
 
     disableTrigger("chatBtn");
@@ -144,9 +176,9 @@ async function updateUIBasedOnAuth() {
 }
 
 
+
 window.addEventListener("DOMContentLoaded", async () => {
     
-    // ... (All window initializations are unchanged)
     try { new DesktopWindow({ windowId: "dragWindow", dragHandleId: "dragHandle", resizeHandleId: "menuResize", boundaryContainerId: "main", visibilityToggleId: "dragWindow", openTriggerId: "menuShortcut", closeButtonId: "closeMenuBtn" }); } catch (e) { console.error("Menu init failed:", e); }
     try { signinWindow = new DesktopWindow({ windowId: "signinWindow", dragHandleId: "signinDragHandle", resizeHandleId: "signinResizeHandle", boundaryContainerId: "main", visibilityToggleId: "signinWindow", closeButtonId: "closesigninBtn" }); setupSigninForm(signinWindow); } catch (e) { console.error("Signin init failed:", e); }
     try { signupWindow = new DesktopWindow({ windowId: "signupWindow", dragHandleId: "signupDragHandle", resizeHandleId: "signupResizeHandle", boundaryContainerId: "main", visibilityToggleId: "signupWindow", closeButtonId: "closeSignupBtn" }); setupSignupForm(signupWindow); } catch (e) { console.error("Signup init failed:", e); }
@@ -195,28 +227,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const soloPongCanvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
     const multiPongCanvas = document.getElementById('multiplayerPongCanvas') as HTMLCanvasElement;
 
-    // ... (Game button event listeners are unchanged)
-    document.getElementById("clickMeBtn")?.addEventListener("click", async () => {
-        stopAnyActiveGame();
-        multiplayerPongWindow.close();
-        pongWindow.open();
-        activePongMode = 'solo_3d';
-        const sceneManager = await SceneManager.create(soloPongCanvas);
-        stopCurrentGame = () => {
-            if (sceneManager) {
-                sceneManager.dispose();
-            }
-        };
-    });
-    document.getElementById("darkBtn")?.addEventListener("click", () => {
-        stopAnyActiveGame();
-        pongWindow.close();
-        multiplayerPongWindow.open();
-        activePongMode = 'remote_2d';
-        setRemotePongCanvas(multiPongCanvas);
-        startRemotePong();
-        stopCurrentGame = stopRemotePong;
-    });
+
 
     await updateUIBasedOnAuth();
     window.addEventListener("auth:updated", updateUIBasedOnAuth);
