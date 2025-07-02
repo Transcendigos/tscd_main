@@ -1,21 +1,25 @@
 
-FROM node:20-alpine
+FROM node:24.0-alpine
 
 WORKDIR /app
+
 
 COPY dev/package*.json ./
 COPY dev/.env ./
 
+
 RUN npm install
+
 
 COPY dev/vite.config.ts ./
 COPY dev/tsconfig.json ./
 
 COPY src/ /app/src/
-COPY index.html ./
-# COPY pong_dev.html ./
-# COPY solong_dev.html ./
+
+COPY index.html ./ 
 
 EXPOSE 5173
 
 CMD ["npm", "run", "dev"]
+
+
