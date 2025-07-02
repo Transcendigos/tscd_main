@@ -1,3 +1,6 @@
+// frontend/src/google_auth.js
+
+
 declare global {
   interface Window {
     google?: any;
