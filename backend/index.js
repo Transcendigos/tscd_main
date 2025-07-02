@@ -23,7 +23,9 @@ import scoreRoutes from './score.js';
 import pongRoutes from './pong_routes.js';
 import { registerMonitoring } from './monitoring.js';
 import blockRoutes from './block_routes.js';
-import pongWsRoutes from './server_pong.js'
+import pongWsRoutes from './server_pong.js';
+import tournamentRoutes from "./tournament_routes.js";
+import statsRoutes from "./stats_routes.js"; 
 
 console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
 
@@ -111,6 +113,8 @@ const start = async () => {
     await server.register(pongRoutes);
     await server.register(blockRoutes);
     await server.register(pongWsRoutes);
+    await server.register(tournamentRoutes);
+    await server.register(statsRoutes);
 
     server.log.info("!!! INDEX.JS: Registered pongRoutes.");
 

@@ -24,3 +24,191 @@
   transition: height 0.3s ease, max-height 0.3s ease;
   overflow: hidden;
 }
+
+/* frontend/src/style.css */
+
+#bracketContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 20px;
+}
+
+.round {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    flex-grow: 1;
+}
+
+.match {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    margin: 30px 15px; /* Provides space for connecting lines */
+    padding: 10px;
+    border: 1px solid #4cb4e7;
+    background-color: #1e293b;
+}
+
+/* Lines connecting players within a match */
+.match:before {
+    content: '';
+    position: absolute;
+    background-color: #4cb4e7;
+    width: 2px;
+    left: -16px;
+    top: 25%;
+    bottom: 25%;
+}
+
+/* Lines connecting matches to the next round */
+.match:after {
+    content: '';
+    position: absolute;
+    background-color: #4cb4e7;
+    height: 2px;
+    width: 15px;
+    right: -16px;
+    top: 50%;
+}
+
+/* Remove lines from the final match */
+.round.final .match:after {
+    display: none;
+}
+
+/* Adjust lines for first round */
+.round:first-child .match:before {
+    display: none;
+}
+
+.player {
+    padding: 5px;
+    width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player.winner {
+    font-weight: bold;
+    color: #8be076;
+}
+
+.player-top {
+    border-bottom: 1px solid #4a5568;
+}
+
+.tbd {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+
+
+.scanline-texture {
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 1px,
+        rgba(76, 180, 231, 0.1) 1px,
+        rgba(76, 180, 231, 0.1) 2px
+    );
+    background-size: 100% 3px;
+}
+
+.info-grid-button {
+    @apply flex flex-col items-center justify-center p-4;
+    @apply border border-slate-700 bg-slate-900/50;
+    @apply text-center text-[#4cb4e7] transition-all duration-300;
+    @apply hover:bg-slate-800/60 hover:backdrop-blur-[2px] backdrop-blur-[4px] hover:drop-shadow-xl/30 hover:border-[#4cb4e7] hover:scale-105;
+}
+
+.forecast-day-card {
+    @apply flex flex-col items-center p-1 bg-slate-900/50 text-xs border border-seLightBlue;
+    @apply space-y-1;
+}
+
+.send-button {
+    @apply flex flex-col items-center justify-center font-bold;
+    @apply border border-seLightBlue/50 bg-slate-800/70;
+    @apply text-center text-[#4cb4e7] transition-all duration-300;
+    @apply hover:bg-slate-900/20 hover:backdrop-blur-[2px] backdrop-blur-[4px] hover:drop-shadow-xl/30 hover:border-seLightBlue hover:scale-105;
+}
+
+@keyframes sharp-flicker {
+  0%, 100% {
+    opacity: 1;
+    transform: none;
+    text-shadow: none;
+  }
+  7% {
+    opacity: 0.8;
+    transform: translate(-1px, -1px);
+    text-shadow: 1px 1px 0 #f8aab6, -1px -1px 0 #53D4C0;
+  }
+  15% {
+    opacity: 1;
+    transform: none;
+    text-shadow: none;
+  }
+  22% {
+    opacity: 0.7;
+    transform: translate(1px, 0px);
+    text-shadow: -1px 0px 0 #f8aab6, 1px 0px 0 #53D4C0;
+  }
+  30% {
+     opacity: 1;
+     transform: none;
+     text-shadow: none;
+  }
+}
+
+/* Base style for the hero button */
+.main-menu-hero-button {
+    @apply flex items-center justify-center w-full h-40 p-4;
+    @apply border-2 border-slate-700 bg-slate-900/50;
+    @apply text-center text-[#4cb4e7] transition-all duration-300;
+}
+
+/* --- INTERACTIVE HOVER STYLES --- */
+
+/* The button's border now changes on hover, but it doesn't move */
+.main-menu-hero-button:not(.cursor-not-allowed):hover {
+    @apply border-[#4cb4e7] bg-slate-800/60 scale-105 drop-shadow-xl;
+}
+
+/* The animation is now applied to the INNER container on hover */
+.main-menu-hero-button:not(.cursor-not-allowed):hover .flicker-text-container {
+    animation: sharp-flicker 1s steps(1, end) infinite;
+}
+
+
+/* --- Secondary Buttons (No changes) --- */
+.main-menu-secondary-button {
+    @apply flex flex-col items-center justify-center p-3 font-bold;
+    @apply border border-slate-700 bg-slate-900/50;
+    @apply text-center text-[#4cb4e7] transition-all duration-300;
+}
+.main-menu-secondary-button svg {
+    @apply opacity-80;
+}
+.main-menu-secondary-button:not(.cursor-not-allowed):hover {
+    @apply bg-slate-800/60 border-[#4cb4e7] scale-105 drop-shadow-xl;
+}
+.main-menu-secondary-button:not(.cursor-not-allowed):hover svg {
+    @apply opacity-100;
+}
+
+/* A container for a logical group of settings */
+.setting-container {
+    @apply border border-slate-700 bg-slate-900/50;
+}
+
+/* The header for each setting container */
+.setting-header {
+    @apply font-bold text-xs p-2 bg-slate-800/40 border-b border-slate-700;
+}
+

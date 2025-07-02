@@ -1,15 +1,9 @@
 // backend/pong_routes.js
 
-import { startGame, stopGame, activeGames, isPlayerInActiveGame } from "./pong_server.js";
+import { isPlayerInActiveGame } from "./pong_server.js";
 import { getDB } from "./db.js";
 import jwt from "jsonwebtoken";
 import { getRedisPublisher } from "./redis.js";
-
-const INVITATION_TIMEOUT_MS = 20000; // 20 seconds for invitation to expire
-
-function generateGameId() {
-  return `game_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-}
 
 export default async function pongRoutes(server, options) {
   const db = getDB();
@@ -18,7 +12,7 @@ export default async function pongRoutes(server, options) {
   server.post("/api/pong/games", async (req, reply) => {
     const inviterToken = req.cookies.auth_token;
     if (!inviterToken) {
-      return reply.code(401).send({ error: "Authentication required to create a game." });
+      return reply.code(401).send({ error: "Authentication required to send an invitation." });
     }
 
     const { opponentPlayerId } = req.body; 
@@ -35,7 +29,7 @@ export default async function pongRoutes(server, options) {
       inviterRawId = inviterDecoded.userId; 
       inviterUserId = `user_${inviterRawId}`;
     } catch (err) {
-      server.log.warn({ err }, "Failed to verify inviter token for game creation");
+      server.log.warn({ err }, "Failed to verify inviter token for invitation");
       return reply.code(401).send({ error: "Invalid or expired inviter token." });
     }
 
@@ -76,35 +70,10 @@ export default async function pongRoutes(server, options) {
         return reply.code(409).send({ error: "One or more players are already in a game." });
     }
     
-    const gameId = generateGameId();
-    const gameOptions = {
-      canvasWidth: 800,
-      canvasHeight: 600,
-      winningScore: 5,
-    };
-
     try {
-      const newGame = startGame(
-        gameId,
-        inviterUserId, 
-        `user_${opponentRawId}`, 
-        {
-          ...gameOptions,
-          player1Username: inviterDecoded.username,
-        },
-        server.broadcastPongGameState
-      );
-
-      if (newGame) {
-        server.log.info(
-          { gameId, inviter: inviterUserId, opponent: `user_${opponentRawId}` },
-          "New Pong game created via API for chat invite"
-        );
-        
         const opponentChannel = `user:${opponentRawId}:messages`;
         const invitationPayload = {
           type: "PONG_GAME_INVITE",
-          gameId: newGame.gameId,
           inviterUsername: inviterDecoded.username,
           inviterId: inviterUserId, 
         };
@@ -113,39 +82,18 @@ export default async function pongRoutes(server, options) {
           JSON.stringify(invitationPayload)
         );
 
-        // --- NEW SMARTER TIMEOUT LOGIC ---
-        setTimeout(async () => {
-            const gameOnTimeout = activeGames.get(gameId);
-            if (gameOnTimeout && gameOnTimeout.status === 'waiting_for_ready') {
-                server.log.info({ gameId }, `Invitation timed out. Cleaning up.`);
-                stopGame(gameId);
+        server.log.info(
+          { inviter: inviterUserId, opponent: `user_${opponentRawId}` },
+          "Pong game invitation sent via API"
+        );
 
-                const expirationPayload = JSON.stringify({
-                    type: 'PONG_INVITE_EXPIRED',
-                    gameId: gameId,
-                    message: `The game invitation has expired.`
-                });
-
-                // Notify both the inviter and the invitee
-                const inviterChannel = `user:${inviterRawId}:messages`;
-                await redisPublisher.publish(inviterChannel, expirationPayload);
-                await redisPublisher.publish(opponentChannel, expirationPayload);
-                 server.log.info({ gameId, inviterChannel, opponentChannel }, `Sent expiration notices.`);
-            }
-        }, INVITATION_TIMEOUT_MS);
-        // --- END NEW TIMEOUT LOGIC ---
-
-        return reply.code(201).send({
-          message: "Game created and invitation sent",
-          gameId: newGame.gameId,
+        return reply.code(200).send({
+          message: "Invitation sent successfully",
         });
-      } else {
-        server.log.error({ gameId }, "Failed to start game, startGame returned falsy");
-        return reply.code(500).send({ error: "Failed to create game session." });
-      }
+
     } catch (error) {
-      server.log.error({ error, gameId }, "Error during game creation");
-      return reply.code(500).send({ error: "Internal server error creating game." });
+      server.log.error({ error }, "Error sending game invitation");
+      return reply.code(500).send({ error: "Internal server error sending invitation." });
     }
   });
 }

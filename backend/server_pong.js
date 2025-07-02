@@ -1,5 +1,6 @@
-// pongWsRoutes.js (or server_pong.js in your project)
 import jwt from 'jsonwebtoken';
+// *** 1. IMPORT the central game completion handler ***
+import { processGameCompletion } from "./tournament_logic.js";
 
 // Game constants
 const PADDLE_HEIGHT = 70;
@@ -14,10 +15,12 @@ const MAX_BALL_SPEED_Y = 8;
 const PADDLE_HIT_ANGLE_FACTOR = 4;
 const BALL_SPEED_INCREASE_FACTOR = -1.05;
 const WINNING_SCORE = 5;
-const PADDLE_SPEED_PER_SECOND = 400; // New constant for paddle speed
+const PADDLE_SPEED_PER_SECOND = 400;
 
 const pongRoom = {
-    players: [], // Stores { ws, id: userId, username: string, side: 'left' | 'right' | null, currentInput: null, lastUpdateTime: null }
+    players: [],
+    // *** 2. ADD a gameId to track the current match ***
+    gameId: null,
     ball: {
         x: CANVAS_WIDTH / 2 - BALL_SIZE / 2,
         y: CANVAS_HEIGHT / 2 - BALL_SIZE / 2,
@@ -46,9 +49,6 @@ function broadcastPongMessage(message, serverInstance) {
                 const logger = serverInstance?.log || console;
                 logger.error({ err: e, userId: player.id }, "Pong: Error sending message during broadcast.");
             }
-        } else {
-            const logger = serverInstance?.log || console;
-            logger.warn({ userId: player.id, wsState: player.ws ? player.ws.readyState : 'N/A' }, "Pong: Skipping broadcast to player; WebSocket not valid or not open.");
         }
     });
 }
@@ -80,13 +80,11 @@ function updateGame(serverInstance) {
     if (!pongRoom.gameIsRunning) return;
     const now = Date.now();
 
-    // Update Paddles based on input
     ['left', 'right'].forEach(side => {
         const paddle = pongRoom.paddles[side];
         if (paddle.currentInput && paddle.lastUpdateTime) {
             const dt = (now - paddle.lastUpdateTime) / 1000;
             const paddleSpeedForFrame = PADDLE_SPEED_PER_SECOND * dt;
-
             if (paddle.currentInput === 'up') {
                 paddle.y = Math.max(0, paddle.y - paddleSpeedForFrame);
             } else if (paddle.currentInput === 'down') {
@@ -96,20 +94,12 @@ function updateGame(serverInstance) {
         paddle.lastUpdateTime = now;
     });
 
-    // Update Ball
     pongRoom.ball.x += pongRoom.ball.vx;
     pongRoom.ball.y += pongRoom.ball.vy;
 
-    // Ball wall collisions
-    if (pongRoom.ball.y <= 0) {
-        pongRoom.ball.y = 0;
-        pongRoom.ball.vy *= -1;
-    } else if (pongRoom.ball.y + pongRoom.ball.height >= CANVAS_HEIGHT) {
-        pongRoom.ball.y = CANVAS_HEIGHT - pongRoom.ball.height;
-        pongRoom.ball.vy *= -1;
-    }
+    if (pongRoom.ball.y <= 0) { pongRoom.ball.y = 0; pongRoom.ball.vy *= -1; }
+    else if (pongRoom.ball.y + pongRoom.ball.height >= CANVAS_HEIGHT) { pongRoom.ball.y = CANVAS_HEIGHT - pongRoom.ball.height; pongRoom.ball.vy *= -1; }
 
-    // Ball paddle collisions
     let paddleHit = null;
     if (pongRoom.ball.vx < 0 && isColliding(pongRoom.ball, pongRoom.paddles.left)) {
         paddleHit = pongRoom.paddles.left;
@@ -119,7 +109,6 @@ function updateGame(serverInstance) {
         handlePaddleCollision(pongRoom.ball, paddleHit);
     }
 
-    // Scoring
     let scored = false;
     if (pongRoom.ball.x + pongRoom.ball.width < 0) {
         pongRoom.paddles.right.score++;
@@ -165,11 +154,9 @@ function handlePaddleCollision(ball, paddle) {
     ball.vx *= BALL_SPEED_INCREASE_FACTOR;
     const hitPositionRatio = (ball.y + ball.height / 2 - paddle.y) / paddle.height;
     ball.vy += (hitPositionRatio - 0.5) * PADDLE_HIT_ANGLE_FACTOR;
-
     ball.vx = Math.max(-MAX_BALL_SPEED_X, Math.min(MAX_BALL_SPEED_X, ball.vx));
     ball.vy = Math.max(-MAX_BALL_SPEED_Y, Math.min(MAX_BALL_SPEED_Y, ball.vy));
 }
-
 
 function startGame(serverInstance) {
     const logger = serverInstance?.log || console;
@@ -181,8 +168,11 @@ function startGame(serverInstance) {
         logger.error("Pong: Attempting to start game but paddle player IDs are not fully assigned.");
         return;
     }
+    
+    // *** 3. ASSIGN a unique ID to the game when it starts ***
+    pongRoom.gameId = `quickplay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-    logger.info({player1: pongRoom.paddles.left.playerId, player2: pongRoom.paddles.right.playerId}, "Pong: Starting game.");
+    logger.info({ gameId: pongRoom.gameId, player1: pongRoom.paddles.left.playerId, player2: pongRoom.paddles.right.playerId }, "Pong: Starting game.");
     pongRoom.gameIsRunning = true;
     resetScores();
     resetBall(true);
@@ -208,15 +198,34 @@ function stopGame(winnerId, reason = "win", serverInstance) {
     const logger = serverInstance?.log || console;
     if (!pongRoom.gameIsRunning) return;
 
-    logger.info({ winnerId, reason }, `Pong: Stopping game.`);
+    logger.info({ gameId: pongRoom.gameId, winnerId, reason }, `Pong: Stopping game.`);
     pongRoom.gameIsRunning = false;
     if (pongRoom.gameInterval) {
         clearInterval(pongRoom.gameInterval);
         pongRoom.gameInterval = null;
     }
 
-    const winnerSide = pongRoom.paddles.left.playerId === winnerId ? 'left' : (pongRoom.paddles.right.playerId === winnerId ? 'right' : null);
+    const p1_id = pongRoom.paddles.left.playerId;
+    const p2_id = pongRoom.paddles.right.playerId;
+    
+    // Make sure we have a valid winner before saving stats
+    if (winnerId && p1_id && p2_id) {
+        const winnerPrefixedId = `user_${winnerId}`;
+        const p1_prefixedId = `user_${p1_id}`;
+        const p2_prefixedId = `user_${p2_id}`;
 
+        const finalScores = {
+            [p1_prefixedId]: pongRoom.paddles.left.score,
+            [p2_prefixedId]: pongRoom.paddles.right.score
+        };
+
+        // *** THE FIX IS HERE: We now explicitly pass 'Quick Play' as the game mode ***
+        processGameCompletion(pongRoom.gameId, winnerPrefixedId, finalScores, 'Quick Play').catch(err => {
+            logger.error({ err, gameId: pongRoom.gameId }, "Error processing Quick Play game completion.");
+        });
+    }
+
+    const winnerSide = pongRoom.paddles.left.playerId === winnerId ? 'left' : (pongRoom.paddles.right.playerId === winnerId ? 'right' : null);
     broadcastPongMessage({
         type: 'game_over',
         winnerSide: winnerSide,
@@ -224,11 +233,12 @@ function stopGame(winnerId, reason = "win", serverInstance) {
         reason: reason
     }, serverInstance);
     
-    // Reset for a potential new game
+    // Reset gameId after processing
+    pongRoom.gameId = null;
     resetPaddles();
 }
 
-// --- End Helper Functions ---
+// --- WebSocket Handler ---
 
 export default async function pongWsRoutes(server, options) {
   server.route({
@@ -294,7 +304,6 @@ export default async function pongWsRoutes(server, options) {
         }
         
         ws.send(JSON.stringify({ type: 'assign_side', side: assignedSide }));
-        server.log.info({ userId: newPlayer.id, side: assignedSide }, "Pong: Player assigned to paddle.");
 
         if (pongRoom.playerCount === 2) {
             startGame(server);
