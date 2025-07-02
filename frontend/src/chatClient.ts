@@ -222,7 +222,7 @@ async function showUserProfile(user: User) {
           </div>
           <div class="flex-grow p-4 flex flex-col space-y-3 bg-slate-800/50 text-slate-300">
             <div class="flex items-center space-x-4">
-                <img src="${fullProfile.picture || '/favicon.jpg'}" onerror="this.onerror=null;this.src='/favicon.jpg';" class="w-20 h-20 rounded-full object-cover border-2 border-[#8be076]">
+                <img src="${fullProfile.picture || '/favicon.jpg'}" onerror="this.onerror=null;this.src='/favicon.jpg';" class="w-20 h-20 rounded-full object-cover border-2 border-[#8be076]" referrerpolicy="no-referrer">
                 <div class="space-y-1">
                     <p class="text-2xl font-bold text-white">${fullProfile.username}</p>
                     <p class="text-sm text-slate-400">${fullProfile.email || 'No public email'}</p>

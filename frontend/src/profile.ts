@@ -39,31 +39,31 @@ export async function settingUserSetting() {
 
         const { profile } = await res.json();
         if (!profileImage || !currentUsername || !currentEmail) {
-            console.warn("Profile elements not found in DOM.");
+            console.warn("Profile elements not found in DOM for settings.");
             return;
         }
-
+        
+        // --- CORRECTED LOGIC ---
         const fallbackImage = '/favicon.jpg';
-        const resolvedSrc = profile.picture || fallbackImage;
-        const absoluteResolvedSrc = resolvedSrc.startsWith('http')
-            ? resolvedSrc
-            : new URL(resolvedSrc, window.location.origin).href;
+        const newImageSrc = profile.picture || fallbackImage;
 
-        if (profileImage.src !== absoluteResolvedSrc) {
-            profileImage.src = resolvedSrc;
+        // Set the src only if it's different from the current one to avoid re-fetching
+        if (profileImage.src !== newImageSrc) {
+            profileImage.src = newImageSrc;
         }
-
+        
         profileImage.alt = `${profile.username}'s profile picture`;
         profileImage.onerror = () => {
-            if (!profileImage.src.includes(fallbackImage)) {
+            // If the new source fails, set to fallback, but prevent an infinite loop
+            if (!profileImage.src.endsWith(fallbackImage)) {
                 profileImage.src = fallbackImage;
             }
         };
 
         currentUsername.textContent = profile.username;
         currentEmail.textContent = profile.email;
-        profileImage.src = profile.picture;
-
+        
+        // (The rest of the function for TOTP and disabling fields remains the same)
         // Refresh TOTP state and UI
         console.log("Refreshing TOTP state");
         const qrContainer = document.getElementById('qrContainer') as HTMLDivElement;
@@ -133,6 +133,7 @@ export async function settingUserSetting() {
         console.error("Error loading user profile:", error);
     }
 }
+
 
 
 export async function settingUserProfile() {
