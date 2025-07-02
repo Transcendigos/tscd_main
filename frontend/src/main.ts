@@ -23,6 +23,7 @@ import { setupTournamentSystem, fetchAndDisplayTournaments, showTournamentBracke
 import { setupDashboard, fetchData } from './dashboard.ts';
 
 
+
 // Window and State Declarations
 let signinWindow: DesktopWindow, signupWindow: DesktopWindow, logoutWindow: DesktopWindow,
     profileWindow: DesktopWindow, settingWindow: DesktopWindow, pongWindow: DesktopWindow,
@@ -38,6 +39,7 @@ let stopCurrentGame: (() => void) | null = null;
 
 let soloPongCanvas: HTMLCanvasElement;
 let multiPongCanvas: HTMLCanvasElement;
+let localPongGameWindow: DesktopWindow;
 
 
 // --- Helper Functions ---
@@ -107,6 +109,27 @@ function handleMultiplayerPongClick() {
     setRemotePongCanvas(multiPongCanvas);
     startRemotePong();
     stopCurrentGame = stopRemotePong;
+}
+
+function handleLocalPongClick(player1: string, player2: string, onGameEndCallback: (winner: string) => void) {
+    stopAnyActiveGame(); // This should now also handle stopping the local pong
+    localPongGameWindow.open();
+    
+    // Update the window title for the current match
+    const titleEl = document.getElementById('localPongWindowTitle');
+    if (titleEl) titleEl.textContent = `${player1} vs ${player2}`;
+    
+    activePongMode = 'local_2d';
+    
+    // Define the full callback that also closes the window
+    const gameEndHandler = (winnerAlias: string) => {
+        onGameEndCallback(winnerAlias); // Call the original callback from tournament.ts
+        localPongGameWindow.close();
+    };
+    
+    startLocalPong(player1, player2, gameEndHandler);
+    
+    stopCurrentGame = stopLocalPong;
 }
 
 
@@ -212,6 +235,20 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
         });
     } catch (e) { console.error("Pong windows init failed:", e); }
+
+    try {
+    localPongGameWindow = new DesktopWindow({
+        windowId: "localPongGameWindow",
+        dragHandleId: "localPongDragHandle",
+        resizeHandleId: "localPongResizeHandle",
+        boundaryContainerId: "main",
+        visibilityToggleId: "localPongGameWindow",
+        closeButtonId: "closeLocalPongBtn",
+        onCloseCallback: stopLocalPong // Ensure game stops when window is closed
+    });
+    const localPongCanvas = document.getElementById('localPongCanvas') as HTMLCanvasElement;
+    setLocalPongCanvas(localPongCanvas);
+} catch (e) { console.error("Local Pong Game Window init failed:", e); }
     
     soloPongCanvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
     multiPongCanvas = document.getElementById('multiplayerPongCanvas') as HTMLCanvasElement;
@@ -270,6 +307,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     settingUserProfile();
     setupSettingForm(settingWindow);
     setupInfoWindow(weatherWindow, grafanaWindow, commandWindow, aboutWindow);
+    (window as any).handleLocalPongClick = handleLocalPongClick;
 
     fetch("/ai_prompt.txt")
         .then(res => res.text())

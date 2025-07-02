@@ -1,541 +1,254 @@
 let canvas: HTMLCanvasElement;
 let pongCtx: CanvasRenderingContext2D;
 
-interface Paddle {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  prevY: number;
-  dv: number;
-  color: string;
-}
-
-interface Ball {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  vx: number;
-  vy: number;
-  hitZ: number;
-  exchange: number;
-  color: string;
-}
-
-interface UserInfo {
-  signedIn: boolean;
-  userId?: number;
-}
-
-let currentUser: UserInfo = { signedIn: false };
-
-async function fetchCurrentUser() {
-  try {
-    const response = await fetch("http://localhost:3000/api/me", {
-      credentials: "include",
-    });
-    if (!response.ok) {
-      console.log("User not signed in.");
-      currentUser = { signedIn: false };
-      return;
-    }
-
-    const data = await response.json();
-    console.log("User info:", data);
-
-    currentUser = {
-      signedIn: data.signedIn,
-      userId: data.user?.userId,
-    };
-  } catch (err) {
-    console.error("Error fetching user info:", err);
-    currentUser = { signedIn: false };
-  }
-}
-
-async function postScore(tournamentId: number, userId: number, score: number) {
-  try {
-    const response = await fetch("http://localhost:3000/api/scores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tournament_id: tournamentId,
-        user_id: userId,
-        score: score,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to save score");
-    }
-
-    const data = await response.json();
-    console.log("Score saved!", data);
-  } catch (err) {
-    console.error("Error saving score:", err);
-  }
-}
+interface Paddle { x: number; y: number; width: number; height: number; color: string; }
+interface Ball { x: number; y: number; width: number; height: number; vx: number; vy: number; color: string; }
 
 let leftPaddle: Paddle, rightPaddle: Paddle, ball: Ball;
 let leftScore = 0;
 let rightScore = 0;
-let waitingForRestart = false;
-let promptStartMessageActive = false;
+const winningScore = 5;
 
-let ballStartX: number, ballStartY: number;
-let leftPaddleStart: number, rightPaddleStart: number;
-
-const paddleWidth = 8;
-const paddleHeight = 70;
-const maxSpeed = 500;
-
-const ballWidth = 10;
-const ballHeight = 10;
-const ballStartV = 200;
-
-let lastTime: number;
+let player1Alias = "Player 1";
+let player2Alias = "Player 2";
+let onGameOverCallback: ((winnerAlias: string) => void) | null = null;
 
 let animationFrameId: number | null = null;
 let gameIsRunning = false;
-
+let isGameOver = false; // <<< FIX: Add game over flag
 let flickerPhase = 0;
-
 const keyPress: Record<string, boolean> = {};
 
-
-document.addEventListener("keydown", (event) => {
-  if (promptStartMessageActive && (event.key === "Enter" || event.key === " ")) {
-    event.preventDefault(); // Prevent default browser action (e.g., space scrolling)
-    promptStartMessageActive = false;
-    gameIsRunning = true;
-    lastTime = performance.now();
-    if (animationFrameId !== null) {
-      cancelAnimationFrame(animationFrameId);//good practice
-    }
-    animationFrameId = requestAnimationFrame(gameLoop); // Start the game
-    return; // Event handled
-  }
-
-  // Handle restart after game over
-  if (waitingForRestart && event.key === "Enter") {
-    event.preventDefault();
-    startPongGame();
-    return;
-  }
-
-  keyPress[event.key] = true;
-});
-
-document.addEventListener("keyup", (event) => {
-  keyPress[event.key] = false;
-});
+document.addEventListener("keydown", (event) => { keyPress[event.key] = true; });
+document.addEventListener("keyup", (event) => { keyPress[event.key] = false; });
 
 export function setCanvas(c: HTMLCanvasElement): void {
   canvas = c;
-  if (canvas) pongCtx = canvas.getContext("2d")!;
+  if (canvas) {
+    pongCtx = canvas.getContext("2d")!;
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+  }
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+}
+
+function drawMidline() {
+    if (!pongCtx || !canvas) return;
+    const segmentHeight = 20, gap = 15, lineWidth = 4, x = canvas.width / 2 - lineWidth / 2;
+    pongCtx.fillStyle = "#d6ecff";
+    pongCtx.shadowColor = "#0fffff";
+    for (let y = 0; y < canvas.height; y += segmentHeight + gap) {
+        pongCtx.shadowBlur = 2; 
+        pongCtx.fillRect(x, y, lineWidth, segmentHeight);
+    }
+    pongCtx.shadowBlur = 0;
+}
+
+function drawScore() {
+    if (!pongCtx || !canvas) return;
+    pongCtx.font = "64px 'Press Start 2P'";
+    pongCtx.fillStyle = "#d6ecff";
+    pongCtx.textAlign = "center";
+    pongCtx.shadowColor = "#0fffff"; 
+    pongCtx.shadowBlur = 3;        
+    pongCtx.fillText(`${leftScore}  ${rightScore}`, canvas.width / 2, canvas.height / 6);
+    
+    pongCtx.font = "24px 'Press Start 2P'";
+    pongCtx.fillText(player1Alias, canvas.width / 4, canvas.height - 40);
+    pongCtx.fillText(player2Alias, (canvas.width / 4) * 3, canvas.height - 40);
+
+    pongCtx.shadowBlur = 0; 
+}
+
+function drawVerticalCRTLines() {
+    if (!pongCtx || !canvas) return;
+    let pulse = Math.sin(Date.now() * 0.01) * 2 + Math.sin(Date.now() * 0.05) * 3; 
+    pongCtx.shadowBlur = Math.abs(pulse);
+    pongCtx.shadowColor = "#000fff";
+    flickerPhase += 0.05; 
+    const flickerAlpha = 0.02 + 0.01 * Math.sin(flickerPhase); 
+    pongCtx.save();
+    pongCtx.globalAlpha = flickerAlpha + 0.05; 
+    pongCtx.strokeStyle = "#00ffff";
+    pongCtx.lineWidth = 1;
+    for (let y = 0; y < canvas.height; y += 4) { 
+        pongCtx.beginPath();
+        pongCtx.moveTo(0, y);
+        pongCtx.lineTo(canvas.width, y);
+        pongCtx.stroke();
+    }
+    pongCtx.restore();
+    pongCtx.shadowBlur = 0;
+}
+
+function drawPaddle(paddle: Paddle) {
+    if (!pongCtx) return;
+    let pulse = Math.sin(Date.now() * 0.2) * 1 + 1.5; 
+    pongCtx.shadowBlur = pulse;
+    pongCtx.shadowColor = "#0fffff";
+    pongCtx.fillStyle = paddle.color;
+    roundRect(pongCtx, paddle.x, paddle.y, paddle.width, paddle.height, 5); 
+    pongCtx.fill();
+    pongCtx.shadowBlur = 0;
+}
+
+function drawBall() {
+    if (!pongCtx) return;
+    pongCtx.fillStyle = ball.color;
+    pongCtx.fillRect(ball.x, ball.y, ball.width, ball.height);
+}
+
+function draw() {
+    if (!pongCtx || !canvas) return;
+
+    const bgGradient = pongCtx.createLinearGradient(0, 0, 0, canvas.height);
+    bgGradient.addColorStop(0, "#1e293b");
+    bgGradient.addColorStop(0.5, "#1b3f72");
+    bgGradient.addColorStop(1, "#1e293b");
+    pongCtx.fillStyle = bgGradient;
+    pongCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+    drawVerticalCRTLines();
+    drawMidline();
+    drawScore();
+    drawBall();
+    drawPaddle(leftPaddle);
+    drawPaddle(rightPaddle);
+
+    if (!gameIsRunning) {
+        pongCtx.font = "24px 'Press Start 2P'";
+        pongCtx.fillStyle = "#fff";
+        pongCtx.shadowColor = "yellow";
+        pongCtx.shadowBlur = 5;
+        pongCtx.textAlign = "center";
+        pongCtx.fillText("Press W/S and ↑/↓", canvas.width / 2, canvas.height / 2 - 40);
+        pongCtx.fillText("Press Enter to Start Match", canvas.width / 2, canvas.height / 2 + 10);
+        pongCtx.shadowBlur = 0;
+    }
 }
 
 function initGameObjects(): void {
-  leftPaddle = {
-    x: 10,
-    y: canvas.height / 2 - paddleHeight / 2,
-    width: paddleWidth,
-    height: paddleHeight,
-    prevY: 0,
-    dv: 0,
-    color: "#44bece",
-  };
+  const paddleWidth = 10;
+  const paddleHeight = 80;
+  const ballSize = 12;
 
-  rightPaddle = {
-    x: canvas.width - paddleWidth - 10,
-    y: canvas.height / 2 - paddleHeight / 2,
-    width: paddleWidth,
-    height: paddleHeight,
-    prevY: 0,
-    dv: 0,
-    color: "#44bece",
-  };
-
-  ball = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    width: ballWidth,
-    height: ballHeight,
-    vx: 200,
-    vy: 200,
-    hitZ: 0,
-    exchange: 0,
-    color: "white",
-  };
-
-  ballStartX = canvas.width / 2 - ball.width / 2;
-  ballStartY = canvas.height / 2 - ball.height / 2;
-
-  leftPaddleStart = canvas.height / 2 - paddleHeight / 2;
-  rightPaddleStart = canvas.height / 2 - paddleHeight / 2;
-
-  resetPos();
+  leftPaddle = { x: 20, y: canvas.height / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, color: "#d6ecff" };
+  rightPaddle = { x: canvas.width - paddleWidth - 20, y: canvas.height / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, color: "#d6ecff" };
+  ball = { x: canvas.width / 2, y: canvas.height / 2, width: ballSize, height: ballSize, vx: 0, vy: 0, color: "white" };
+  
+  resetBall(0);
 }
 
-function resetPos(): void {
-  if (!leftPaddle || !rightPaddle || !ball) {
-    console.warn("Game objects not initialized before resetPos");
-    return;
-  }
-
-  leftPaddle.y = leftPaddleStart;
-  rightPaddle.y = rightPaddleStart;
-
-  ball.x = ballStartX;
-  ball.y = ballStartY;
-
-  ball.vx = ballStartV * (Math.random() > 0.5 ? 1 : -1);
-  ball.vy = (Math.random() > 0.5 ? 1 : -1) * 100;
-  ball.exchange = 0;
-}
-
-function drawMidline(): void {
-  const segmentHeight = 20;
-  const gap = 15;
-  const lineWidth = 4;
-  const x = canvas.width / 2 - lineWidth / 2;
-  for (let y = 0; y < canvas.height; y += segmentHeight + gap) {
-    pongCtx.fillStyle = "#d6ecff";
-    pongCtx.shadowColor = "#0fffff";
-    pongCtx.fillRect(x, y, lineWidth, segmentHeight);
-  }
-}
-
-function drawScore(): void {
-  pongCtx.font = "64px 'Press Start 2P'";
-  pongCtx.fillStyle = "#d6ecff";
-  pongCtx.textAlign = "center";
-  pongCtx.fillText(
-    `${leftScore}  ${rightScore}`,
-    canvas.width / 2,
-    canvas.height / 6
-  );
-}
-
-function drawVerticalCRTLines(): void {
-  let pulse = Math.sin(Date.now() * 0.1) * 3;
-  pongCtx.shadowBlur = pulse;
-
-  pongCtx.shadowColor = "#000fff";
-
-  flickerPhase += 0.1;
-  const flickerAlpha = 0.04 + 0.01 * Math.sin(flickerPhase);
-
-  pongCtx.save();
-  pongCtx.globalAlpha = flickerAlpha + 0.1;
-  pongCtx.strokeStyle = "#00ffff";
-  pongCtx.lineWidth = 1;
-
-  for (let y = 0; y < canvas.height; y += 3) {
-    pongCtx.beginPath();
-    pongCtx.moveTo(0, y);
-    pongCtx.lineTo(canvas.width, y);
-    pongCtx.stroke();
-  }
-
-  pongCtx.restore();
-}
-
-function drawPaddle(paddle: Paddle): void {
-  let pulse = Math.sin(Date.now() * 0.4) * 0.5;
-  pongCtx.shadowBlur = pulse;
-
-  pongCtx.fillStyle = "#d6ecff";
-  pongCtx.shadowColor = "#0fffff";
-
-  roundRect(pongCtx, paddle.x, paddle.y, paddle.width, paddle.height, 10);
-  pongCtx.fill();
-}
-
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
-): void {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
-}
-
-function draw(): void {
-  if (!pongCtx || !canvas) return;
-
-  pongCtx.clearRect(0, 0, canvas.width, canvas.height);
-
-  const bgGradient = pongCtx.createLinearGradient(0, 0, 0, canvas.height);
-  bgGradient.addColorStop(0, "#001c3b");
-  bgGradient.addColorStop(0.5, "#234461");
-  bgGradient.addColorStop(1, "#001c3b");
-
-  pongCtx.fillStyle = bgGradient;
-  pongCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-  drawVerticalCRTLines();
-
-  pongCtx.fillStyle = "#ffffff";
-  if (ball) {
-    pongCtx.fillRect(ball.x, ball.y, ball.width, ball.height);
-  }
-
-
-  if (leftPaddle && rightPaddle) {
-    drawPaddle(leftPaddle);
-    drawPaddle(rightPaddle);
-  }
-
-
-  drawMidline();
-  drawScore();
-
-  if (promptStartMessageActive) {
-    pongCtx.font = "24px 'Press Start 2P'";
-    pongCtx.fillStyle = "#d6ecff";
-    pongCtx.textAlign = "center";
-    pongCtx.fillText(
-      "Press Enter or Space to Start",
-      canvas.width / 2,
-      canvas.height / 2
-    );
-  }
-}
-
-function isColliding(ball: Ball, paddle: Paddle): boolean {
-  return (
-    ball.x < paddle.x + paddle.width &&
-    ball.x + ball.width > paddle.x &&
-    ball.y < paddle.y + paddle.height &&
-    ball.y + ball.height > paddle.y
-  );
-}
-
-function handleCollision(ball: Ball, paddle: Paddle): void {
-  ball.vx *= -1.1;
-  ball.vx = Math.max(Math.min(ball.vx, maxSpeed), -maxSpeed);
-
-  const hitZone = (ball.y - paddle.y) / paddleHeight;
-  ball.hitZ = hitZone;
-
-  const maxAngle = 250;
-  const deflect = (hitZone - 0.5) * 2 * maxAngle;
-
-  if (hitZone >= 0.4 && hitZone <= 0.6) {
-    ball.vy = 0;
-    ball.vx *= 1.3;
+function resetBall(direction: number): void {
+  ball.x = canvas.width / 2 - ball.width / 2;
+  ball.y = canvas.height / 2 - ball.height / 2;
+  
+  if (direction === 0) {
+      ball.vx = 0;
+      ball.vy = 0;
   } else {
-    ball.vy = deflect + paddle.dv * 15;
+      const ballStartV = 350;
+      ball.vx = ballStartV * direction;
+      ball.vy = (Math.random() - 0.5) * 300;
   }
-
-  ball.exchange++;
 }
 
 function update(dt: number): void {
-  const paddleSpeed = 500 * dt;
+    if (keyPress["Enter"] && !gameIsRunning) {
+        gameIsRunning = true;
+        resetBall(Math.random() > 0.5 ? 1 : -1);
+    }
+    if (!gameIsRunning) return;
 
-  if (!leftPaddle || !rightPaddle || !ball) return;
+    const paddleSpeed = 500 * dt;
+    if (keyPress["w"] && leftPaddle.y > 0) leftPaddle.y -= paddleSpeed;
+    if (keyPress["s"] && leftPaddle.y + leftPaddle.height < canvas.height) leftPaddle.y += paddleSpeed;
+    if (keyPress["ArrowUp"] && rightPaddle.y > 0) rightPaddle.y -= paddleSpeed;
+    if (keyPress["ArrowDown"] && rightPaddle.y + rightPaddle.height < canvas.height) rightPaddle.y += paddleSpeed;
+    
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
 
-  // Left paddle controls
-  if (keyPress["w"] && leftPaddle.y > 0) leftPaddle.y -= paddleSpeed;
-  if (keyPress["s"] && leftPaddle.y + leftPaddle.height < canvas.height)
-    leftPaddle.y += paddleSpeed;
+    if (ball.y <= 0 || ball.y + ball.height >= canvas.height) ball.vy *= -1;
 
-  // Right paddle controls
-  if (keyPress["ArrowUp"] && rightPaddle.y > 0) rightPaddle.y -= paddleSpeed;
-  if (keyPress["ArrowDown"] && rightPaddle.y + rightPaddle.height < canvas.height)
-    rightPaddle.y += paddleSpeed;
+    if (ball.vx < 0 && ball.x < leftPaddle.x + leftPaddle.width && ball.x > leftPaddle.x && ball.y + ball.height > leftPaddle.y && ball.y < leftPaddle.y + leftPaddle.height) {
+        ball.vx *= -1.1;
+        const hitPoint = (ball.y + ball.height / 2 - leftPaddle.y) / leftPaddle.height;
+        ball.vy = (hitPoint - 0.5) * 500;
+    }
+    if (ball.vx > 0 && ball.x + ball.width > rightPaddle.x && ball.x < rightPaddle.x + rightPaddle.width && ball.y + ball.height > rightPaddle.y && ball.y < rightPaddle.y + rightPaddle.height) {
+        ball.vx *= -1.1;
+        const hitPoint = (ball.y + ball.height / 2 - rightPaddle.y) / rightPaddle.height;
+        ball.vy = (hitPoint - 0.5) * 500;
+    }
+    
+    if (ball.x < -ball.width) {
+        rightScore++;
+        resetBall(1);
+    } else if (ball.x > canvas.width) {
+        leftScore++;
+        resetBall(-1);
+    }
 
+    if (leftScore >= winningScore) endGame(player1Alias);
+    if (rightScore >= winningScore) endGame(player2Alias);
+}
 
-  leftPaddle.dv = leftPaddle.y - leftPaddle.prevY;
-  leftPaddle.prevY = leftPaddle.y;
-  rightPaddle.dv = rightPaddle.y - rightPaddle.prevY;
-  rightPaddle.prevY = rightPaddle.y;
+function gameLoop(): void {
+    if (isGameOver) return; // <<< FIX: Don't loop if game is over
+    const dt = 1 / 60;
+    update(dt);
+    draw();
+    animationFrameId = requestAnimationFrame(gameLoop);
+}
 
-  ball.x += ball.vx * dt;
-  ball.y += ball.vy * dt;
+function endGame(winnerAlias: string): void {
+  if (isGameOver) return; // <<< FIX: Prevent this function from running more than once
+  isGameOver = true; // <<< FIX: Set the flag
 
-  if (ball.y <= 0 || ball.y + ball.height >= canvas.height) {
-    ball.vy *= -1;
-    ball.y = Math.max(0, Math.min(canvas.height - ball.height, ball.y));
-  }
-
-  if (isColliding(ball, leftPaddle)) {
-    ball.x = leftPaddle.x + ball.width;
-    handleCollision(ball, leftPaddle);
-  }
-
-  if (isColliding(ball, rightPaddle)) {
-    ball.x = rightPaddle.x - ball.width;
-    handleCollision(ball, rightPaddle);
-  }
-
-  if (ball.x + ball.width + 5 < 0) {
-    rightScore++;
-    resetPos();
-  }
-
-  if (ball.x > canvas.width) {
-    leftScore++;
-    resetPos();
+  stopPongGame();
+  if (onGameOverCallback) {
+      onGameOverCallback(winnerAlias);
   }
 }
 
-function gameLoop(currentTime: number): void {
-  if (!gameIsRunning) return; // Don't run if game isn't active
-
-  const delta = (currentTime - lastTime) / 1000;
-  lastTime = currentTime;
-  update(delta);
-  draw();
-
-  const winningScore = 2; 
-
-  if (leftScore >= winningScore || rightScore >= winningScore) {
-    const winnerId = leftScore >= winningScore ? 1 : 2; 
-    const finalScore = Math.max(leftScore, rightScore);
-
-    endGame(winnerId, finalScore);
-    return;
+export function startPongGame(p1Alias: string, p2Alias: string, onEndCallback: (winner: string) => void): void {
+  if (animationFrameId) stopPongGame();
+  
+  if (canvas) {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
   }
+  
+  player1Alias = p1Alias;
+  player2Alias = p2Alias;
+  onGameOverCallback = onEndCallback;
+  
+  leftScore = 0;
+  rightScore = 0;
+  gameIsRunning = false;
+  isGameOver = false; // <<< FIX: Reset the flag for the new game
+  
+  initGameObjects();
   animationFrameId = requestAnimationFrame(gameLoop);
 }
 
-async function endGame(winnerId: number, finalScore: number) {
-  console.log(`Game Over! Player ${winnerId} wins! Score: ${finalScore}`);
-  gameIsRunning = false; // Stop the game logic
-
-  // Post score if the current user is the winner
-  if (currentUser.signedIn && currentUser.userId === winnerId) {
-    try {
-      await postScore(1, currentUser.userId, finalScore); // Assuming tournamentId is 1
-    } catch (err) {
-      console.error("Error saving score:", err);
-    }
-  } else if (currentUser.signedIn && currentUser.userId !== winnerId) {
-    console.log("Current user is not the winner; skipping score saving for this player.");
-  } else {
-     console.log("User not signed in; skipping score saving.");
-  }
-
-  // Use a new animation frame to draw the end game screen to ensure it's rendered
-  if (animationFrameId !== null) {
-      cancelAnimationFrame(animationFrameId); // Cancel the main game loop
-      animationFrameId = null;
-  }
-  
-  animationFrameId = requestAnimationFrame(() => {
-    if (pongCtx && canvas) {
-      pongCtx.clearRect(0, 0, canvas.width, canvas.height);
-      const bgGradient = pongCtx.createLinearGradient(0, 0, 0, canvas.height);
-      bgGradient.addColorStop(0, "#001c3b");
-      bgGradient.addColorStop(0.5, "#234461");
-      bgGradient.addColorStop(1, "#001c3b");
-      pongCtx.fillStyle = bgGradient;
-      pongCtx.fillRect(0, 0, canvas.width, canvas.height);
-      drawVerticalCRTLines();
-
-      pongCtx.font = "32px 'Press Start 2P'";
-      pongCtx.fillStyle = "#d6ecff";
-      pongCtx.textAlign = "center";
-      pongCtx.fillText(
-        `Player ${winnerId} Wins!`,
-        canvas.width / 2,
-        canvas.height / 2 - 40
-      );
-      pongCtx.fillText(
-        "Press Enter to play a new match",
-        canvas.width / 2,
-        canvas.height / 2 + 20
-      );
-    }
-  });
-  waitingForRestart = true;
-}
-
-export async function startPongGame(): Promise<void> {
-  // Stop any existing game animation frame (gameLoop or endGame screen)
-  if (animationFrameId !== null) {
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
-  }
-  if (gameIsRunning) {
-     console.log("Pong game was running. Stopping previous instance.");
-  }
-
-  gameIsRunning = false;
-
-  if (!canvas || !pongCtx) {
-    console.error("Canvas or context not initialized. Attempting to find #pongCanvas.");
-    const localCanvas = document.getElementById(
-      "pongCanvas"
-    ) as HTMLCanvasElement;
-    if (localCanvas) {
-        setCanvas(localCanvas);
-    } else {
-        console.error("Essential canvas #pongCanvas not found. Cannot start Pong game.");
-        return;
-    }
-    if (!pongCtx) { 
-        console.error("Canvas context could not be obtained. Cannot start Pong game.");
-        return;
-    }
-  }
-
-  console.log("Setting up Pong game for start prompt...");
-  await fetchCurrentUser();
-
-  initGameObjects(); 
-  leftScore = 0;
-  rightScore = 0;
-  waitingForRestart = false; 
-  promptStartMessageActive = true;
-
-  draw();
-}
-
 export function stopPongGame(): void {
-  console.log("Stopping Pong game...");
-  gameIsRunning = false;
-  promptStartMessageActive = false;
-
-  if (animationFrameId !== null) {
+  if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
   }
-
-  leftScore = 0;
-  rightScore = 0;
-  waitingForRestart = false;
-
-  if (pongCtx && canvas) {
-    pongCtx.clearRect(0, 0, canvas.width, canvas.height);
-    // Optionally draw a "Game Stopped" or initial screen here
-    // For example, you could draw a simple background:
-    // const bgGradient = pongCtx.createLinearGradient(0, 0, 0, canvas.height);
-    // bgGradient.addColorStop(0, "#001c3b");
-    // bgGradient.addColorStop(0.5, "#234461");
-    // bgGradient.addColorStop(1, "#001c3b");
-    // pongCtx.fillStyle = bgGradient;
-    // pongCtx.fillRect(0, 0, canvas.width, canvas.height);
-    // pongCtx.font = "24px 'Press Start 2P'";
-    // pongCtx.fillStyle = "#d6ecff";
-    // pongCtx.textAlign = "center";
-    // pongCtx.fillText("Game Stopped", canvas.width / 2, canvas.height / 2);
-  }
-  console.log("Pong game stopped and resources cleaned.");
 }
