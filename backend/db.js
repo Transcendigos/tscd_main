@@ -192,6 +192,25 @@ export function initializeDB(logger) {
                 if (logger) logger.info("Tournament matches table checked/created successfully.");
             }
         });
+
+
+        db.run(`
+           CREATE TABLE IF NOT EXISTS friends (
+               user_id INTEGER NOT NULL,
+               friend_id INTEGER NOT NULL,
+               PRIMARY KEY (user_id, friend_id),
+               FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+               FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE
+           )
+`       , (err) => {
+           if (err) {
+               if (logger) logger.error({ err }, "Error creating friends table");
+           } else {
+               if (logger) logger.info("Friends table checked/created successfully.");
+           }
+        });
+
+        
     });
 
     dbInstance = db;

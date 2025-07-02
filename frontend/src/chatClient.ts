@@ -33,6 +33,7 @@ interface ApiUser {
     picture?: string | null;
     isOnline: boolean;
     isBlockedByMe: boolean;
+    isFriend: boolean;
 }
 
 interface ActiveChatWindow {
@@ -131,7 +132,18 @@ export function initializeChatSystem() {
 
   chatUserListEl.addEventListener("click", (event) => {
     const target = event.target as HTMLElement;
-    if (target.matches('input[type="checkbox"]')) { return; }
+
+    if (target.matches('.friend-toggle-btn')) {
+        handleFriendToggle(event);
+        return;
+    }
+
+            if (target.matches('.block-toggle-btn')) {
+            handleBlockToggle(event);
+            return;
+        }
+
+    
 
     const listItem = target.closest("li");
     if (listItem && listItem.parentElement === chatUserListEl && listItem.dataset.userId) {
@@ -536,13 +548,47 @@ function connectWebSocket() {
   };
 }
 
-async function handleBlockToggle(event: Event) {
-    const checkbox = event.target as HTMLInputElement;
-    checkbox.disabled = true;
+async function handleFriendToggle(event: Event) {
+    const button = event.target as HTMLButtonElement;
+    const friendId = button.dataset.userId;
+    const isCurrentlyFriend = button.dataset.isFriend === 'true';
 
-    const userId = checkbox.dataset.userId;
-    const endpoint = checkbox.checked ? '/api/chat/block' : '/api/chat/unblock';
-    const bodyKey = checkbox.checked ? 'userIdToBlock' : 'userIdToUnblock';
+    if (!friendId) return;
+
+    button.disabled = true; // Prevent double-clicks
+
+    const endpoint = isCurrentlyFriend ? '/api/friends/remove' : '/api/friends/add';
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ friendId: parseInt(friendId, 10) })
+        });
+
+        if (response.ok) {
+            await loadUserList(); // On success, refresh the entire user list
+        } else {
+            const result = await response.json();
+            alert(`Error: ${result.message || 'Could not update friend status.'}`);
+            button.disabled = false;
+        }
+    } catch (error) {
+        console.error('Failed to toggle friend status', error);
+        alert('An error occurred while updating friend status.');
+        button.disabled = false;
+    }
+}
+
+async function handleBlockToggle(event: Event) {
+    const button = event.target as HTMLButtonElement;
+    button.disabled = true;
+
+    const userId = button.dataset.userId;
+    const isCurrentlyBlocked = button.dataset.isBlocked === 'true';
+
+    const endpoint = isCurrentlyBlocked ? '/api/chat/unblock' : '/api/chat/block';
+    const bodyKey = isCurrentlyBlocked ? 'userIdToUnblock' : 'userIdToBlock';
 
     try {
         const res = await fetch(endpoint, {
@@ -555,83 +601,124 @@ async function handleBlockToggle(event: Event) {
             loadUserList();
         } else {
             alert('Failed to update block status.');
-            checkbox.checked = !checkbox.checked;
+            button.disabled = false;
         }
     } catch (error) {
         console.error("Error toggling block status:", error);
         alert('An error occurred.');
-        checkbox.checked = !checkbox.checked;
-    } finally {
-        checkbox.disabled = false;
+        button.disabled = false;
     }
 }
 
 async function loadUserList() {
     if (!chatUserListEl) { console.error("Chat: chatUserListEl not found."); return; }
     if (!currentUserId) {
-        console.warn("Chat: Not authenticated (currentUserId not set). Cannot load user list.");
+        console.warn("Chat: Not authenticated. Cannot load user list.");
         chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs p-1.5">Authentication pending...</li>';
         return;
     }
 
     try {
         const usersResponse = await fetch("/api/chat/users", { credentials: 'include' });
-        if (!usersResponse.ok) {
-            throw new Error(`Failed to fetch user list. Status: ${usersResponse.status}`);
+        if (!usersResponse.ok) throw new Error(`Status: ${usersResponse.status}`);
+        const usersFromServer: ApiUser[] = await usersResponse.json();
+
+        chatUserListEl.innerHTML = ""; // Clear the list before redrawing
+
+        const friends = usersFromServer.filter(u => u.isFriend);
+        const others = usersFromServer.filter(u => !u.isFriend);
+
+        // Sort both lists (e.g., online first, then alphabetically)
+        const sortUsers = (a: ApiUser, b: ApiUser) => {
+            if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+            return a.username.localeCompare(b.username);
+        };
+        friends.sort(sortUsers);
+        others.sort(sortUsers);
+
+        const createListItem = (user: ApiUser): HTMLElement => {
+            const numericUserId = parseInt(user.id.substring(5), 10);
+            const li = document.createElement("li");
+            li.dataset.username = user.username;
+            li.dataset.userId = numericUserId.toString();
+            li.dataset.isBlocked = user.isBlockedByMe.toString();
+            li.dataset.userPicture = user.picture || '';
+
+            li.className = "p-1.5 hover:bg-slate-700 text-xs flex items-center space-x-2";
+            if (!user.isBlockedByMe) li.classList.add("cursor-pointer");
+
+            // --- Add/Remove Friend Star ---
+            const friendStar = document.createElement('button');
+            friendStar.title = user.isFriend ? `Remove ${user.username} from friends` : `Add ${user.username} to friends`;
+            friendStar.className = `friend-toggle-btn text-lg ${user.isFriend ? 'text-yellow-400' : 'text-slate-600 hover:text-yellow-400'}`;
+            friendStar.innerHTML = user.isFriend ? '&#9733;' : '&#9734;'; // Filled vs. Empty Star
+            friendStar.dataset.userId = numericUserId.toString();
+            friendStar.dataset.isFriend = user.isFriend.toString();
+            li.appendChild(friendStar);
+
+            // --- Avatar and Status ---
+            const avatarContainer = document.createElement("div");
+            avatarContainer.className = "relative flex-shrink-0";
+            const statusCircle = document.createElement("div");
+            statusCircle.id = `chat-user-status-${numericUserId}`;
+            statusCircle.className = "w-2.5 h-2.5 bg-green-400 rounded-full absolute -top-0.5 -left-0.5 border-2 border-slate-800";
+            statusCircle.style.display = user.isOnline ? 'block' : 'none';
+            const colorIndex = numericUserId % userPlaceholderColors.length;
+            const placeholder = document.createElement("div");
+            placeholder.className = `w-5 h-5 flex items-center justify-center text-xs text-slate-900 pointer-events-none ${userPlaceholderColors[colorIndex]}`;
+            placeholder.textContent = user.username.substring(0, 1).toUpperCase();
+            avatarContainer.appendChild(placeholder);
+            avatarContainer.appendChild(statusCircle);
+            li.appendChild(avatarContainer);
+
+            // --- Username ---
+            const nameSpan = document.createElement("span");
+            nameSpan.textContent = user.username;
+            nameSpan.className = `pointer-events-none flex-grow ${user.isBlockedByMe ? 'text-slate-500 line-through' : ''}`;
+            li.appendChild(nameSpan);
+
+            // --- Block Button ---
+            const blockButton = document.createElement('button');
+            blockButton.title = user.isBlockedByMe ? `Unblock ${user.username}` : `Block ${user.username}`;
+            blockButton.className = 'block-toggle-btn text-lg ml-auto p-1';
+
+            if (user.isBlockedByMe) {
+                blockButton.innerHTML = '&#128721;'; // The "no entry" sign 🚫
+                blockButton.classList.add('text-red-500');
+            } else {
+                blockButton.innerHTML = '&#128721;';
+                blockButton.classList.add('text-slate-600', 'hover:text-red-500', 'transition-colors');
+            }
+
+            blockButton.dataset.userId = numericUserId.toString();
+            blockButton.dataset.isBlocked = user.isBlockedByMe.toString();
+            li.appendChild(blockButton);
+
+            return li;
+        };
+
+        // Render Friends List (if any)
+        if (friends.length > 0) {
+            const header = document.createElement('h3');
+            header.className = 'text-sm font-bold text-yellow-300 p-2 bg-slate-800/50 sticky top-0 z-10';
+            header.textContent = 'Friends';
+            chatUserListEl.appendChild(header);
+            friends.forEach(user => chatUserListEl.appendChild(createListItem(user)));
         }
 
-        const usersFromServer: ApiUser[] = await usersResponse.json();
-        chatUserListEl.innerHTML = "";
+        // Render Others List (if any)
+        if (others.length > 0) {
+            const header = document.createElement('h3');
+            header.className = 'text-sm font-bold text-slate-300 p-2 bg-slate-800/50 sticky top-0 z-10';
+            header.textContent = 'All Users';
+            chatUserListEl.appendChild(header);
+            others.forEach(user => chatUserListEl.appendChild(createListItem(user)));
+        }
 
         if (usersFromServer.length === 0) {
             chatUserListEl.innerHTML = '<li class="text-xs p-1.5">No other users available.</li>';
-        } else {
-            usersFromServer.forEach((user) => {
-                const numericUserId = parseInt(user.id.substring(5), 10);
-                if (isNaN(numericUserId)) return;
-
-                const li = document.createElement("li");
-                li.dataset.username = user.username;
-                li.dataset.userId = numericUserId.toString();
-                li.dataset.isBlocked = user.isBlockedByMe.toString();
-
-                li.className = "p-1.5 hover:bg-slate-700 text-xs flex items-center space-x-2";
-                if (!user.isBlockedByMe) {
-                    li.classList.add("cursor-pointer");
-                }
-
-                const avatarContainer = document.createElement("div");
-                avatarContainer.className = "relative flex-shrink-0";
-                const statusCircle = document.createElement("div");
-                statusCircle.id = `chat-user-status-${numericUserId}`;
-                statusCircle.className = "w-2.5 h-2.5 bg-green-400 rounded-full absolute top-0 left-0 border-2 border-slate-700";
-                statusCircle.style.display = user.isOnline ? 'block' : 'none';
-
-                const colorIndex = numericUserId % userPlaceholderColors.length;
-                const placeholder = document.createElement("div");
-                placeholder.className = `w-5 h-5 flex items-center justify-center text-xs text-slate-900 pointer-events-none flex-shrink-0 ${userPlaceholderColors[colorIndex]}`;
-                placeholder.textContent = user.username.substring(0, 1).toUpperCase();
-                avatarContainer.appendChild(placeholder);
-                avatarContainer.appendChild(statusCircle);
-                li.appendChild(avatarContainer);
-
-                const nameSpan = document.createElement("span");
-                nameSpan.textContent = user.username;
-                nameSpan.className = `pointer-events-none flex-grow ${user.isBlockedByMe ? 'text-slate-500 line-through' : ''}`;
-                li.appendChild(nameSpan);
-
-                const blockCheckbox = document.createElement('input');
-                blockCheckbox.type = 'checkbox';
-                blockCheckbox.title = `Block ${user.username}`;
-                blockCheckbox.className = 'ml-auto accent-[#D4535B] h-4 w-4 flex-shrink-0';
-                blockCheckbox.dataset.userId = numericUserId.toString();
-                blockCheckbox.checked = user.isBlockedByMe;
-                blockCheckbox.addEventListener('change', handleBlockToggle);
-                li.appendChild(blockCheckbox);
-
-                chatUserListEl?.appendChild(li);
-            });
         }
+
     } catch (error) {
         console.error("Chat: Error loading user list:", error);
         if (chatUserListEl) chatUserListEl.innerHTML = '<li class="text-red-400 text-xs p-1.5">Failed to load users.</li>';
