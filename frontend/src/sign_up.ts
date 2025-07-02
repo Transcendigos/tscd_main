@@ -1,9 +1,13 @@
 import { DesktopWindow } from "./DesktopWindow.js"; // ✅ make sure it's imported
 
+function getApiUrl(path: string) {
+  const base = import.meta.env.VITE_API_URL || '';
+  return base + path;
+}
 
 export async function checkSignedIn(): Promise<boolean> {
   try {
-    const res = await fetch("http://localhost:3000/api/me", {
+    const res = await fetch(getApiUrl("/api/me"), {
       credentials: "include",
     });
     const result = await res.json();
@@ -40,7 +44,7 @@ export function setupSignupForm(signupWindow: DesktopWindow) {
     });
 
     try {
-      const res = await fetch("http://localhost:3000/api/signup", {
+      const res = await fetch(getApiUrl("/api/signup"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

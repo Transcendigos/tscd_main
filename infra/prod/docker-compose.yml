@@ -1,22 +1,127 @@
 version: '3.8'
 
 services:
-  backend:
-    build:
-      context: ../..
-      dockerfile: infra/prod/Dockerfile_backend
-    container_name: backend
-    expose:
-      - "3000"
-    restart: unless-stopped
-
   nginx:
     build:
       context: ../..
       dockerfile: infra/prod/Dockerfile_nginx
-    container_name: nginx
+    container_name: nginx_prod
     ports:
-      - "8080:80"
+      - "8443:443"
+      - "8080:8080"
     depends_on:
       - backend
     restart: unless-stopped
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: infra/prod/Dockerfile_backend
+    container_name: backend_prod
+    volumes:
+      - sqlite-data:/app/data
+      - ../../logs:/logs
+      - ../../frontend/public/uploads:/app/public/uploads
+    expose:
+      - "3000"
+    depends_on:
+      - redis_chat
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis_chat:6379
+
+  redis_chat:
+    image: redis:alpine
+    container_name: redis_chat_prod
+    volumes:
+      - redis-chat-data:/data
+    restart: unless-stopped
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.1
+    container_name: elasticsearch_prod
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.18.1
+    container_name: logstash_prod
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ../../logs:/logs
+    ports:
+      - "5044:5044"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.18.1
+    container_name: kibana_prod
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus_prod
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alert.rules.yml:/etc/prometheus/alert.rules.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana_prod
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    restart: unless-stopped
+
+  node_exporter:
+    image: prom/node-exporter
+    container_name: node_exporter_prod
+    ports:
+      - "9101:9100"
+    restart: unless-stopped
+
+  redis_exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis_exporter_prod
+    environment:
+      - REDIS_ADDR=redis://redis_chat:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      - redis_chat
+    restart: unless-stopped
+
+volumes:
+  sqlite-data:
+  redis-chat-data:
+  nginx-logs:
+  esdata:
+  prometheus-data:
+  grafana-storage:
