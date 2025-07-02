@@ -57,7 +57,7 @@ export default fp(async function authRoutes(server, options) {
       const tokenPayload = { userId: insertedUserId, username, email, method_sign: 'local', picture: null };
       const token = jwt.sign(tokenPayload, server.jwt_secret, { expiresIn: '7d' });
 
-      reply.clearCookie('session_token', { path: '/' }); // cleanup legacy
+      reply.clearCookie('session_token', { path: '/' });
       server.log.info({ username, email, userId: insertedUserId }, "User signed up successfully");
       setAuthCookie(reply, token);
 
@@ -150,11 +150,21 @@ export default fp(async function authRoutes(server, options) {
         userIdToSign = dbUser.id;
         finalUsername = dbUser.username;
         server.log.info({ picture, dbuser: dbUser.picture }, "all photo");
-        finalPicture = dbUser.picture || picture;
-        if (finalPicture !== dbUser.picture) {
-          db.run('UPDATE users SET picture = ? WHERE id = ?', [finalPicture, userIdToSign], (err) => {
-            if (err) server.log.error({ err, userId: userIdToSign }, "Error updating user picture during Google Sign-In");
-          });
+        finalPicture = picture || dbUser.picture;
+        if (finalPicture && finalPicture !== dbUser.picture) {
+          try {
+            await new Promise((resolve, reject) => {
+              db.run('UPDATE users SET picture = ? WHERE id = ?', [finalPicture, userIdToSign], function(err) {
+                if (err) {
+                  server.log.error({ err, userId: userIdToSign }, "Error updating user picture during Google Sign-In");
+                  return reject(err);
+                }
+                resolve();
+              });
+            });
+          } catch (err) {
+            return reply.code(500).send({ error: 'Failed to update user profile.' });
+          }
         }
         server.log.info({ email, username: finalUsername, userId: userIdToSign }, "Existing user signed in via Google");
       }

@@ -2,10 +2,22 @@ import { DesktopWindow } from "./DesktopWindow.js";
 import { fetchAndDisplayTournaments, showTournamentBracket } from "./tournament.ts";
 
 
+
 interface User {
   id: number;
   username: string;
   picture?: string | null;
+}
+
+interface UserProfileData {
+    id: number;
+    username: string;
+    email?: string;
+    picture?: string;
+    wins?: number;
+    losses?: number;
+    winRatio?: string;
+    matchHistory?: any[];
 }
 
 type WebSocketUser = {
@@ -21,6 +33,7 @@ interface ApiUser {
     picture?: string | null;
     isOnline: boolean;
     isBlockedByMe: boolean;
+    isFriend: boolean;
 }
 
 interface ActiveChatWindow {
@@ -119,7 +132,18 @@ export function initializeChatSystem() {
 
   chatUserListEl.addEventListener("click", (event) => {
     const target = event.target as HTMLElement;
-    if (target.matches('input[type="checkbox"]')) { return; }
+
+    if (target.matches('.friend-toggle-btn')) {
+        handleFriendToggle(event);
+        return;
+    }
+
+            if (target.matches('.block-toggle-btn')) {
+            handleBlockToggle(event);
+            return;
+        }
+
+    
 
     const listItem = target.closest("li");
     if (listItem && listItem.parentElement === chatUserListEl && listItem.dataset.userId) {
@@ -156,45 +180,90 @@ async function showUserProfile(user: User) {
         return;
     }
 
-    const res = await fetch(`/api/profile/${user.id}`, { credentials: 'include' });
-    if (!res.ok) {
-        return;
-    }
-    const { profile } = await res.json();
+    const prefixedId = `user_${user.id}`;
 
-    const profileWindowHtml = `
-    <div id="userProfileWindow_${user.id}" class="border-2 border-[#8be076] w-[350px] text-[#4cb4e7] text-sm flex flex-col bg-slate-900/80 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none" style="min-width: 300px; min-height: 150px;">
-      <div id="userProfileDragHandle_${user.id}" class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#8be076] cursor-grab active:cursor-grabbing select-none">
-        <span class="font-bold">${profile.username}'s Profile</span>
-        <button id="closeUserProfileBtn_${user.id}" class="w-5 h-5 border border-[#8be076] flex items-center justify-center font-bold hover:bg-[#f8aab6] hover:text-slate-900 transition-colors">X</button>
-      </div>
-      <div class="flex-grow p-4 flex items-center space-x-4 bg-slate-800/50">
-        <img src="${profile.picture || '/favicon.jpg'}" onerror="this.onerror=null;this.src='/favicon.jpg';" class="w-20 h-20 rounded-full object-cover border-2 border-[#8be076]">
-        <div class="space-y-1">
-            <p class="text-xl font-bold text-white">${profile.username}</p>
-            <p class="text-sm text-slate-300">${profile.email}</p>
-        </div>
-      </div>
-      <div id="userProfileResizeHandle_${user.id}" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
-    </div>`;
+    try {
+        // Fetch all data in parallel, just like in your populateUserProfile function
+        const [profileRes, summaryRes, historyRes] = await Promise.all([
+            fetch(`http://localhost:3000/api/profile/${user.id}`, { credentials: 'include' }),
+            fetch(`/api/stats/summary/${prefixedId}`),
+            fetch(`/api/stats/match-history/${prefixedId}`)
+        ]);
 
-    document.getElementById("main")?.insertAdjacentHTML('beforeend', profileWindowHtml);
-
-    const newProfileWindow = new DesktopWindow({
-        windowId: `userProfileWindow_${user.id}`,
-        dragHandleId: `userProfileDragHandle_${user.id}`,
-        resizeHandleId: `userProfileResizeHandle_${user.id}`,
-        closeButtonId: `closeUserProfileBtn_${user.id}`,
-        boundaryContainerId: 'main',
-        visibilityToggleId: `userProfileWindow_${user.id}`,
-        onCloseCallback: () => {
-            openProfileWindows.delete(user.id);
-            document.getElementById(`userProfileWindow_${user.id}`)?.remove();
+        if (!profileRes.ok || !summaryRes.ok || !historyRes.ok) {
+            console.error('Failed to fetch all profile data for user:', user.id);
+            alert(`Could not load full profile for ${user.username}.`);
+            return;
         }
-    });
 
-    openProfileWindows.set(user.id, newProfileWindow);
-    newProfileWindow.open();
+        const { profile } = await profileRes.json();
+        const summary = await summaryRes.json();
+        const history = await historyRes.json();
+        const fullProfile: UserProfileData = { ...profile, ...summary, matchHistory: history };
+
+        const historyRowsHtml = fullProfile.matchHistory && fullProfile.matchHistory.length > 0
+            ? fullProfile.matchHistory.map(match => {
+                const resultClass = match.result === 'Win' ? 'text-green-400' : 'text-red-400';
+                return `
+                    <tr class="border-t border-slate-700/50">
+                        <td class="p-2">${match.opponent}</td>
+                        <td class="p-2">${match.yourScore} - ${match.opponentScore}</td>
+                        <td class="p-2 font-bold ${resultClass}">${match.result}</td>
+                        <td class="p-2 opacity-70 text-xs">${new Date(match.date).toLocaleDateString()}</td>
+                    </tr>`;
+            }).join('')
+            : '<tr><td colspan="4" class="text-center p-4 text-slate-400">No match history.</td></tr>';
+
+        const profileWindowHtml = `
+        <div id="userProfileWindow_${user.id}" class="border-2 border-[#8be076] w-[450px] text-sm flex flex-col bg-slate-900/90 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none">
+          <div id="userProfileDragHandle_${user.id}" class="px-2 py-1 flex items-center justify-between border-b-2 border-[#8be076] cursor-grab active:cursor-grabbing select-none">
+            <span class="font-bold text-white">${fullProfile.username}'s Profile</span>
+            <button id="closeUserProfileBtn_${user.id}" class="w-5 h-5 border border-[#8be076] flex items-center justify-center font-bold hover:bg-[#f8aab6] hover:text-slate-900 transition-colors">X</button>
+          </div>
+          <div class="flex-grow p-4 flex flex-col space-y-3 bg-slate-800/50 text-slate-300">
+            <div class="flex items-center space-x-4">
+                <img src="${fullProfile.picture || '/favicon.jpg'}" onerror="this.onerror=null;this.src='/favicon.jpg';" class="w-20 h-20 rounded-full object-cover border-2 border-[#8be076]" referrerpolicy="no-referrer">
+                <div class="space-y-1">
+                    <p class="text-2xl font-bold text-white">${fullProfile.username}</p>
+                    <p class="text-sm text-slate-400">${fullProfile.email || 'No public email'}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center text-white">
+                <div class="bg-slate-700/50 p-2 rounded-lg"><p class="font-bold text-xl text-green-400">${fullProfile.wins || 0}</p><p class="text-xs text-slate-400">Wins</p></div>
+                <div class="bg-slate-700/50 p-2 rounded-lg"><p class="font-bold text-xl text-red-400">${fullProfile.losses || 0}</p><p class="text-xs text-slate-400">Losses</p></div>
+                <div class="bg-slate-700/50 p-2 rounded-lg"><p class="font-bold text-xl">${fullProfile.winRatio || 'N/A'}</p><p class="text-xs text-slate-400">Win Ratio</p></div>
+            </div>
+            <div class="flex-grow bg-slate-900/50 rounded-lg overflow-hidden flex flex-col">
+                <h3 class="text-center font-bold text-xs p-1 bg-slate-900/80 text-white">Match History</h3>
+                <div class="overflow-y-auto" style="max-height: 150px;">
+                    <table class="w-full text-left text-xs">
+                        <tbody id="profileMatchHistory_${user.id}">${historyRowsHtml}</tbody>
+                    </table>
+                </div>
+            </div>
+          </div>
+          <div id="userProfileResizeHandle_${user.id}" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
+        </div>`;
+
+        document.getElementById("main")?.insertAdjacentHTML('beforeend', profileWindowHtml);
+
+        const newProfileWindow = new DesktopWindow({
+            windowId: `userProfileWindow_${user.id}`, dragHandleId: `userProfileDragHandle_${user.id}`,
+            resizeHandleId: `userProfileResizeHandle_${user.id}`, closeButtonId: `closeUserProfileBtn_${user.id}`,
+            boundaryContainerId: 'main', visibilityToggleId: `userProfileWindow_${user.id}`,
+            onCloseCallback: () => {
+                openProfileWindows.delete(user.id);
+                document.getElementById(`userProfileWindow_${user.id}`)?.remove();
+            }
+        });
+
+        openProfileWindows.set(user.id, newProfileWindow);
+        newProfileWindow.open();
+
+    } catch (error) {
+        console.error("Failed to show user profile:", error);
+        alert("Could not load user profile. The user's data may be private or an error occurred.");
+    }
 }
 
 
@@ -258,10 +327,7 @@ function connectWebSocket() {
     return;
   }
   console.log("Chat: Attempting to establish WebSocket connection...");
-  const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const wsHost = window.location.host;
-  const WEBSOCKET_URL = `${wsProtocol}://${wsHost}/ws/chat`;
-  socket = new WebSocket(WEBSOCKET_URL);
+  socket = new WebSocket("ws://localhost:3000/ws/chat");
 
   socket.onopen = () => {
     console.log("Chat: WebSocket Connection Opened! Waiting for server to authenticate via cookie.");
@@ -482,13 +548,47 @@ function connectWebSocket() {
   };
 }
 
-async function handleBlockToggle(event: Event) {
-    const checkbox = event.target as HTMLInputElement;
-    checkbox.disabled = true;
+async function handleFriendToggle(event: Event) {
+    const button = event.target as HTMLButtonElement;
+    const friendId = button.dataset.userId;
+    const isCurrentlyFriend = button.dataset.isFriend === 'true';
 
-    const userId = checkbox.dataset.userId;
-    const endpoint = checkbox.checked ? '/api/chat/block' : '/api/chat/unblock';
-    const bodyKey = checkbox.checked ? 'userIdToBlock' : 'userIdToUnblock';
+    if (!friendId) return;
+
+    button.disabled = true; // Prevent double-clicks
+
+    const endpoint = isCurrentlyFriend ? '/api/friends/remove' : '/api/friends/add';
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ friendId: parseInt(friendId, 10) })
+        });
+
+        if (response.ok) {
+            await loadUserList(); // On success, refresh the entire user list
+        } else {
+            const result = await response.json();
+            alert(`Error: ${result.message || 'Could not update friend status.'}`);
+            button.disabled = false;
+        }
+    } catch (error) {
+        console.error('Failed to toggle friend status', error);
+        alert('An error occurred while updating friend status.');
+        button.disabled = false;
+    }
+}
+
+async function handleBlockToggle(event: Event) {
+    const button = event.target as HTMLButtonElement;
+    button.disabled = true;
+
+    const userId = button.dataset.userId;
+    const isCurrentlyBlocked = button.dataset.isBlocked === 'true';
+
+    const endpoint = isCurrentlyBlocked ? '/api/chat/unblock' : '/api/chat/block';
+    const bodyKey = isCurrentlyBlocked ? 'userIdToUnblock' : 'userIdToBlock';
 
     try {
         const res = await fetch(endpoint, {
@@ -501,83 +601,124 @@ async function handleBlockToggle(event: Event) {
             loadUserList();
         } else {
             alert('Failed to update block status.');
-            checkbox.checked = !checkbox.checked;
+            button.disabled = false;
         }
     } catch (error) {
         console.error("Error toggling block status:", error);
         alert('An error occurred.');
-        checkbox.checked = !checkbox.checked;
-    } finally {
-        checkbox.disabled = false;
+        button.disabled = false;
     }
 }
 
 async function loadUserList() {
     if (!chatUserListEl) { console.error("Chat: chatUserListEl not found."); return; }
     if (!currentUserId) {
-        console.warn("Chat: Not authenticated (currentUserId not set). Cannot load user list.");
+        console.warn("Chat: Not authenticated. Cannot load user list.");
         chatUserListEl.innerHTML = '<li class="text-slate-400 text-xs p-1.5">Authentication pending...</li>';
         return;
     }
 
     try {
         const usersResponse = await fetch("/api/chat/users", { credentials: 'include' });
-        if (!usersResponse.ok) {
-            throw new Error(`Failed to fetch user list. Status: ${usersResponse.status}`);
+        if (!usersResponse.ok) throw new Error(`Status: ${usersResponse.status}`);
+        const usersFromServer: ApiUser[] = await usersResponse.json();
+
+        chatUserListEl.innerHTML = ""; // Clear the list before redrawing
+
+        const friends = usersFromServer.filter(u => u.isFriend);
+        const others = usersFromServer.filter(u => !u.isFriend);
+
+        // Sort both lists (e.g., online first, then alphabetically)
+        const sortUsers = (a: ApiUser, b: ApiUser) => {
+            if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+            return a.username.localeCompare(b.username);
+        };
+        friends.sort(sortUsers);
+        others.sort(sortUsers);
+
+        const createListItem = (user: ApiUser): HTMLElement => {
+            const numericUserId = parseInt(user.id.substring(5), 10);
+            const li = document.createElement("li");
+            li.dataset.username = user.username;
+            li.dataset.userId = numericUserId.toString();
+            li.dataset.isBlocked = user.isBlockedByMe.toString();
+            li.dataset.userPicture = user.picture || '';
+
+            li.className = "p-1.5 hover:bg-slate-700 text-xs flex items-center space-x-2";
+            if (!user.isBlockedByMe) li.classList.add("cursor-pointer");
+
+            // --- Add/Remove Friend Star ---
+            const friendStar = document.createElement('button');
+            friendStar.title = user.isFriend ? `Remove ${user.username} from friends` : `Add ${user.username} to friends`;
+            friendStar.className = `friend-toggle-btn text-lg ${user.isFriend ? 'text-yellow-400' : 'text-slate-600 hover:text-yellow-400'}`;
+            friendStar.innerHTML = user.isFriend ? '&#9733;' : '&#9734;'; // Filled vs. Empty Star
+            friendStar.dataset.userId = numericUserId.toString();
+            friendStar.dataset.isFriend = user.isFriend.toString();
+            li.appendChild(friendStar);
+
+            // --- Avatar and Status ---
+            const avatarContainer = document.createElement("div");
+            avatarContainer.className = "relative flex-shrink-0";
+            const statusCircle = document.createElement("div");
+            statusCircle.id = `chat-user-status-${numericUserId}`;
+            statusCircle.className = "w-2.5 h-2.5 bg-green-400 rounded-full absolute -top-0.5 -left-0.5 border-2 border-slate-800";
+            statusCircle.style.display = user.isOnline ? 'block' : 'none';
+            const colorIndex = numericUserId % userPlaceholderColors.length;
+            const placeholder = document.createElement("div");
+            placeholder.className = `w-5 h-5 flex items-center justify-center text-xs text-slate-900 pointer-events-none ${userPlaceholderColors[colorIndex]}`;
+            placeholder.textContent = user.username.substring(0, 1).toUpperCase();
+            avatarContainer.appendChild(placeholder);
+            avatarContainer.appendChild(statusCircle);
+            li.appendChild(avatarContainer);
+
+            // --- Username ---
+            const nameSpan = document.createElement("span");
+            nameSpan.textContent = user.username;
+            nameSpan.className = `pointer-events-none flex-grow ${user.isBlockedByMe ? 'text-slate-500 line-through' : ''}`;
+            li.appendChild(nameSpan);
+
+            // --- Block Button ---
+            const blockButton = document.createElement('button');
+            blockButton.title = user.isBlockedByMe ? `Unblock ${user.username}` : `Block ${user.username}`;
+            blockButton.className = 'block-toggle-btn text-lg ml-auto p-1';
+
+            if (user.isBlockedByMe) {
+                blockButton.innerHTML = '&#128721;'; // The "no entry" sign 🚫
+                blockButton.classList.add('text-red-500');
+            } else {
+                blockButton.innerHTML = '&#128721;';
+                blockButton.classList.add('text-slate-600', 'hover:text-red-500', 'transition-colors');
+            }
+
+            blockButton.dataset.userId = numericUserId.toString();
+            blockButton.dataset.isBlocked = user.isBlockedByMe.toString();
+            li.appendChild(blockButton);
+
+            return li;
+        };
+
+        // Render Friends List (if any)
+        if (friends.length > 0) {
+            const header = document.createElement('h3');
+            header.className = 'text-sm font-bold text-yellow-300 p-2 bg-slate-800/50 sticky top-0 z-10';
+            header.textContent = 'Friends';
+            chatUserListEl.appendChild(header);
+            friends.forEach(user => chatUserListEl.appendChild(createListItem(user)));
         }
 
-        const usersFromServer: ApiUser[] = await usersResponse.json();
-        chatUserListEl.innerHTML = "";
+        // Render Others List (if any)
+        if (others.length > 0) {
+            const header = document.createElement('h3');
+            header.className = 'text-sm font-bold text-slate-300 p-2 bg-slate-800/50 sticky top-0 z-10';
+            header.textContent = 'All Users';
+            chatUserListEl.appendChild(header);
+            others.forEach(user => chatUserListEl.appendChild(createListItem(user)));
+        }
 
         if (usersFromServer.length === 0) {
             chatUserListEl.innerHTML = '<li class="text-xs p-1.5">No other users available.</li>';
-        } else {
-            usersFromServer.forEach((user) => {
-                const numericUserId = parseInt(user.id.substring(5), 10);
-                if (isNaN(numericUserId)) return;
-
-                const li = document.createElement("li");
-                li.dataset.username = user.username;
-                li.dataset.userId = numericUserId.toString();
-                li.dataset.isBlocked = user.isBlockedByMe.toString();
-
-                li.className = "p-1.5 hover:bg-slate-700 text-xs flex items-center space-x-2";
-                if (!user.isBlockedByMe) {
-                    li.classList.add("cursor-pointer");
-                }
-
-                const avatarContainer = document.createElement("div");
-                avatarContainer.className = "relative flex-shrink-0";
-                const statusCircle = document.createElement("div");
-                statusCircle.id = `chat-user-status-${numericUserId}`;
-                statusCircle.className = "w-2.5 h-2.5 bg-green-400 rounded-full absolute top-0 left-0 border-2 border-slate-700";
-                statusCircle.style.display = user.isOnline ? 'block' : 'none';
-
-                const colorIndex = numericUserId % userPlaceholderColors.length;
-                const placeholder = document.createElement("div");
-                placeholder.className = `w-5 h-5 flex items-center justify-center text-xs text-slate-900 pointer-events-none flex-shrink-0 ${userPlaceholderColors[colorIndex]}`;
-                placeholder.textContent = user.username.substring(0, 1).toUpperCase();
-                avatarContainer.appendChild(placeholder);
-                avatarContainer.appendChild(statusCircle);
-                li.appendChild(avatarContainer);
-
-                const nameSpan = document.createElement("span");
-                nameSpan.textContent = user.username;
-                nameSpan.className = `pointer-events-none flex-grow ${user.isBlockedByMe ? 'text-slate-500 line-through' : ''}`;
-                li.appendChild(nameSpan);
-
-                const blockCheckbox = document.createElement('input');
-                blockCheckbox.type = 'checkbox';
-                blockCheckbox.title = `Block ${user.username}`;
-                blockCheckbox.className = 'ml-auto accent-[#D4535B] h-4 w-4 flex-shrink-0';
-                blockCheckbox.dataset.userId = numericUserId.toString();
-                blockCheckbox.checked = user.isBlockedByMe;
-                blockCheckbox.addEventListener('change', handleBlockToggle);
-                li.appendChild(blockCheckbox);
-
-                chatUserListEl?.appendChild(li);
-            });
         }
+
     } catch (error) {
         console.error("Chat: Error loading user list:", error);
         if (chatUserListEl) chatUserListEl.innerHTML = '<li class="text-red-400 text-xs p-1.5">Failed to load users.</li>';
@@ -593,7 +734,8 @@ function createPrivateChatWindowHtml(peerUser: User): string {
             <div id="privateChatDragHandle_${peerIdNumeric}" class="bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 cursor-grab active:cursor-grabbing select-none">
                 <div class="flex items-center space-x-1.5"><span class="font-bold">Chat with ${peerUsernameSafe}</span></div>
                 <div class="flex items-center space-x-1">
-                    <button id="invitePongBtn_${peerIdNumeric}" title="Invite ${peerUsernameSafe} to Pong" class="px-2 py-0.5 border border-seLightBlue text-seLightBlue hover:bg-seLightBlue hover:text-slate-900 font-bold text-xs transition-colors">Invite ${peerUsernameSafe} to Pong</button>
+                    <button id="viewProfileBtn_${peerIdNumeric}" title="View ${peerUsernameSafe}'s Profile" class="px-2 py-0.5 border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-slate-900 font-bold text-xs transition-colors">Profile</button>
+                    <button id="invitePongBtn_${peerIdNumeric}" title="Invite ${peerUsernameSafe} to Pong" class="px-2 py-0.5 border border-seLightBlue text-seLightBlue hover:bg-seLightBlue hover:text-slate-900 font-bold text-xs transition-colors">Invite</button>
                     <button aria-label="Close private chat with ${peerUsernameSafe}" id="closePrivateChatBtn_${peerIdNumeric}" class="w-5 h-5 border flex items-center justify-center font-bold hover-important transition-colors">X</button>
                 </div>
             </div>
@@ -643,50 +785,64 @@ function createPrivateChatWindowHtml(peerUser: User): string {
 }
 
 async function launchPrivateChatWindow(peerUser: User) {
+  // If a chat window for this user is already open, just focus it.
   if (activePrivateChats.has(peerUser.id)) {
     const existingChat = activePrivateChats.get(peerUser.id);
     if (existingChat) {
       existingChat.windowInstance.open();
-      existingChat.inputField.focus();
+      if (existingChat.inputField) {
+        existingChat.inputField.focus();
+      }
     }
     return;
   }
+
+  // Create the window's HTML and add it to the page
   const windowHtml = createPrivateChatWindowHtml(peerUser);
   const mainElement = document.getElementById("main");
-  if (!mainElement) { console.error("Main element ('main') not found to append chat window!"); return; }
+  if (!mainElement) {
+    console.error("Main element ('main') not found to append chat window!");
+    return;
+  }
   mainElement.insertAdjacentHTML("beforeend", windowHtml);
 
+  // Use requestAnimationFrame to ensure the element is in the DOM before we manipulate it
   requestAnimationFrame(async () => {
     const windowId = `privateChatWindow_${peerUser.id}`;
-    const dragHandleId = `privateChatDragHandle_${peerUser.id}`;
-    const closeButtonId = `closePrivateChatBtn_${peerUser.id}`;
-    const resizeHandleId = `privateChatResizeHandle_${peerUser.id}`;
-    const messagesAreaId = `privateMessagesArea_${peerUser.id}`;
-    const inputFieldId = `privateMessageInput_${peerUser.id}`;
-    const sendButtonId = `privateSendBtn_${peerUser.id}`;
-    const invitePongButtonId = `invitePongBtn_${peerUser.id}`;
     const newWindowElement = document.getElementById(windowId);
-    if (!newWindowElement) { console.error(`Failed to find new window element ${windowId} after insertion.`); return; }
+    if (!newWindowElement) {
+      console.error(`Failed to find new window element ${windowId} after insertion.`);
+      return;
+    }
 
     try {
+      // Initialize the DesktopWindow instance for dragging, resizing, and closing
       const newWindowInstance = new DesktopWindow({
-        windowId: windowId, dragHandleId: dragHandleId, resizeHandleId: resizeHandleId,
-        closeButtonId: closeButtonId, boundaryContainerId: "main", visibilityToggleId: windowId,
-        initialShow: false,
+        windowId: windowId,
+        dragHandleId: `privateChatDragHandle_${peerUser.id}`,
+        resizeHandleId: `privateChatResizeHandle_${peerUser.id}`,
+        closeButtonId: `closePrivateChatBtn_${peerUser.id}`,
+        boundaryContainerId: "main",
+        visibilityToggleId: windowId,
+        initialShow: false, // Don't show it immediately, we'll open it after setup
         onCloseCallback: () => {
+          // Cleanup when the window is closed
           const chatInfo = activePrivateChats.get(peerUser.id);
-          if (chatInfo && chatInfo.windowInstance.element) chatInfo.windowInstance.element.remove();
+          if (chatInfo && chatInfo.windowInstance.element) {
+            chatInfo.windowInstance.element.remove();
+          }
           activePrivateChats.delete(peerUser.id);
         },
       });
-      newWindowInstance.open();
-      const messagesArea = document.getElementById(messagesAreaId) as HTMLElement;
-      const inputField = document.getElementById(inputFieldId) as HTMLInputElement;
-      const sendButton = document.getElementById(sendButtonId) as HTMLButtonElement;
-      const invitePongButton = document.getElementById(invitePongButtonId) as HTMLButtonElement;
 
+      // Get all the interactive elements from the new window
+      const messagesArea = document.getElementById(`privateMessagesArea_${peerUser.id}`) as HTMLElement;
+      const inputField = document.getElementById(`privateMessageInput_${peerUser.id}`) as HTMLInputElement;
+      const sendButton = document.getElementById(`privateSendBtn_${peerUser.id}`) as HTMLButtonElement;
+      const invitePongButton = document.getElementById(`invitePongBtn_${peerUser.id}`) as HTMLButtonElement;
+      const viewProfileButton = document.getElementById(`viewProfileBtn_${peerUser.id}`) as HTMLButtonElement;
 
-      // --- DRAWING MVP CODE ---
+      // --- Drawing Canvas Elements & Logic ---
       const toggleDrawBtn = document.getElementById(`toggleDrawBtn_${peerUser.id}`) as HTMLButtonElement;
       const drawingContainer = document.getElementById(`drawingContainer_${peerUser.id}`) as HTMLDivElement;
       const canvas = document.getElementById(`drawingCanvas_${peerUser.id}`) as HTMLCanvasElement;
@@ -702,142 +858,96 @@ async function launchPrivateChatWindow(peerUser: User) {
         return;
       }
 
+      // Drawing state variables
       let currentColor = 'black';
       let currentSize = 1;
       let isErasing = false;
       let isDrawing = false;
       let lastX = 0;
       let lastY = 0;
-
+      
       const updateToolVisuals = () => {
         const activeStyle = { top: "#020617", left: "#020617", bottom: "#4b5563", right: "#4b5563" }; // Inset
         const inactiveStyle = { top: "#4b5563", left: "#4b5563", bottom: "#020617", right: "#020617" }; // Outset
-
         const applyStyles = (el: HTMLElement, isActive: boolean) => {
-            const styleToApply = isActive ? activeStyle : inactiveStyle;
-            el.style.borderTopColor = styleToApply.top;
-            el.style.borderLeftColor = styleToApply.left;
-            el.style.borderBottomColor = styleToApply.bottom;
-            el.style.borderRightColor = styleToApply.right;
+            el.style.borderTopColor = isActive ? activeStyle.top : inactiveStyle.top;
+            el.style.borderLeftColor = isActive ? activeStyle.left : inactiveStyle.left;
+            el.style.borderBottomColor = isActive ? activeStyle.bottom : inactiveStyle.bottom;
+            el.style.borderRightColor = isActive ? activeStyle.right : inactiveStyle.right;
         };
-
-        colorPalette.querySelectorAll('.tool-color').forEach(b => {
-            const button = b as HTMLButtonElement;
-            applyStyles(button, button.dataset.color === currentColor && !isErasing);
-        });
-
-        sizeSelector.querySelectorAll('.tool-size').forEach(b => {
-            const button = b as HTMLButtonElement;
-            applyStyles(button, parseInt(button.dataset.size!) === currentSize);
-        });
-
+        colorPalette.querySelectorAll('.tool-color').forEach(b => applyStyles(b as HTMLButtonElement, (b as HTMLElement).dataset.color === currentColor && !isErasing));
+        sizeSelector.querySelectorAll('.tool-size').forEach(b => applyStyles(b as HTMLButtonElement, parseInt((b as HTMLElement).dataset.size!) === currentSize));
         applyStyles(eraserBtn, isErasing);
       };
-
       updateToolVisuals();
 
+      // Event listeners for drawing tools
       colorPalette.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        const button = target.closest('.tool-color') as HTMLButtonElement | null;
-        if (button) {
-          currentColor = button.dataset.color || 'black';
-          isErasing = false;
-          updateToolVisuals();
-        }
+        const button = (e.target as HTMLElement).closest('.tool-color') as HTMLButtonElement;
+        if(button) { currentColor = button.dataset.color || 'black'; isErasing = false; updateToolVisuals(); }
       });
-
       sizeSelector.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        const button = target.closest('.tool-size') as HTMLButtonElement | null;
-        if (button) {
-          currentSize = parseInt(button.dataset.size || '1', 10);
-          updateToolVisuals();
-        }
+         const button = (e.target as HTMLElement).closest('.tool-size') as HTMLButtonElement;
+         if(button) { currentSize = parseInt(button.dataset.size || '1', 10); updateToolVisuals(); }
       });
+      eraserBtn.addEventListener('click', () => { isErasing = true; updateToolVisuals(); });
 
-      eraserBtn.addEventListener('click', () => {
-        isErasing = true;
-        updateToolVisuals();
-      });
-
-      const draw = (e: MouseEvent) => {
-        if (!isDrawing) return;
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(e.offsetX, e.offsetY);
-        ctx.stroke();
-        [lastX, lastY] = [e.offsetX, e.offsetY];
-      };
-
+      // Mouse events for drawing on the canvas
       canvas.addEventListener('mousedown', (e) => {
         isDrawing = true;
         ctx.lineWidth = currentSize;
         ctx.strokeStyle = isErasing ? '#FFFFFF' : currentColor;
         ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
         [lastX, lastY] = [e.offsetX, e.offsetY];
       });
-
-      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mousemove', (e) => {
+        if (isDrawing) {
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+      });
       canvas.addEventListener('mouseup', () => isDrawing = false);
       canvas.addEventListener('mouseout', () => isDrawing = false);
 
-      toggleDrawBtn.addEventListener('click', () => {
-        drawingContainer.classList.toggle('hidden');
-      });
-
-      clearCanvasBtn.addEventListener('click', () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      });
-
+      // Listeners for drawing UI buttons
+      toggleDrawBtn.addEventListener('click', () => drawingContainer.classList.toggle('hidden'));
+      clearCanvasBtn.addEventListener('click', () => ctx.clearRect(0, 0, canvas.width, canvas.height));
       sendDrawingBtn.addEventListener('click', () => {
         const dataUrl = canvas.toDataURL('image/png');
         if (socket && socket.readyState === WebSocket.OPEN && currentUserId) {
-          const payload = { type: "privateMessage", toUserId: peerUser.id.toString(), drawingDataUrl: dataUrl };
-          socket.send(JSON.stringify(payload));
-
-          displayMessageInWindow(
-            { fromUserId: currentUserId, fromUsername: currentUsername || "You", toUserId: peerUser.id, drawingDataUrl: dataUrl, timestamp: new Date().toISOString() },
-            messagesArea,
-            peerUser.id
-          );
-
+          socket.send(JSON.stringify({ type: "privateMessage", toUserId: peerUser.id.toString(), drawingDataUrl: dataUrl }));
+          displayMessageInWindow({ fromUserId: currentUserId, drawingDataUrl: dataUrl }, messagesArea, peerUser.id);
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           drawingContainer.classList.add('hidden');
         }
       });
+      // --- End of Drawing Logic ---
 
-      // --- END DRAWING MVP CODE ---
-
-      if (!messagesArea || !inputField || !sendButton || !invitePongButton) {
-        console.error(`Chat: Could not find all interactive chat sub-elements for ${peerUser.username}.`);
-        newWindowElement.remove(); return;
+      // Final check and setup for main chat functionality
+      if (!messagesArea || !inputField || !sendButton || !invitePongButton || !viewProfileButton) {
+        throw new Error(`Could not find all interactive chat sub-elements for ${peerUser.username}.`);
       }
-      activePrivateChats.set(peerUser.id, { peer: peerUser, windowInstance: newWindowInstance, messagesArea: messagesArea, inputField: inputField, sendButton: sendButton });
+
+      activePrivateChats.set(peerUser.id, { peer: peerUser, windowInstance: newWindowInstance, messagesArea, inputField, sendButton });
+
+      // Attach main event listeners
       sendButton.addEventListener("click", () => { sendMessageToPeer(peerUser, inputField.value); inputField.value = ""; inputField.focus(); });
       inputField.addEventListener("keypress", (e) => { if (e.key === "Enter" && !sendButton.disabled) { sendMessageToPeer(peerUser, inputField.value); inputField.value = ""; }});
-      invitePongButton.addEventListener('click', () => {
-        invitePongButton.disabled = true; invitePongButton.textContent = "Invited";
-        handleInvitePlayerToPong(peerUser);
-        setTimeout(() => {
-          const currentButton = document.getElementById(invitePongButtonId) as HTMLButtonElement;
-          if(currentButton) { currentButton.disabled = false; currentButton.textContent = "Invite Pong"; }
-        }, 5000);
-      });
+      invitePongButton.addEventListener('click', () => handleInvitePlayerToPong(peerUser));
+      viewProfileButton.addEventListener('click', () => showUserProfile(peerUser));
+
+      // Load history, open the window, and focus the input field
       await loadChatHistoryForWindow(peerUser, messagesArea);
+      newWindowInstance.open();
       inputField.focus();
+
     } catch (error) {
       console.error(`Error initializing DesktopWindow or chat for ${peerUser.username}:`, error);
-      const elToRemoveOnCatch = document.getElementById(windowId);
-      if (elToRemoveOnCatch) elToRemoveOnCatch.remove();
+      newWindowElement.remove(); // Clean up the failed window
     }
-
-      const viewProfileButton = document.getElementById(`viewProfileBtn_${peerUser.id}`);
-        if (viewProfileButton) {
-            viewProfileButton.addEventListener('click', () => {
-                showUserProfile(peerUser);
-            });
-        }
   });
 }
 
@@ -1031,3 +1141,6 @@ export function sendPongLeaveGame(gameId: string) {
     console.error('[CHATCLIENT] WebSocket not connected. Cannot send PONG_LEAVE_GAME.');
   }
 }
+
+
+

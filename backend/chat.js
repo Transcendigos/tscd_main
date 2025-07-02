@@ -660,6 +660,7 @@ server.get("/api/chat/users", async (req, reply) => {
 
         const onlineUserPrefixedIds = await redisPublisher.smembers('online_users');
 
+        // Fetch users I have blocked
         const iHaveBlockedRows = await new Promise((resolve, reject) => {
             db.all('SELECT blocked_id FROM blocked_users WHERE blocker_id = ?', [currentUserRawId], (err, rows) => {
                 if (err) return reject(err);
@@ -668,6 +669,7 @@ server.get("/api/chat/users", async (req, reply) => {
         });
         const iHaveBlockedSet = new Set(iHaveBlockedRows.map(r => r.blocked_id));
 
+        // Fetch users who have blocked me
         const whoHaveBlockedMeRows = await new Promise((resolve, reject) => {
             db.all('SELECT blocker_id FROM blocked_users WHERE blocked_id = ?', [currentUserRawId], (err, rows) => {
                 if (err) return reject(err);
@@ -676,6 +678,17 @@ server.get("/api/chat/users", async (req, reply) => {
         });
         const whoHaveBlockedMeSet = new Set(whoHaveBlockedMeRows.map(r => r.blocker_id));
 
+        // *** NEW: Fetch my friends ***
+        const friendsRows = await new Promise((resolve, reject) => {
+            db.all('SELECT friend_id FROM friends WHERE user_id = ?', [currentUserRawId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+        const friendsSet = new Set(friendsRows.map(r => r.friend_id));
+        // *** END NEW ***
+
+        // Fetch all users except myself
         const allUsersFromDB = await new Promise((resolve, reject) => {
             db.all("SELECT id, username, picture FROM users WHERE id != ?", [currentUserRawId], (err, rows) => {
                 if (err) return reject(err);
@@ -683,7 +696,8 @@ server.get("/api/chat/users", async (req, reply) => {
             });
         });
 
-            const usersWithStatus = allUsersFromDB.map(user => {
+        // Map all data together
+        const usersWithStatus = allUsersFromDB.map(user => {
             const prefixedId = `user_${user.id}`;
             const isBlockedByMe = iHaveBlockedSet.has(user.id);
             const hasBlockedMe = whoHaveBlockedMeSet.has(user.id);
@@ -694,7 +708,8 @@ server.get("/api/chat/users", async (req, reply) => {
                 username: user.username,
                 picture: user.picture,
                 isOnline: onlineUserPrefixedIds.includes(prefixedId) && !isInteractionBlocked,
-                isBlockedByMe: isBlockedByMe
+                isBlockedByMe: isBlockedByMe,
+                isFriend: friendsSet.has(user.id) // *** THE NEW FLAG ***
             };
         });
 

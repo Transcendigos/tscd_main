@@ -6,7 +6,7 @@ import { setupLogoutForm } from "./logout.js";
 import { setupSigninForm } from "./sign_in.js";
 import { setupSettingForm } from "./setting.js";
 import { setupInfoWindow } from "./infowindow.ts";
-import { settingUserProfile, settingUserSetting } from "./profile.ts";
+import { settingUserProfile, settingUserSetting, populateUserProfile } from "./profile.ts";
 import { setupAIWindow } from "./aiassistant.ts";
 import { setupSpotifySearch } from './music.ts';
 import { initializeChatSystem, resetChatSystem, sendPongPlayerInput, sendPongPlayerReady, sendPongLeaveGame } from "./chatClient.js";
@@ -19,59 +19,57 @@ import {
 import { SceneManager } from "./pong3D/sceneManager.js";
 import { startPongGame as startRemotePong, setCanvas as setRemotePongCanvas, stopPongGame as stopRemotePong } from "./client_pong.ts";
 import { startPongGame as startLocalPong, setCanvas as setLocalPongCanvas, stopPongGame as stopLocalPong } from "./localmultipong.js";
-// *** CHANGE: Import the new exported function
 import { setupTournamentSystem, fetchAndDisplayTournaments, showTournamentBracket } from "./tournament.ts";
 import { setupDashboard, fetchData } from './dashboard.ts';
-import { populateUserProfile } from './profile.js'; 
 
 
 
-// ... (variable declarations are unchanged)
-let signinWindow: DesktopWindow;
-let signupWindow: DesktopWindow;
-let logoutWindow: DesktopWindow;
-let profileWindow: DesktopWindow;
-let settingWindow: DesktopWindow;
-let pongWindow: DesktopWindow;
-let multiplayerPongWindow: DesktopWindow;
-let chatWindow: DesktopWindow;
-let statsWindow: DesktopWindow;
-let infoWindow: DesktopWindow;
-let weatherWindow: DesktopWindow;
-let grafanaWindow: DesktopWindow;
-let commandWindow: DesktopWindow;
-let aboutWindow: DesktopWindow;
-let aiWindow: DesktopWindow;
-let musicWindow: DesktopWindow;
-let tournamentWindow: DesktopWindow;
+// Window and State Declarations
+let signinWindow: DesktopWindow, signupWindow: DesktopWindow, logoutWindow: DesktopWindow,
+    profileWindow: DesktopWindow, settingWindow: DesktopWindow, pongWindow: DesktopWindow,
+    multiplayerPongWindow: DesktopWindow, chatWindow: DesktopWindow, statsWindow: DesktopWindow,
+    infoWindow: DesktopWindow, weatherWindow: DesktopWindow, grafanaWindow: DesktopWindow,
+    commandWindow: DesktopWindow, aboutWindow: DesktopWindow, aiWindow: DesktopWindow,
+    musicWindow: DesktopWindow, tournamentWindow: DesktopWindow;
+
 let sceneManager: SceneManager | null = null;
 let activeRemoteGameId: string | null = null;
 let activePongMode: 'solo_3d' | 'remote_2d' | 'local_2d' | null = null;
 let stopCurrentGame: (() => void) | null = null;
 
-// ... (assignOpenTrigger, disableTrigger, stopAnyActiveGame, changeTheme functions are unchanged)
+let soloPongCanvas: HTMLCanvasElement;
+let multiPongCanvas: HTMLCanvasElement;
+let localPongGameWindow: DesktopWindow;
+
+
+// --- Helper Functions ---
 function assignOpenTrigger(windowInstance: DesktopWindow, triggerId: string, onOpenCallback?: () => void) {
   const trigger = document.getElementById(triggerId);
   if (trigger) {
-    trigger.addEventListener("click", () => {
+    const newTrigger = trigger.cloneNode(true);
+    trigger.parentNode?.replaceChild(newTrigger, trigger);
+
+    newTrigger.addEventListener("click", () => {
       windowInstance.open();
       if (typeof onOpenCallback === 'function') {
         onOpenCallback();
       }
     });
-    trigger.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
-    trigger.classList.add("hover-important", "cursor-default");
+    newTrigger.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
+    newTrigger.classList.add("hover-important", "cursor-default");
   }
 }
+
 function disableTrigger(triggerId: string) {
   const el = document.getElementById(triggerId);
   if (el) {
-    el.classList.add("opacity-50", "cursor-not-allowed", "select-none");
-    el.classList.remove("hover-important", "cursor-default");
     const clone = el.cloneNode(true);
     el.parentNode?.replaceChild(clone, el);
+    clone.classList.add("opacity-50", "cursor-not-allowed", "select-none");
+    clone.classList.remove("hover-important", "cursor-default");
   }
 }
+
 function stopAnyActiveGame() {
     if (stopCurrentGame) {
         console.log(`Stopping active game mode: ${activePongMode}`);
@@ -80,6 +78,7 @@ function stopAnyActiveGame() {
         activePongMode = null;
     }
 }
+
 function changeTheme(color1: string, color2: string) {
     document.body.style.backgroundImage = `
         repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 2px, transparent 2px, transparent 4px),
@@ -87,7 +86,54 @@ function changeTheme(color1: string, color2: string) {
     `;
 }
 
-// ... (updateUIBasedOnAuth is unchanged)
+// --- Game Handlers ---
+async function handleSoloPongClick() {
+    stopAnyActiveGame();
+    multiplayerPongWindow.close();
+    pongWindow.open();
+    activePongMode = 'solo_3d';
+    sceneManager = await SceneManager.create(soloPongCanvas);
+    stopCurrentGame = () => {
+        if (sceneManager) {
+            sceneManager.dispose();
+            sceneManager = null;
+        }
+    };
+}
+
+function handleMultiplayerPongClick() {
+    stopAnyActiveGame();
+    pongWindow.close();
+    multiplayerPongWindow.open();
+    activePongMode = 'remote_2d';
+    setRemotePongCanvas(multiPongCanvas);
+    startRemotePong();
+    stopCurrentGame = stopRemotePong;
+}
+
+function handleLocalPongClick(player1: string, player2: string, onGameEndCallback: (winner: string) => void) {
+    stopAnyActiveGame(); // This should now also handle stopping the local pong
+    localPongGameWindow.open();
+    
+    // Update the window title for the current match
+    const titleEl = document.getElementById('localPongWindowTitle');
+    if (titleEl) titleEl.textContent = `${player1} vs ${player2}`;
+    
+    activePongMode = 'local_2d';
+    
+    // Define the full callback that also closes the window
+    const gameEndHandler = (winnerAlias: string) => {
+        onGameEndCallback(winnerAlias); // Call the original callback from tournament.ts
+        localPongGameWindow.close();
+    };
+    
+    startLocalPong(player1, player2, gameEndHandler);
+    
+    stopCurrentGame = stopLocalPong;
+}
+
+
+// --- Auth UI Management ---
 async function updateUIBasedOnAuth() {
   const isSignedIn = await checkSignedIn();
 
@@ -95,22 +141,34 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(profileWindow, "profileBtn", populateUserProfile);
     assignOpenTrigger(settingWindow, "settingTab", settingUserSetting);
     assignOpenTrigger(logoutWindow, "logoutTab");
-    
-    document.getElementById("clickMeBtn")?.classList.remove("opacity-50", "cursor-not-allowed");
-    document.getElementById("darkBtn")?.classList.remove("opacity-50", "cursor-not-allowed");
-    
     assignOpenTrigger(tournamentWindow, "tournamentBtn", fetchAndDisplayTournaments);
-
     assignOpenTrigger(chatWindow, "chatBtn");
     assignOpenTrigger(infoWindow, "infoTab");
     assignOpenTrigger(statsWindow, "statsTab", fetchData);
-    assignOpenTrigger(aiWindow, "aiBtn", commandWindow.open);
+    assignOpenTrigger(aiWindow, "aiBtn", () => commandWindow.open());
     assignOpenTrigger(musicWindow, "musicBtn");
-    
-    initializeChatSystem();
 
+    // Re-enable game buttons and attach listeners
+    const clickMeBtn = document.getElementById("clickMeBtn");
+    if(clickMeBtn) {
+        const newBtn = clickMeBtn.cloneNode(true);
+        clickMeBtn.parentNode?.replaceChild(newBtn, clickMeBtn);
+        newBtn.addEventListener('click', handleSoloPongClick);
+        newBtn.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
+    }
+
+    const darkBtn = document.getElementById("darkBtn");
+     if(darkBtn) {
+        const newBtn = darkBtn.cloneNode(true);
+        darkBtn.parentNode?.replaceChild(newBtn, darkBtn);
+        newBtn.addEventListener('click', handleMultiplayerPongClick);
+        newBtn.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
+    }
+
+    initializeChatSystem();
     disableTrigger("signinTab");
     disableTrigger("signupTab");
+
   } else {
     assignOpenTrigger(signinWindow, "signinTab", () => (window as any).resetSigninForm?.());
     assignOpenTrigger(signupWindow, "signupTab", () => (window as any).resetSignupForm?.());
@@ -120,11 +178,7 @@ async function updateUIBasedOnAuth() {
     disableTrigger("logoutTab");
     disableTrigger("darkBtn");
     disableTrigger("clickMeBtn");
-    
-    document.getElementById("clickMeBtn")?.classList.add("opacity-50", "cursor-not-allowed");
-    document.getElementById("darkBtn")?.classList.add("opacity-50", "cursor-not-allowed");
     disableTrigger("tournamentBtn");
-
     disableTrigger("chatBtn");
     disableTrigger("infoTab");
     disableTrigger("statsTab");
@@ -143,10 +197,10 @@ async function updateUIBasedOnAuth() {
   }
 }
 
-
+// --- App Initialization ---
 window.addEventListener("DOMContentLoaded", async () => {
     
-    // ... (All window initializations are unchanged)
+    // Window Initializations
     try { new DesktopWindow({ windowId: "dragWindow", dragHandleId: "dragHandle", resizeHandleId: "menuResize", boundaryContainerId: "main", visibilityToggleId: "dragWindow", openTriggerId: "menuShortcut", closeButtonId: "closeMenuBtn" }); } catch (e) { console.error("Menu init failed:", e); }
     try { signinWindow = new DesktopWindow({ windowId: "signinWindow", dragHandleId: "signinDragHandle", resizeHandleId: "signinResizeHandle", boundaryContainerId: "main", visibilityToggleId: "signinWindow", closeButtonId: "closesigninBtn" }); setupSigninForm(signinWindow); } catch (e) { console.error("Signin init failed:", e); }
     try { signupWindow = new DesktopWindow({ windowId: "signupWindow", dragHandleId: "signupDragHandle", resizeHandleId: "signupResizeHandle", boundaryContainerId: "main", visibilityToggleId: "signupWindow", closeButtonId: "closeSignupBtn" }); setupSignupForm(signupWindow); } catch (e) { console.error("Signup init failed:", e); }
@@ -158,23 +212,14 @@ window.addEventListener("DOMContentLoaded", async () => {
     try { grafanaWindow = new DesktopWindow({ windowId: "grafanaWindow", dragHandleId: "grafanaDragHandle", resizeHandleId: "grafanaResizeHandle", boundaryContainerId: "main", visibilityToggleId: "grafanaWindow", closeButtonId: "closegrafanaBtn" }); } catch(e) { console.error("Grafana init failed:", e); }
     try { commandWindow = new DesktopWindow({ windowId: "commandWindow", dragHandleId: "commandDragHandle", resizeHandleId: "commandResizeHandle", boundaryContainerId: "main", visibilityToggleId: "commandWindow", closeButtonId: "closecommandBtn" }); } catch(e) { console.error("Command init failed:", e); }
     try { aboutWindow = new DesktopWindow({ windowId: "aboutWindow", dragHandleId: "aboutDragHandle", resizeHandleId: "aboutResizeHandle", boundaryContainerId: "main", visibilityToggleId: "aboutWindow", closeButtonId: "closeaboutBtn" }); } catch(e) { console.error("About init failed:", e); }
-    try { statsWindow = new DesktopWindow({ windowId: "statsWindow", dragHandleId: "statsDragHandle", resizeHandleId: "statsResizeHandle", boundaryContainerId: "main", visibilityToggleId: "statsWindow", closeButtonId: "closestatsBtn" }); } catch (e) { console.error("Stats init failed:", e); }
+    try { statsWindow = new DesktopWindow({ windowId: "statsWindow", dragHandleId: "statsDragHandle", resizeHandleId: "statsResizeHandle", boundaryContainerId: "main", visibilityToggleId: "statsWindow", closeButtonId: "closestatsBtn" }); setupDashboard(); } catch (e) { console.error("Stats init failed:", e); }
     try { chatWindow = new DesktopWindow({ windowId: "chatWindow", dragHandleId: "chatDragHandle", resizeHandleId: "chatResizeHandle", boundaryContainerId: "main", visibilityToggleId: "chatWindow", closeButtonId: "closeChatBtn" }); } catch (e) { console.error("Chat init failed:", e); }
     try { aiWindow = new DesktopWindow({ windowId: "aiWindow", dragHandleId: "aiDragHandle", resizeHandleId: "aiResizeHandle", boundaryContainerId: "main", visibilityToggleId: "aiWindow", closeButtonId: "closeaiBtn" }); } catch (e) { console.error("AI init failed:", e); }
     try { musicWindow = new DesktopWindow({ windowId: "musicWindow", dragHandleId: "musicDragHandle", resizeHandleId: "musicResizeHandle", boundaryContainerId: "main", visibilityToggleId: "musicWindow", closeButtonId: "closemusicBtn" }); setupSpotifySearch(); } catch (e) { console.error("Music init failed:", e); }
-    
     try {
-        tournamentWindow = new DesktopWindow({
-            windowId: "tournamentWindow",
-            dragHandleId: "tournamentDragHandle",
-            resizeHandleId: "tournamentResizeHandle",
-            boundaryContainerId: "main",
-            visibilityToggleId: "tournamentWindow",
-            closeButtonId: "closeTournamentBtn"
-        });
+        tournamentWindow = new DesktopWindow({ windowId: "tournamentWindow", dragHandleId: "tournamentDragHandle", resizeHandleId: "tournamentResizeHandle", boundaryContainerId: "main", visibilityToggleId: "tournamentWindow", closeButtonId: "closeTournamentBtn" });
         setupTournamentSystem();
     } catch (e) { console.error("Tournament window init failed:", e); }
-
     try {
         pongWindow = new DesktopWindow({
             windowId: "pongWindow", dragHandleId: "pongDragHandle", resizeHandleId: "pongResizeHandle",
@@ -185,44 +230,36 @@ window.addEventListener("DOMContentLoaded", async () => {
             windowId: "multiplayerPongWindow", dragHandleId: "multiplayerPongDragHandle", resizeHandleId: "multiplayerPongResizeHandle",
             boundaryContainerId: "main", visibilityToggleId: "multiplayerPongWindow", closeButtonId: "closeMultiplayerPongBtn",
             onCloseCallback: () => {
-              if (activePongMode === 'remote_2d' && activeRemoteGameId) {
-                sendPongLeaveGame(activeRemoteGameId);
+              if (activePongMode === 'remote_2d' && activeRemoteGameId) sendPongLeaveGame(activeRemoteGameId);
+              stopAnyActiveGame()
             }
-              stopAnyActiveGame()}
         });
     } catch (e) { console.error("Pong windows init failed:", e); }
+
+    try {
+    localPongGameWindow = new DesktopWindow({
+        windowId: "localPongGameWindow",
+        dragHandleId: "localPongDragHandle",
+        resizeHandleId: "localPongResizeHandle",
+        boundaryContainerId: "main",
+        visibilityToggleId: "localPongGameWindow",
+        closeButtonId: "closeLocalPongBtn",
+        onCloseCallback: stopLocalPong // Ensure game stops when window is closed
+    });
+    const localPongCanvas = document.getElementById('localPongCanvas') as HTMLCanvasElement;
+    setLocalPongCanvas(localPongCanvas);
+} catch (e) { console.error("Local Pong Game Window init failed:", e); }
     
-    const soloPongCanvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
-    const multiPongCanvas = document.getElementById('multiplayerPongCanvas') as HTMLCanvasElement;
+    soloPongCanvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
+    multiPongCanvas = document.getElementById('multiplayerPongCanvas') as HTMLCanvasElement;
 
-    // ... (Game button event listeners are unchanged)
-    document.getElementById("clickMeBtn")?.addEventListener("click", async () => {
-        stopAnyActiveGame();
-        multiplayerPongWindow.close();
-        pongWindow.open();
-        activePongMode = 'solo_3d';
-        const sceneManager = await SceneManager.create(soloPongCanvas);
-        stopCurrentGame = () => {
-            if (sceneManager) {
-                sceneManager.dispose();
-            }
-        };
-    });
-    document.getElementById("darkBtn")?.addEventListener("click", () => {
-        stopAnyActiveGame();
-        pongWindow.close();
-        multiplayerPongWindow.open();
-        activePongMode = 'remote_2d';
-        setRemotePongCanvas(multiPongCanvas);
-        startRemotePong();
-        stopCurrentGame = stopRemotePong;
-    });
-
+    // Set initial UI state
     await updateUIBasedOnAuth();
+    
+    // Listen for auth changes
     window.addEventListener("auth:updated", updateUIBasedOnAuth);
 
     // --- Global Event Listeners ---
-    
     window.addEventListener('pongGameStart', (event: Event) => {
         stopAnyActiveGame();
         const customEvent = event as CustomEvent;
@@ -248,13 +285,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         stopCurrentGame = null;
     });
 
-    // *** CHANGE: ADD NEW EVENT LISTENER FOR TOURNAMENTS ***
     window.addEventListener('tournament:start', (event: Event) => {
         const customEvent = event as CustomEvent;
         const { tournamentId } = customEvent.detail;
         if (tournamentWindow) {
-            tournamentWindow.open(); // Make sure the window is open
-            showTournamentBracket(tournamentId); // Then show the bracket
+            tournamentWindow.open();
+            showTournamentBracket(tournamentId);
         }
     });
     
@@ -266,10 +302,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         else if (theme === 'green') { changeTheme('#2d4d26', '#4a803d');}
     });
 
+    // Final setups
     initGoogleSignIn();
     settingUserProfile();
     setupSettingForm(settingWindow);
     setupInfoWindow(weatherWindow, grafanaWindow, commandWindow, aboutWindow);
+    (window as any).handleLocalPongClick = handleLocalPongClick;
 
     fetch("/ai_prompt.txt")
         .then(res => res.text())

@@ -39,31 +39,31 @@ export async function settingUserSetting() {
 
         const { profile } = await res.json();
         if (!profileImage || !currentUsername || !currentEmail) {
-            console.warn("Profile elements not found in DOM.");
+            console.warn("Profile elements not found in DOM for settings.");
             return;
         }
-
+        
+        // --- CORRECTED LOGIC ---
         const fallbackImage = '/favicon.jpg';
-        const resolvedSrc = profile.picture || fallbackImage;
-        const absoluteResolvedSrc = resolvedSrc.startsWith('http')
-            ? resolvedSrc
-            : new URL(resolvedSrc, window.location.origin).href;
+        const newImageSrc = profile.picture || fallbackImage;
 
-        if (profileImage.src !== absoluteResolvedSrc) {
-            profileImage.src = resolvedSrc;
+        // Set the src only if it's different from the current one to avoid re-fetching
+        if (profileImage.src !== newImageSrc) {
+            profileImage.src = newImageSrc;
         }
-
+        
         profileImage.alt = `${profile.username}'s profile picture`;
         profileImage.onerror = () => {
-            if (!profileImage.src.includes(fallbackImage)) {
+            // If the new source fails, set to fallback, but prevent an infinite loop
+            if (!profileImage.src.endsWith(fallbackImage)) {
                 profileImage.src = fallbackImage;
             }
         };
 
         currentUsername.textContent = profile.username;
         currentEmail.textContent = profile.email;
-        profileImage.src = profile.picture;
-
+        
+        // (The rest of the function for TOTP and disabling fields remains the same)
         // Refresh TOTP state and UI
         console.log("Refreshing TOTP state");
         const qrContainer = document.getElementById('qrContainer') as HTMLDivElement;
@@ -135,6 +135,7 @@ export async function settingUserSetting() {
 }
 
 
+
 export async function settingUserProfile() {
     try {
         const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
@@ -179,28 +180,26 @@ export async function populateUserProfile() {
         document.getElementById('profileUsername')!.textContent = "Error: Not Signed In";
         return;
     }
-    
+
     const prefixedId = `user_${myUserId}`;
 
     try {
         // Fetch all necessary data in parallel for maximum speed
-        const [profileRes, summaryRes, historyRes] = await Promise.all([
+        const [profileRes, summaryRes, historyRes, friendsRes] = await Promise.all([
             fetch('http://localhost:3000/api/profile', { credentials: 'include' }),
             fetch(`/api/stats/summary/${prefixedId}`),
-            fetch(`/api/stats/match-history/${prefixedId}`)
-            // Note: You will need to create an endpoint to fetch friends list
-            // fetch(`/api/friends/${prefixedId}`)
+            fetch(`/api/stats/match-history/${prefixedId}`),
+            fetch(`/api/friends/${prefixedId}`, { credentials: 'include' }) // Fetch friends
         ]);
 
-        if (!profileRes.ok || !summaryRes.ok || !historyRes.ok) {
+        if (!profileRes.ok || !summaryRes.ok || !historyRes.ok || !friendsRes.ok) {
             throw new Error('Failed to fetch all profile data.');
         }
 
         const { profile } = await profileRes.json();
         const summary = await summaryRes.json();
         const history = await historyRes.json();
-        // const friends = await friendsRes.json(); // Uncomment when you have a friends endpoint
-
+        const friends = await friendsRes.json();
         // --- Populate Header ---
         (document.getElementById('profileImage') as HTMLImageElement).src = profile.picture || '/favicon.jpg';
         document.getElementById('profileUsername')!.textContent = profile.username;
@@ -211,19 +210,29 @@ export async function populateUserProfile() {
         document.getElementById('profileLosses')!.textContent = summary.losses;
         document.getElementById('profileWinRatio')!.textContent = summary.winRatio;
 
-        // --- Populate Friends List (Example) ---
-        // This part is a placeholder until you create the backend endpoint for it.
-        const friendsList = document.getElementById('profileFriendsList')!;
-        friendsList.innerHTML = `<li class="opacity-50 text-xs">Friends list coming soon...</li>`; 
-        // Once you have the data, you would use a map function like this:
-        /*
-        friendsList.innerHTML = friends.map(friend => `
-            <li class="flex items-center justify-between text-xs p-1 bg-slate-900/50">
-                <span>${friend.username}</span>
-                <span class="text-${friend.is_online ? 'green' : 'gray'}-400">${friend.is_online ? 'Online' : 'Offline'}</span>
-            </li>
-        `).join('') || `<li class="opacity-50 text-xs">No friends added yet.</li>`;
-        */
+        // --- Populate Friends List ---
+        const friendsListEl = document.getElementById('profileFriendsList')!;
+        friendsListEl.innerHTML = '';
+        if (friends.length > 0) {
+            friends.forEach(friend => {
+                const li = document.createElement('li');
+                li.className = "flex items-center justify-between text-xs p-1.5 bg-slate-900/50 rounded-md";
+                
+                const onlineStatusClass = friend.isOnline ? 'text-green-400' : 'text-slate-500';
+                const onlineStatusText = friend.isOnline ? 'Online' : 'Offline';
+
+                li.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span>${friend.username}</span>
+                    </div>
+                    <span class="${onlineStatusClass}">${onlineStatusText}</span>
+                `;
+                friendsListEl.appendChild(li);
+            });
+        } else {
+            friendsListEl.innerHTML = `<li class="opacity-50 text-xs p-2 text-center">No friends added yet.</li>`;
+        }
+
 
         // --- Populate Match History ---
         const historyBody = document.getElementById('profileMatchHistory');
@@ -249,7 +258,7 @@ export async function populateUserProfile() {
 
     } catch (error) {
         console.error("Error populating user profile:", error);
-        document.getElementById('profileUsername')!.textContent = "Failed to load data";
+        document.getElementById('profileUsername')!.textContent = "Failed to load profile data";
     }
 }
 

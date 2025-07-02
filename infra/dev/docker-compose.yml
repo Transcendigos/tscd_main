@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  frontend:
+  web:
     build:
       context: ../../frontend
-      dockerfile: ../infra/dev/Dockerfile_frontend
-    container_name: frontend
+      dockerfile: ../infra/dev/Dockerfile.dev
+    container_name: my-vite-tailwind-ts-dev-container
     ports:
       - "5173:5173"
     volumes:
@@ -16,6 +16,9 @@ services:
       - ../../frontend/dev/tsconfig.json:/app/tsconfig.json
       - ../../frontend/dev/vite.config.ts:/app/vite.config.ts
       - ../../frontend/public/:/app/public/
+
+    working_dir: /app
+    command: npm run dev
     environment:
       - NODE_ENV=development
     expose:
@@ -36,7 +39,6 @@ services:
       - redis_chat
     restart: unless-stopped
     environment:
-      - NODE_ENV=development
       - REDIS_URL=redis://redis_chat:6379
 
   redis_chat:
@@ -125,6 +127,8 @@ services:
     depends_on:
       - redis_chat
     restart: unless-stopped
+
+
 
 volumes:
   sqlite-data:

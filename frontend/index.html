@@ -1286,17 +1286,23 @@
             class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
         </div>
 
-        <!-- --------------PUT NEW WINDOW BELOW -------------- -->
+        <!-- --------------TOURNAMENT WINDOW -------------- -->
+         
 
-  <div id="tournamentWindow" class="border-2 border-[#4cb4e7] w-[500px] text-[#4cb4e7] text-sm flex flex-col bg-slate-900/60 drop-shadow-xl/30 backdrop-blur-xs absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none" style="min-width: 550px;">
+<div id="tournamentWindow" class="border-2 border-[#4cb4e7] w-[500px] text-[#4cb4e7] text-sm flex flex-col bg-slate-900/60 drop-shadow-xl/30 backdrop-blur-xs absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none" style="min-width: 550px;">
     <div id="tournamentDragHandle" class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
         <span class="font-bold">Pong Tournaments</span>
         <button id="closeTournamentBtn" class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover:bg-[#f8aab6] hover:text-slate-900 transition-colors">X</button>
     </div>
-    
+
     <div id="tournamentLobbyView" class="flex-grow p-4 flex flex-col space-y-4 bg-slate-800/50">
+        <div class="text-center">
+            <button id="startLocalTournamentBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded w-full max-w-md mx-auto">
+                Start Local Tournament
+            </button>
+        </div>
         <div class="border border-slate-600/70 bg-slate-800/50 drop-shadow-xl/30 backdrop-blur-xs p-3">
-            <h3 class="font-bold text-lg mb-2 border-[#4cb4e7]">Create New Tournament</h3>
+            <h3 class="font-bold text-lg mb-2 border-[#4cb4e7]">Create New Remote Tournament</h3>
             <form id="createTournamentForm" class="space-y-3">
                 <div>
                     <label for="tournamentName" class="block text-xs font-medium text-slate-300">Tournament Name</label>
@@ -1321,17 +1327,50 @@
         </div>
     </div>
 
+    <div id="localTournamentSetupView" class="w-full max-w-lg mx-auto p-4 hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Local Tournament Setup</h2>
+            <button id="backToLobbyFromLocalSetupBtn" class="border px-3 py-1 font-bold hover:bg-[#4cb4e7] hover:text-slate-900 text-xs transition-colors">Back to Lobby</button>
+        </div>
+        <div class="bg-slate-900/50 p-4 border border-slate-700">
+            <div id="aliasInputsContainer" class="grid grid-cols-2 gap-4">
+            </div>
+            <div class="text-center mt-4">
+                <button id="startLocalTournamentGameBtn" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded w-full">
+                    Start Tournament
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="tournamentBracketView" class="flex-grow p-4 flex-col space-y-4 bg-slate-800/50 hidden">
         <div class="flex justify-between items-center">
             <h3 id="bracketTournamentName" class="font-bold text-lg border-[#4cb4e7]">Tournament Bracket</h3>
             <button id="backToLobbyBtn" class="border px-3 py-1 font-bold hover:bg-[#4cb4e7] hover:text-slate-900 text-xs transition-colors">Back to Lobby</button>
         </div>
         <div id="bracketContainer" class="flex justify-center items-center text-xs border-[#4cb4e7]">
-            </div>
+        </div>
     </div>
     
     <div id="tournamentResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
 </div>
+
+<!-- --------------LOCAL MULTIPONG WINDOW -------------- -->
+
+<div id="localPongGameWindow" class="border-2 border-green-400 w-[800px] h-[600px] text-green-300 flex flex-col bg-slate-900/80 drop-shadow-xl/30 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none">
+    <div id="localPongDragHandle" class="px-1.5 py-1 flex items-center justify-between border-b-2 border-green-400 cursor-grab active:cursor-grabbing select-none">
+        <span id="localPongWindowTitle" class="font-bold">Local Pong Match</span>
+        <button id="closeLocalPongBtn" class="w-5 h-5 border border-green-400 flex items-center justify-center font-bold hover:bg-red-500 hover:text-slate-900 transition-colors">X</button>
+    </div>
+    <div class="flex-grow p-0 bg-black">
+        <canvas id="localPongCanvas" class="w-full h-full"></canvas>
+    </div>
+    <div id="localPongResizeHandle" class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"></div>
+</div>
+
+
+
+<!-- --------------PUT NEW WINDOW BELOW -------------- -->
 
 
 
@@ -1355,8 +1394,8 @@
           </span>
         </div>
       </footer>
-      <script type="module" src="src/DesktopWindow.ts"></script>
-      <script type="module" src="src/main.ts"></script>
+      <script type="module" src="src/DesktopWindow.js"></script>
+      <script type="module" src="src/main.js"></script>
 
     </body>
 

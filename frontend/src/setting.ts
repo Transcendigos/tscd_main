@@ -164,7 +164,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     deleteMsg.textContent = "⏳ Deleting your account...";
 
     try {
-		const res = await fetch("http://localhost:3000/api/profile/delete-account", {
+      const res = await fetch("http://localhost:3000/api/profile/delete-account", {
         method: "POST",
         credentials: "include"
       });
@@ -230,7 +230,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     totpMsg.textContent = ''; // clear previous
 
     try {
-		const res = await fetch('http://localhost:3000/api/2fa/verify-totp', {
+      const res = await fetch('http://localhost:3000/api/2fa/verify-totp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

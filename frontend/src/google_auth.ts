@@ -1,3 +1,6 @@
+// frontend/src/google_auth.js
+
+
 declare global {
   interface Window {
     google?: any;
@@ -5,7 +8,7 @@ declare global {
 }
 
 function handleCredentialResponse(response: any) {
-	fetch("http://localhost:3000/api/google-login", {
+  fetch("http://localhost:3000/api/google-login", {
     method: "POST",
     credentials: "include",
     headers: {
