@@ -54,7 +54,8 @@ export function setupSignupForm(signupWindow: DesktopWindow) {
         // 🔁 Ask main.ts to update the UI
         window.dispatchEvent(new Event("auth:updated"));
       } else {
-        alert("Signup failed: " + result.error);
+        console.log("signup error");
+        // alert("Signup failed: " + result.error);
       }
     } catch (err) {
       console.error("Signup failed:", err);

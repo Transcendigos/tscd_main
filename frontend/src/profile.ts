@@ -252,5 +252,3 @@ export async function populateUserProfile() {
         document.getElementById('profileUsername')!.textContent = "Failed to load data";
     }
 }
-
-
