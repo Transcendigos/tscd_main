@@ -15,15 +15,10 @@ function aqiMeaning(aqi: number): string {
   }
 }
 
-function getApiUrl(path: string) {
-  const base = import.meta.env.VITE_API_URL || '';
-  return base + path;
-}
-
 // Render data into the weather window
 async function renderWeatherData() {
   try {
-    const response = await fetch(getApiUrl("/api/weather/paris"));
+    const response = await fetch("http://localhost:3000/api/weather/paris");
     const data = await response.json();
 
     // --- Compartment 1: Main Display ---
