@@ -2,11 +2,6 @@ import { currentUserId as myUserId } from './chatClient.js';
 
 const hide = (id: string) => document.getElementById(id)!.classList.add("hidden");
 
-function getApiUrl(path: string) {
-  const base = import.meta.env.VITE_API_URL || '';
-  return base + path;
-}
-
 async function resetAllForms() {
     (document.getElementById("newUsername") as HTMLInputElement).value = '';
     (document.getElementById("newEmail") as HTMLInputElement).value = '';
@@ -36,7 +31,7 @@ export async function settingUserSetting() {
         const currentUsername = document.getElementById('currentUsername');
         const currentEmail = document.getElementById('currentEmail');
 
-        const res = await fetch(getApiUrl('/api/profile'), { credentials: 'include' });
+        const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
         if (!res.ok) {
             console.error('Failed to fetch profile');
             return;
@@ -77,7 +72,7 @@ export async function settingUserSetting() {
 
         qrContainer.classList.add('hidden');
 
-        const resMe = await fetch(getApiUrl("/api/me"), { credentials: "include" });
+        const resMe = await fetch("http://localhost:3000/api/me", { credentials: "include" });
         const data = await resMe.json();
 
         if (data.signedIn && data.user) {
@@ -142,7 +137,7 @@ export async function settingUserSetting() {
 
 export async function settingUserProfile() {
     try {
-        const res = await fetch(getApiUrl('/api/profile'), { credentials: 'include' });
+        const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
         if (!res.ok) {
             console.error('Failed to fetch profile');
             return;

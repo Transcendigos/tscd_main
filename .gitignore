@@ -23,6 +23,3 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
-
-# Ignore all files in frontend/public/uploads
-/frontend/public/uploads/

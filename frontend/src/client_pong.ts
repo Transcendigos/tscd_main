@@ -31,9 +31,7 @@ let canvas: HTMLCanvasElement;
 let pongCtx: CanvasRenderingContext2D;
 
 let socket: WebSocket | null = null;
-const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-const wsHost = window.location.host;
-const WEBSOCKET_URL = `${wsProtocol}://${wsHost}/ws/remotepong`;
+const WEBSOCKET_URL = 'ws://localhost:3000/ws/remotepong';
 
 let localPlayerId: number | null = null;
 let playerSide: 'left' | 'right' | 'spectator' | null = null;

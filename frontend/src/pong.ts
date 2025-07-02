@@ -36,7 +36,7 @@ let currentUser: UserInfo = { signedIn: false };
 
 async function fetchCurrentUser() {
   try {
-    const response = await fetch("/api/me", {
+    const response = await fetch("http://localhost:3000/api/me", {
       credentials: "include",
     });
     if (!response.ok) {
@@ -60,7 +60,7 @@ async function fetchCurrentUser() {
 
 async function postScore(tournamentId: number, userId: number, score: number) {
   try {
-    const response = await fetch("/api/scores", {
+    const response = await fetch("http://localhost:3000/api/scores", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

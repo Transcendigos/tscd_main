@@ -50,7 +50,7 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
     if (!email) return;
 
     try {
-      const res = await fetch(getApiUrl(`/api/auth/methods?email=${encodeURIComponent(email)}`));
+      const res = await fetch(`http://localhost:3000/api/auth/methods?email=${encodeURIComponent(email)}`);
       const data = await res.json();
 
       const methods = data.methods || [];
@@ -114,11 +114,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
     twofaFields.classList.add("hidden");
   });
 
-  function getApiUrl(path: string) {
-    const base = import.meta.env.VITE_API_URL || '';
-    return base + path;
-  }
-
   signinForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     errorBox.textContent = "";
@@ -126,7 +121,7 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
     const email = emailInput.value;
     const password = passwordInput.value;
 
-    const res = await fetch(getApiUrl("/api/signin"), {
+    const res = await fetch("http://localhost:3000/api/signin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -154,7 +149,7 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
 
     const code = codeInput.value;
     const method = "TOTP"; 
-    const res = await fetch(getApiUrl("/api/2fa/verify"), {
+    const res = await fetch("http://localhost:3000/api/2fa/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

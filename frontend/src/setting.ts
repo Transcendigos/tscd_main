@@ -40,15 +40,11 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
   const currentUsername = document.getElementById('currentUsername');
   const currentEmail = document.getElementById('currentEmail');
 
-  function getApiUrl(path: string) {
-    const base = import.meta.env.VITE_API_URL || '';
-    return base + path;
-  }
 
   // Username
   document.getElementById("saveUsernameBtn")?.addEventListener("click", async () => {
     const newUsername = (document.getElementById("newUsername") as HTMLInputElement).value;
-    const res = await fetch(getApiUrl("/api/profile/update-username"), {
+    const res = await fetch("http://localhost:3000/api/profile/update-username", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -83,7 +79,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
       return;
     }
 
-    const res = await fetch(getApiUrl("/api/profile/update-email"), {
+    const res = await fetch("http://localhost:3000/api/profile/update-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -108,7 +104,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
   // Password
   document.getElementById("savePasswordBtn")?.addEventListener("click", async () => {
     const newPassword = (document.getElementById("newPassword") as HTMLInputElement).value;
-    const res = await fetch(getApiUrl("/api/profile/update-password"), {
+    const res = await fetch("http://localhost:3000/api/profile/update-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -136,7 +132,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     const formData = new FormData();
     formData.append("profilePic", file);
 
-    const res = await fetch(getApiUrl("/api/profile/upload-picture"), {
+    const res = await fetch("http://localhost:3000/api/profile/upload-picture", {
       method: "POST",
       credentials: "include",
       body: formData,
@@ -168,7 +164,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     deleteMsg.textContent = "⏳ Deleting your account...";
 
     try {
-      const res = await fetch(getApiUrl("/api/profile/delete-account"), {
+      const res = await fetch("http://localhost:3000/api/profile/delete-account", {
         method: "POST",
         credentials: "include"
       });
@@ -202,7 +198,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
   totp2faCheckbox.addEventListener('change', async () => {
     if (!totp2faCheckbox.checked) {
       // ❌ Disable TOTP
-      const res = await fetch(getApiUrl('/api/2fa/disable-totp'), {
+      const res = await fetch('http://localhost:3000/api/2fa/disable-totp', {
         method: 'POST',
         credentials: 'include',
       });
@@ -213,7 +209,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     }
 
     // ✅ Start TOTP setup
-    const res = await fetch(getApiUrl('/api/2fa/setup-totp'), {
+    const res = await fetch('http://localhost:3000/api/2fa/setup-totp', {
       method: 'POST',
       credentials: 'include',
     });
@@ -234,7 +230,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     totpMsg.textContent = ''; // clear previous
 
     try {
-      const res = await fetch(getApiUrl('/api/2fa/verify-totp'), {
+      const res = await fetch('http://localhost:3000/api/2fa/verify-totp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
