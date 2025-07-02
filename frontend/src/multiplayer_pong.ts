@@ -2,24 +2,28 @@ let mpCanvas: HTMLCanvasElement | null = null;
 let mpCtx: CanvasRenderingContext2D | null = null;
 
 let mpGameId: string | null = null;
-let mpMyPlayerId: string | null = null; 
+let mpMyPlayerId: string | null = null;
 let mpOpponentPlayerId: string | null = null;
 let mpOpponentUsername: string | null = null;
 
-let mpServerPlayer1Id: string | null = null; 
-let mpServerPlayer2Id: string | null = null; 
+let mpServerPlayer1Id: string | null = null;
+let mpServerPlayer2Id: string | null = null;
 
 let mpBallState: { x: number, y: number, width: number, height: number, vx?: number, vy?: number } | null = null;
 let mpPlayersState: {
     [playerId: string]: { id?: string, paddleY: number, score: number, username?: string, isReady?: boolean }
 } | null = null;
-let mpGameStatus: string | null = null; 
+let mpGameStatus: string | null = null;
 let localPlayerHasSignalledReady = false;
 
 const PADDLE_WIDTH = 8;
 const PADDLE_HEIGHT = 70;
 const BALL_WIDTH = 10;
 const BALL_HEIGHT = 10;
+
+// --- Color Constants ---
+const PLAYER_HIGHLIGHT_COLOR = '#39FF14'; // Green for the local player
+const DEFAULT_COLOR = '#d6ecff';        // Default color for opponents/UI
 
 type SendInputFunction = (gameId: string, input: 'up' | 'down' | 'stop_up' | 'stop_down') => void;
 let sendPlayerInputToServer: SendInputFunction | null = null;
@@ -54,10 +58,10 @@ function drawMidline_Styled_MP() {
     const gap = 15;
     const lineWidth = 4;
     const x = mpCanvas.width / 2 - lineWidth / 2;
-    mpCtx.fillStyle = "#d6ecff";
+    mpCtx.fillStyle = DEFAULT_COLOR;
     mpCtx.shadowColor = "#0fffff";
     for (let y = 0; y < mpCanvas.height; y += segmentHeight + gap) {
-        mpCtx.shadowBlur = 2; 
+        mpCtx.shadowBlur = 2;
         mpCtx.fillRect(x, y, lineWidth, segmentHeight);
     }
     mpCtx.shadowBlur = 0;
@@ -69,26 +73,26 @@ function drawScore_Styled_MP() {
     const p2DisplayScore = mpPlayersState[mpServerPlayer2Id]?.score ?? 0;
 
     mpCtx.font = "64px 'Press Start 2P'";
-    mpCtx.fillStyle = "#d6ecff";
+    mpCtx.fillStyle = DEFAULT_COLOR;
     mpCtx.textAlign = "center";
-    mpCtx.shadowColor = "#0fffff"; 
-    mpCtx.shadowBlur = 3;        
+    mpCtx.shadowColor = "#0fffff";
+    mpCtx.shadowBlur = 3;
     mpCtx.fillText(`${p1DisplayScore}  ${p2DisplayScore}`, mpCanvas.width / 2, mpCanvas.height / 6);
-    mpCtx.shadowBlur = 0; 
+    mpCtx.shadowBlur = 0;
 }
 
 function drawVerticalCRTLines_Styled_MP() {
     if (!mpCtx || !mpCanvas) return;
-    let pulse = Math.sin(Date.now() * 0.01) * 2 + Math.sin(Date.now() * 0.05) * 3; 
+    let pulse = Math.sin(Date.now() * 0.01) * 2 + Math.sin(Date.now() * 0.05) * 3;
     mpCtx.shadowBlur = Math.abs(pulse);
     mpCtx.shadowColor = "#000fff";
-    flickerPhase += 0.05; 
-    const flickerAlpha = 0.02 + 0.01 * Math.sin(flickerPhase); 
+    flickerPhase += 0.05;
+    const flickerAlpha = 0.02 + 0.01 * Math.sin(flickerPhase);
     mpCtx.save();
-    mpCtx.globalAlpha = flickerAlpha + 0.05; 
+    mpCtx.globalAlpha = flickerAlpha + 0.05;
     mpCtx.strokeStyle = "#00ffff";
     mpCtx.lineWidth = 1;
-    for (let y = 0; y < mpCanvas.height; y += 4) { 
+    for (let y = 0; y < mpCanvas.height; y += 4) {
         mpCtx.beginPath();
         mpCtx.moveTo(0, y);
         mpCtx.lineTo(mpCanvas.width, y);
@@ -98,20 +102,24 @@ function drawVerticalCRTLines_Styled_MP() {
     mpCtx.shadowBlur = 0;
 }
 
-function drawPaddle_Styled_MP(x: number, y: number, width: number, height: number) {
+/**
+ * MODIFIED: This function now accepts a color parameter to draw the paddle.
+ */
+function drawPaddle_Styled_MP(x: number, y: number, width: number, height: number, color: string) {
     if (!mpCtx) return;
-    let pulse = Math.sin(Date.now() * 0.2) * 1 + 1.5; 
+    let pulse = Math.sin(Date.now() * 0.2) * 1 + 1.5;
     mpCtx.shadowBlur = pulse;
-    mpCtx.shadowColor = "#0fffff";
-    mpCtx.fillStyle = "#d6ecff";
-    roundRect(mpCtx, x, y, width, height, 5); 
+    // Use the paddle's specific color for the shadow and fill
+    mpCtx.shadowColor = color === PLAYER_HIGHLIGHT_COLOR ? color : "#0fffff";
+    mpCtx.fillStyle = color;
+    roundRect(mpCtx, x, y, width, height, 5);
     mpCtx.fill();
     mpCtx.shadowBlur = 0;
 }
 
 function drawMultiplayerBall(x: number, y: number, color: string) {
     if (!mpCtx) return;
-    mpCtx.fillStyle = color; // This is fine for a simple white ball
+    mpCtx.fillStyle = color;
     mpCtx.fillRect(x, y, BALL_WIDTH, BALL_HEIGHT);
 }
 
@@ -122,7 +130,7 @@ function handleReadyUpKeyPress(event: KeyboardEvent) {
             if (mpGameId && sendPlayerReadySignalToServer) {
                 sendPlayerReadySignalToServer(mpGameId);
                 localPlayerHasSignalledReady = true;
-                renderMultiplayerFrame(); 
+                renderMultiplayerFrame();
                 document.removeEventListener('keydown', handleReadyUpKeyPress);
                 setupMultiplayerInputHandlers();
             }
@@ -132,15 +140,15 @@ function handleReadyUpKeyPress(event: KeyboardEvent) {
 
 export function initMultiplayerPong(
     gameId: string,
-    initialState: any, 
+    initialState: any,
     yourPlayerId: string,
     opponentId: string,
     opponentUsername: string,
     canvasElement: HTMLCanvasElement,
     sendInputFunc: SendInputFunction,
-    sendReadyFunc: SendReadyFunction 
+    sendReadyFunc: SendReadyFunction
 ) {
-    cleanupMultiplayerPong(); 
+    cleanupMultiplayerPong();
 
     mpGameId = gameId;
     mpMyPlayerId = yourPlayerId;
@@ -158,13 +166,13 @@ export function initMultiplayerPong(
     sendPlayerInputToServer = sendInputFunc;
     sendPlayerReadySignalToServer = sendReadyFunc;
     localPlayerHasSignalledReady = false;
-   
+
     updateMultiplayerGameState(initialState.ball, initialState.players, initialState.status);
-    
+
     if (initialState.status === 'waiting_for_ready') {
         document.addEventListener('keydown', handleReadyUpKeyPress);
     } else if (initialState.status === 'in-progress') {
-        localPlayerHasSignalledReady = true; 
+        localPlayerHasSignalledReady = true;
         setupMultiplayerInputHandlers();
     }
     renderMultiplayerFrame();
@@ -175,19 +183,17 @@ export function updateMultiplayerGameState(
     playersData: any,
     statusData: string
 ) {
-    // console.log(`[MultiplayerPong] updateMultiplayerGameState called. Players:`, JSON.parse(JSON.stringify(playersData)), `Ball:`, JSON.parse(JSON.stringify(ballData)), `Status: ${statusData}`);
-    
     const oldStatus = mpGameStatus;
     mpBallState = ballData;
     mpPlayersState = playersData;
     mpGameStatus = statusData;
 
     if (oldStatus === 'waiting_for_ready' && mpGameStatus === 'in-progress') {
-        document.removeEventListener('keydown', handleReadyUpKeyPress); 
-        if (!localPlayerHasSignalledReady) { 
-            localPlayerHasSignalledReady = true; 
+        document.removeEventListener('keydown', handleReadyUpKeyPress);
+        if (!localPlayerHasSignalledReady) {
+            localPlayerHasSignalledReady = true;
         }
-        setupMultiplayerInputHandlers(); 
+        setupMultiplayerInputHandlers();
     }
 
     if (mpCtx && mpCanvas) {
@@ -197,8 +203,8 @@ export function updateMultiplayerGameState(
 
 export function handleMultiplayerGameOver(winnerId: string | null, scores: any) {
     mpGameStatus = 'finished';
-    renderMultiplayerFrame(); 
-    
+    renderMultiplayerFrame();
+
     if (mpCtx && mpCanvas) {
         mpCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         mpCtx.fillRect(0, 0, mpCanvas.width, mpCanvas.height);
@@ -212,7 +218,7 @@ export function handleMultiplayerGameOver(winnerId: string | null, scores: any) 
             } else if (mpOpponentPlayerId && winnerId === mpOpponentPlayerId) {
                 winnerDisplayName = (mpPlayersState && mpPlayersState[mpOpponentPlayerId as string]?.username) || mpOpponentUsername || 'Opponent';
             } else {
-                winnerDisplayName = mpPlayersState?.[winnerId]?.username || "Unknown Winner"; 
+                winnerDisplayName = mpPlayersState?.[winnerId]?.username || "Unknown Winner";
             }
             mpCtx.fillText(`${winnerDisplayName} Wins!`, mpCanvas.width / 2, mpCanvas.height / 2 - 30);
         } else {
@@ -227,20 +233,19 @@ export function handleMultiplayerGameOver(winnerId: string | null, scores: any) 
         }
         mpCtx.fillText("Game Over", mpCanvas.width / 2, mpCanvas.height / 2 + 60);
     }
-    cleanupMultiplayerInputHandlers(); 
-    document.removeEventListener('keydown', handleReadyUpKeyPress); 
+    cleanupMultiplayerInputHandlers();
+    document.removeEventListener('keydown', handleReadyUpKeyPress);
 }
 
+
+/**
+ * MODIFIED: This function now determines the color for each paddle based on the player ID.
+ */
 function renderMultiplayerFrame() {
     if (!mpCtx || !mpCanvas) {
         console.warn("[MultiplayerPong] renderMultiplayerFrame: Bailing due to missing canvas context or element.");
         return;
     }
-
-
-        // #1e293b 0%,
-        // #1b3f72 50%,
-        // #1e293b 100%);
 
     const bgGradient = mpCtx.createLinearGradient(0, 0, 0, mpCanvas.height);
     bgGradient.addColorStop(0, "#1e293b");
@@ -261,43 +266,53 @@ function renderMultiplayerFrame() {
         const myReadyText = localPlayerHasSignalledReady || myPlayerData?.isReady ? 'Ready!' : 'Press SPACE to Ready Up';
         mpCtx.fillText(`You: ${myReadyText}`, mpCanvas.width / 2, mpCanvas.height / 2 - 20);
         mpCtx.fillText(`Opponent (${mpOpponentUsername || 'Player 2'}): ${opponentPlayerData?.isReady ? 'Ready!' : 'Waiting...'}`, mpCanvas.width / 2, mpCanvas.height / 2 + 20);
-        
+
         if (mpPlayersState && mpServerPlayer1Id && mpPlayersState[mpServerPlayer1Id]) {
-             drawPaddle_Styled_MP(10, mpPlayersState[mpServerPlayer1Id].paddleY, PADDLE_WIDTH, PADDLE_HEIGHT);
+            const p1Color = mpServerPlayer1Id === mpMyPlayerId ? PLAYER_HIGHLIGHT_COLOR : DEFAULT_COLOR;
+            drawPaddle_Styled_MP(10, mpPlayersState[mpServerPlayer1Id].paddleY, PADDLE_WIDTH, PADDLE_HEIGHT, p1Color);
         }
         if (mpPlayersState && mpServerPlayer2Id && mpPlayersState[mpServerPlayer2Id]) {
-             drawPaddle_Styled_MP(mpCanvas.width - PADDLE_WIDTH - 10, mpPlayersState[mpServerPlayer2Id].paddleY, PADDLE_WIDTH, PADDLE_HEIGHT);
+            const p2Color = mpServerPlayer2Id === mpMyPlayerId ? PLAYER_HIGHLIGHT_COLOR : DEFAULT_COLOR;
+            drawPaddle_Styled_MP(mpCanvas.width - PADDLE_WIDTH - 10, mpPlayersState[mpServerPlayer2Id].paddleY, PADDLE_WIDTH, PADDLE_HEIGHT, p2Color);
         }
         if (mpPlayersState) drawScore_Styled_MP();
-        return; 
+        return;
     }
-    
+
     if (mpGameStatus === 'finished') {
         if (mpPlayersState && mpServerPlayer1Id && mpServerPlayer2Id && mpBallState) {
             drawMidline_Styled_MP();
-            drawPaddle_Styled_MP(10, mpPlayersState[mpServerPlayer1Id].paddleY, PADDLE_WIDTH, PADDLE_HEIGHT);
-            drawPaddle_Styled_MP(mpCanvas.width - PADDLE_WIDTH - 10, mpPlayersState[mpServerPlayer2Id].paddleY, PADDLE_WIDTH, PADDLE_HEIGHT);
+            const p1Color = mpServerPlayer1Id === mpMyPlayerId ? PLAYER_HIGHLIGHT_COLOR : DEFAULT_COLOR;
+            const p2Color = mpServerPlayer2Id === mpMyPlayerId ? PLAYER_HIGHLIGHT_COLOR : DEFAULT_COLOR;
+            drawPaddle_Styled_MP(10, mpPlayersState[mpServerPlayer1Id].paddleY, PADDLE_WIDTH, PADDLE_HEIGHT, p1Color);
+            drawPaddle_Styled_MP(mpCanvas.width - PADDLE_WIDTH - 10, mpPlayersState[mpServerPlayer2Id].paddleY, PADDLE_WIDTH, PADDLE_HEIGHT, p2Color);
             drawMultiplayerBall(mpBallState.x, mpBallState.y, '#FFFFFF');
-            drawScore_Styled_MP(); 
+            drawScore_Styled_MP();
         }
-        return; 
+        return;
     }
-    
+
     if (!mpBallState || !mpPlayersState || !mpServerPlayer1Id || !mpServerPlayer2Id ) {
-         console.warn("[MultiplayerPong] renderMultiplayerFrame: Bailing before full render for in-progress game.", 
+         console.warn("[MultiplayerPong] renderMultiplayerFrame: Bailing before full render for in-progress game.",
             { mpBallState, mpPlayersState, mpServerPlayer1Id, mpServerPlayer2Id });
         return;
     }
-    
+
 
     const leftPaddleX = 10;
     const rightPaddleX = mpCanvas.width - PADDLE_WIDTH - 10;
     const leftPlayerData = mpPlayersState[mpServerPlayer1Id];
     const rightPlayerData = mpPlayersState[mpServerPlayer2Id];
 
-    if (leftPlayerData) drawPaddle_Styled_MP(leftPaddleX, leftPlayerData.paddleY, PADDLE_WIDTH, PADDLE_HEIGHT);
-    if (rightPlayerData) drawPaddle_Styled_MP(rightPaddleX, rightPlayerData.paddleY, PADDLE_WIDTH, PADDLE_HEIGHT);
-    
+    if (leftPlayerData) {
+        const p1Color = mpServerPlayer1Id === mpMyPlayerId ? PLAYER_HIGHLIGHT_COLOR : DEFAULT_COLOR;
+        drawPaddle_Styled_MP(leftPaddleX, leftPlayerData.paddleY, PADDLE_WIDTH, PADDLE_HEIGHT, p1Color);
+    }
+    if (rightPlayerData) {
+        const p2Color = mpServerPlayer2Id === mpMyPlayerId ? PLAYER_HIGHLIGHT_COLOR : DEFAULT_COLOR;
+        drawPaddle_Styled_MP(rightPaddleX, rightPlayerData.paddleY, PADDLE_WIDTH, PADDLE_HEIGHT, p2Color);
+    }
+
     drawMultiplayerBall(mpBallState.x, mpBallState.y, '#FFFFFF');
     drawMidline_Styled_MP();
     drawScore_Styled_MP();
@@ -308,7 +323,7 @@ const boundKeyUpHandler = (event: KeyboardEvent) => handleMultiplayerKeyUp(event
 let keysPressed: { [key: string]: boolean } = {};
 
 function setupMultiplayerInputHandlers() {
-    cleanupMultiplayerInputHandlers(); 
+    cleanupMultiplayerInputHandlers();
     keysPressed = {};
     document.addEventListener('keydown', boundKeyDownHandler);
     document.addEventListener('keyup', boundKeyUpHandler);
@@ -349,11 +364,11 @@ function handleMultiplayerKeyUp(event: KeyboardEvent) {
 export function cleanupMultiplayerPong() {
     cleanupMultiplayerInputHandlers();
     document.removeEventListener('keydown', handleReadyUpKeyPress);
-    
+
     mpGameId = null; mpMyPlayerId = null; mpOpponentPlayerId = null; mpOpponentUsername = null;
     mpServerPlayer1Id = null; mpServerPlayer2Id = null; mpBallState = null; mpPlayersState = null;
     mpGameStatus = null; localPlayerHasSignalledReady = false;
-    
+
     if (mpCtx && mpCanvas) mpCtx.clearRect(0, 0, mpCanvas.width, mpCanvas.height);
     sendPlayerInputToServer = null; sendPlayerReadySignalToServer = null;
 }
