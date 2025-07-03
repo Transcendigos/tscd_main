@@ -185,7 +185,7 @@ async function showUserProfile(user: User) {
     try {
         // Fetch all data in parallel, just like in your populateUserProfile function
         const [profileRes, summaryRes, historyRes] = await Promise.all([
-            fetch(`http://localhost:3000/api/profile/${user.id}`, { credentials: 'include' }),
+            fetch(`/api/profile/${user.id}`, { credentials: 'include' }),
             fetch(`/api/stats/summary/${prefixedId}`),
             fetch(`/api/stats/match-history/${prefixedId}`)
         ]);
@@ -327,7 +327,7 @@ function connectWebSocket() {
     return;
   }
   console.log("Chat: Attempting to establish WebSocket connection...");
-  socket = new WebSocket("ws://localhost:3000/ws/chat");
+  socket = new WebSocket("/ws/chat");
 
   socket.onopen = () => {
     console.log("Chat: WebSocket Connection Opened! Waiting for server to authenticate via cookie.");

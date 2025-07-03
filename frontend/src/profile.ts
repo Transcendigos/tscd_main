@@ -31,7 +31,7 @@ export async function settingUserSetting() {
         const currentUsername = document.getElementById('currentUsername');
         const currentEmail = document.getElementById('currentEmail');
 
-        const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
+        const res = await fetch('/api/profile', { credentials: 'include' });
         if (!res.ok) {
             console.error('Failed to fetch profile');
             return;
@@ -72,7 +72,7 @@ export async function settingUserSetting() {
 
         qrContainer.classList.add('hidden');
 
-        const resMe = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+        const resMe = await fetch("/api/me", { credentials: "include" });
         const data = await resMe.json();
 
         if (data.signedIn && data.user) {
@@ -138,7 +138,7 @@ export async function settingUserSetting() {
 
 export async function settingUserProfile() {
     try {
-        const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
+        const res = await fetch('/api/profile', { credentials: 'include' });
         if (!res.ok) {
             console.error('Failed to fetch profile');
             return;
@@ -186,7 +186,7 @@ export async function populateUserProfile() {
     try {
         // Fetch all necessary data in parallel for maximum speed
         const [profileRes, summaryRes, historyRes, friendsRes] = await Promise.all([
-            fetch('http://localhost:3000/api/profile', { credentials: 'include' }),
+            fetch('/api/profile', { credentials: 'include' }),
             fetch(`/api/stats/summary/${prefixedId}`),
             fetch(`/api/stats/match-history/${prefixedId}`),
             fetch(`/api/friends/${prefixedId}`, { credentials: 'include' }) // Fetch friends

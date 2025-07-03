@@ -18,7 +18,7 @@ function aqiMeaning(aqi: number): string {
 // Render data into the weather window
 async function renderWeatherData() {
   try {
-    const response = await fetch("http://localhost:3000/api/weather/paris");
+    const response = await fetch("/api/weather/paris");
     const data = await response.json();
 
     // --- Compartment 1: Main Display ---

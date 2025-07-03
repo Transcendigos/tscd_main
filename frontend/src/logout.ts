@@ -10,7 +10,7 @@ export function setupLogoutForm(logoutWindow: DesktopWindow) {
 
   logoutWindow.open = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+      const res = await fetch("/api/me", { credentials: "include" });
       const data = await res.json();
       console.log("🧾 /api/me response:", data);
 
@@ -30,7 +30,7 @@ export function setupLogoutForm(logoutWindow: DesktopWindow) {
   // Handle logout
   const logoutBtn = document.getElementById("logoutBtn");
   logoutBtn?.addEventListener("click", async () => {
-    await fetch("http://localhost:3000/api/logout", {
+    await fetch("/api/logout", {
       method: "POST",
       credentials: "include",
     });
