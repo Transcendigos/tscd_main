@@ -19,7 +19,6 @@ const PADDLE_SPEED_PER_SECOND = 400;
 
 const pongRoom = {
     players: [],
-    // *** 2. ADD a gameId to track the current match ***
     gameId: null,
     ball: {
         x: CANVAS_WIDTH / 2 - BALL_SIZE / 2,
@@ -38,7 +37,6 @@ const pongRoom = {
     playerCount: 0
 };
 
-// --- Helper Functions ---
 function broadcastPongMessage(message, serverInstance) {
     const stringifiedMessage = JSON.stringify(message);
     pongRoom.players.forEach(player => {
@@ -169,7 +167,6 @@ function startGame(serverInstance) {
         return;
     }
     
-    // *** 3. ASSIGN a unique ID to the game when it starts ***
     pongRoom.gameId = `quickplay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     logger.info({ gameId: pongRoom.gameId, player1: pongRoom.paddles.left.playerId, player2: pongRoom.paddles.right.playerId }, "Pong: Starting game.");
@@ -208,7 +205,6 @@ function stopGame(winnerId, reason = "win", serverInstance) {
     const p1_id = pongRoom.paddles.left.playerId;
     const p2_id = pongRoom.paddles.right.playerId;
     
-    // Make sure we have a valid winner before saving stats
     if (winnerId && p1_id && p2_id) {
         const winnerPrefixedId = `user_${winnerId}`;
         const p1_prefixedId = `user_${p1_id}`;
@@ -219,7 +215,6 @@ function stopGame(winnerId, reason = "win", serverInstance) {
             [p2_prefixedId]: pongRoom.paddles.right.score
         };
 
-        // *** THE FIX IS HERE: We now explicitly pass 'Quick Play' as the game mode ***
         processGameCompletion(pongRoom.gameId, winnerPrefixedId, finalScores, 'Quick Play').catch(err => {
             logger.error({ err, gameId: pongRoom.gameId }, "Error processing Quick Play game completion.");
         });
@@ -233,7 +228,6 @@ function stopGame(winnerId, reason = "win", serverInstance) {
         reason: reason
     }, serverInstance);
     
-    // Reset gameId after processing
     pongRoom.gameId = null;
     resetPaddles();
 }

@@ -69,13 +69,12 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     }
   });
 
-  // Email
   document.getElementById("saveEmailBtn")?.addEventListener("click", async () => {
     const emailInput = document.getElementById("newEmail") as HTMLInputElement;
     const newEmail = emailInput.value;
 
     if (!emailInput.checkValidity()) {
-      emailInput.reportValidity(); // Trigger browser-style error popup
+      emailInput.reportValidity();
       return;
     }
 
@@ -101,7 +100,6 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
       emailMsg.textContent = `❌ ${data.error || "Failed to update email"}`;
     }
   });
-  // Password
   document.getElementById("savePasswordBtn")?.addEventListener("click", async () => {
     const newPassword = (document.getElementById("newPassword") as HTMLInputElement).value;
     const res = await fetch("/api/profile/update-password", {
@@ -115,7 +113,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     if (res.ok) {
       passwordMsg.textContent = "✅ Password updated!";
       setTimeout(() => {
-        hide("passwordForm"); // Redirect to homepage or login
+        hide("passwordForm");
       }, 1000);
       resetAllForms();
       console.log("ALL GOOD");
@@ -124,7 +122,6 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     }
   });
 
-  // Picture Upload profileImageSetting
   document.getElementById("uploadPicBtn")?.addEventListener("click", async () => {
     const fileInput = document.getElementById("profilePicInput") as HTMLInputElement;
     const file = fileInput.files?.[0];
@@ -141,12 +138,12 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     const data = await res.json();
     if (res.ok) {
       const img_profile = document.getElementById("profileImage") as HTMLImageElement;
-      img_profile.src = data.url || URL.createObjectURL(file); // temporary preview
+      img_profile.src = data.url || URL.createObjectURL(file);
       const img_setting = document.getElementById("profileImageSetting") as HTMLImageElement;
-      img_setting.src = data.url || URL.createObjectURL(file); // temporary preview
+      img_setting.src = data.url || URL.createObjectURL(file);
       pictureMsg.textContent = "✅ Picture updated!";
       setTimeout(() => {
-        hide("pictureForm"); // Redirect to homepage or login
+        hide("pictureForm");
       }, 1000);
       resetAllForms();
       console.log("ALL GOOD");
@@ -174,7 +171,7 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
       if (res.ok) {
         deleteMsg.textContent = "✅ Account deleted. Redirecting...";
         setTimeout(() => {
-          window.location.href = "/"; // Redirect to homepage or login
+          window.location.href = "/";
         }, 1500);
         resetAllForms();
       } else {
@@ -194,10 +191,8 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
   const confirmTotpButton = document.getElementById('confirmTotpButton') as HTMLButtonElement;
   const totpMsg = document.getElementById('totpStatus') as HTMLParagraphElement;
 
-  // ✅ Enable/Disable TOTP 2FA
   totp2faCheckbox.addEventListener('change', async () => {
     if (!totp2faCheckbox.checked) {
-      // ❌ Disable TOTP
       const res = await fetch('/api/2fa/disable-totp', {
         method: 'POST',
         credentials: 'include',
@@ -208,7 +203,6 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
       return;
     }
 
-    // ✅ Start TOTP setup
     const res = await fetch('/api/2fa/setup-totp', {
       method: 'POST',
       credentials: 'include',
@@ -217,17 +211,16 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
     const data = await res.json();
     if (data.qrCodeUrl && data.base32) {
       qrCodeImage.src = data.qrCodeUrl;
-      qrCodeImage.dataset.secret = data.base32; // ← store secret
+      qrCodeImage.dataset.secret = data.base32;
       qrContainer.classList.remove('hidden');
       totpMsg.textContent = '';
     }
   });
 
-  // ✅ Confirm TOTP 6-digit input
   confirmTotpButton.addEventListener('click', async () => {
     const token = verifyTotpInput.value;
     const secret = qrCodeImage.dataset.secret || '';
-    totpMsg.textContent = ''; // clear previous
+    totpMsg.textContent = ''; 
 
     try {
       const res = await fetch('/api/2fa/verify-totp', {
@@ -253,7 +246,6 @@ export async function setupSettingForm(settingWindow: DesktopWindow) {
       }, 1500);
 
     } catch (err) {
-      // 👇 You will see any backend-provided error here
       console.error("❌ TOTP verification failed:", err);
       totpMsg.textContent = err.message || 'TOTP verification failed';
       totpMsg.classList.remove('text-[#53D4C0]');

@@ -21,9 +21,8 @@ const PADDLE_HEIGHT = 70;
 const BALL_WIDTH = 10;
 const BALL_HEIGHT = 10;
 
-// --- Color Constants ---
-const PLAYER_HIGHLIGHT_COLOR = '#39FF14'; // Green for the local player
-const DEFAULT_COLOR = '#d6ecff';        // Default color for opponents/UI
+const PLAYER_HIGHLIGHT_COLOR = '#39FF14';
+const DEFAULT_COLOR = '#d6ecff';
 
 type SendInputFunction = (gameId: string, input: 'up' | 'down' | 'stop_up' | 'stop_down') => void;
 let sendPlayerInputToServer: SendInputFunction | null = null;
@@ -102,14 +101,11 @@ function drawVerticalCRTLines_Styled_MP() {
     mpCtx.shadowBlur = 0;
 }
 
-/**
- * MODIFIED: This function now accepts a color parameter to draw the paddle.
- */
+
 function drawPaddle_Styled_MP(x: number, y: number, width: number, height: number, color: string) {
     if (!mpCtx) return;
     let pulse = Math.sin(Date.now() * 0.2) * 1 + 1.5;
     mpCtx.shadowBlur = pulse;
-    // Use the paddle's specific color for the shadow and fill
     mpCtx.shadowColor = color === PLAYER_HIGHLIGHT_COLOR ? color : "#0fffff";
     mpCtx.fillStyle = color;
     roundRect(mpCtx, x, y, width, height, 5);
@@ -238,9 +234,7 @@ export function handleMultiplayerGameOver(winnerId: string | null, scores: any) 
 }
 
 
-/**
- * MODIFIED: This function now determines the color for each paddle based on the player ID.
- */
+
 function renderMultiplayerFrame() {
     if (!mpCtx || !mpCanvas) {
         console.warn("[MultiplayerPong] renderMultiplayerFrame: Bailing due to missing canvas context or element.");

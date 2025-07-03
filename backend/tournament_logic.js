@@ -14,7 +14,6 @@ export async function processGameCompletion(gameId, winnerPrefixedId, finalScore
         return;
     }
     
-    // Get player IDs and scores from the keys and values of the finalScores object
     const [p1_prefixedId, p2_prefixedId] = Object.keys(finalScores);
     const p1_score = finalScores[p1_prefixedId];
     const p2_score = finalScores[p2_prefixedId];

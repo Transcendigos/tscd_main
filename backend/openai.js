@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'; // omit this if you're on Node 18+
+import fetch from 'node-fetch';
 import fp from 'fastify-plugin';
 
 export default fp(async function openaiRoute(server, options) {
@@ -27,7 +27,7 @@ export default fp(async function openaiRoute(server, options) {
             if (!data.choices || !Array.isArray(data.choices)) {
                 return reply.code(502).send({
                     error: "Invalid response from OpenAI",
-                    detail: data, // send full body back for debugging
+                    detail: data,
                 });
             }
             

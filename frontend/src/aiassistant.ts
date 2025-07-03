@@ -10,10 +10,10 @@ export function resetAIWindow() {
   }
 
   if (messages) {
-    messages.innerHTML = ""; // Clear all previous messages
+    messages.innerHTML = "";
   }
 
-  window.speechSynthesis.cancel(); // Stop any ongoing speech
+  window.speechSynthesis.cancel();
 }
 
 async function detectLanguage(text: string): Promise<string> {

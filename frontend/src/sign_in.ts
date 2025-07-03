@@ -16,7 +16,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
 
   let tempEmail = "";
 
-  //Reset sign-in form (called on window open)
   function resetSigninForm() {
     console.log("[SignIn] Resetting form");
 
@@ -35,17 +34,14 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
 
   (window as any).resetSigninForm = resetSigninForm;
 
-  // Reset on first load
   resetSigninForm();
 
-  // Manual close
   closeBtn?.addEventListener("click", () => {
     signinWindow.close();
     resetSigninForm();
   });
 
 
-  // ✅ Detect login method and adjust UI
   async function detectAuthMethod(email: string) {
     if (!email) return;
 
@@ -55,28 +51,22 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
 
       const methods = data.methods || [];
 
-      // Case: New email (no existing user)
       if (methods.length === 0) {
-        // New user detected — block sign-in and prompt to sign up
         passwordInput.disabled = true;
         passwordInput.classList.add("opacity-50");
         submitBtn.disabled = true;
         signinGOOGLE?.classList.add("hidden");
 
-        // Auto-switch after short delay
         setTimeout(() => {
-          // Close Sign-In window
           signinWindow.close();
           resetSigninForm();
 
-          // Trigger Sign-Up tab
           const signupTab = document.getElementById("signupTab");
-          signupTab?.click(); // Triggers DesktopWindow to open sign-up
+          signupTab?.click();
         }, 2200);
         return;
       }
 
-      // Case: Google only
       if (methods.includes("google") && !methods.includes("local")) {
         passwordInput.disabled = true;
         passwordInput.classList.add("opacity-50");
@@ -84,7 +74,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
         return;
       }
 
-      // Case: Local only
       if (methods.includes("local") && !methods.includes("google")) {
         passwordInput.disabled = false;
         passwordInput.classList.remove("opacity-50");
@@ -100,7 +89,6 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
     }
   }
 
-  // Trigger detection on blur
   emailInput.addEventListener("blur", () => {
     detectAuthMethod(emailInput.value);
   });
@@ -135,14 +123,13 @@ export function setupSigninForm(signinWindow: DesktopWindow) {
       twofaFields.classList.remove("hidden");
 
     } else if (data.user) {
-      signinWindow.close(); // ✅ close window
-      window.dispatchEvent(new Event("auth:updated")); // 🔁 update UI
+      signinWindow.close();
+      window.dispatchEvent(new Event("auth:updated"));
     } else {
       errorBox.textContent = data.error || "Login failed";
     }
   });
 
-  // 2FA Submit
   submit2FAButton.addEventListener("click", async (e) => {
     e.preventDefault();
     errorBox.textContent = "";

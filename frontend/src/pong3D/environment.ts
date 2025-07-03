@@ -9,7 +9,6 @@ export class Environment {
     public backWall: BABYLON.Mesh;
     public frontWall: BABYLON.Mesh;
 
-    // New properties for the employee photo frame
     public employeePhotoFrame: BABYLON.Mesh;
     private employeePhotoMaterial: BABYLON.StandardMaterial;
 
@@ -55,7 +54,6 @@ export class Environment {
             { x: 0, z: 0 }    // Center
         ];
 
-        // --- Create SpotLights with their own height ---
         const spotLightAngle = Math.PI / 1.5;
         const spotLightExponent = 2;
         const lightDirection = new BABYLON.Vector3(0, -1, 0);
@@ -73,7 +71,6 @@ export class Environment {
             this.ambientLights.push(spotLight);
         });
 
-        // --- Create PointLights with their own, lower height ---
         const pointLightRange = 15;
         positions.forEach((pos, i) => {
             const pointLight = new BABYLON.PointLight(

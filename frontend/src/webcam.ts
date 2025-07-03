@@ -1,11 +1,5 @@
 // src/webcam.ts
 
-/**
- * Initializes and starts the webcam feed, displaying it in the specified video element.
- * @param videoElementId The ID of the HTML <video> element to display the feed.
- * @param errorMessageElementId The ID of the HTML element to display error messages.
- * @returns A Promise that resolves with the MediaStream if successful, or null otherwise.
- */
 export async function startWebcamFeed(videoElementId?: string, errorMessageElementId?: string): Promise<MediaStream | null> {
     const videoElement = videoElementId ? document.getElementById(videoElementId) as HTMLVideoElement | null : null;
     const errorMessageElement = errorMessageElementId ? document.getElementById(errorMessageElementId) as HTMLElement | null : null;
@@ -32,7 +26,6 @@ export async function startWebcamFeed(videoElementId?: string, errorMessageEleme
             audio: false
         });
 
-        // Only try to use the videoElement if it was found
         if (videoElement) {
             videoElement.srcObject = stream;
             console.log(`Webcam stream started for video element: ${videoElementId}.`);
@@ -87,7 +80,6 @@ export function takePicture(stream: MediaStream): Promise<string> {
         video.playsInline = true;
 
         video.onloadedmetadata = () => {
-            // Wait for the video to have dimensions
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const context = canvas.getContext('2d');
@@ -95,13 +87,10 @@ export function takePicture(stream: MediaStream): Promise<string> {
                 return reject(new Error('Failed to get 2D context from canvas.'));
             }
 
-            // Draw the current video frame to the canvas
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Get the image as a data URL
             const dataUrl = canvas.toDataURL('image/png');
 
-            // Stop the video tracks to turn off the webcam light
             stream.getTracks().forEach(track => track.stop());
 
             resolve(dataUrl);

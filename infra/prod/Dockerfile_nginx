@@ -13,8 +13,6 @@ RUN npm install
 # Copy source code
 COPY frontend/src/ ./src/
 COPY frontend/index.html ./
-COPY frontend/pong_dev.html ./
-COPY frontend/solong_dev.html ./
 COPY frontend/public/ ./public/
 
 # Build the application with Vite (bypass TypeScript strict checking)

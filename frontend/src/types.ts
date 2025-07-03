@@ -22,7 +22,6 @@ export interface IInvader {
     collided: boolean;
 }
 
-// NEW: Describes a single, moving projectile
 export interface IProjectile {
     x: number;
     y: number;

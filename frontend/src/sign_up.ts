@@ -1,4 +1,4 @@
-import { DesktopWindow } from "./DesktopWindow.js"; // ✅ make sure it's imported
+import { DesktopWindow } from "./DesktopWindow.js";
 
 
 export async function checkSignedIn(): Promise<boolean> {
@@ -26,7 +26,6 @@ export function setupSignupForm(signupWindow: DesktopWindow) {
 
   (window as any).resetSignupForm = resetSignupForm;
 
-  // Reset on first load
   resetSignupForm();
 
 
@@ -49,9 +48,7 @@ export function setupSignupForm(signupWindow: DesktopWindow) {
 
       const result = await res.json();
       if (res.ok) {
-        // ✅ BACKEND HAS SET THE AUTH COOKIE
-        signupWindow.close(); // ✅ use DesktopWindow method
-        // 🔁 Ask main.ts to update the UI
+        signupWindow.close();
         window.dispatchEvent(new Event("auth:updated"));
       } else {
         alert("Signup failed: " + result.error);
@@ -65,7 +62,7 @@ export function setupSignupForm(signupWindow: DesktopWindow) {
   });
 
   closeSignupBtn?.addEventListener("click", () => {
-    signupWindow.close(); // ✅ use DesktopWindow method
+    signupWindow.close();
     resetSignupForm();
   });
 }

@@ -15,7 +15,7 @@ let onGameOverCallback: ((winnerAlias: string) => void) | null = null;
 
 let animationFrameId: number | null = null;
 let gameIsRunning = false;
-let isGameOver = false; // <<< FIX: Add game over flag
+let isGameOver = false;
 let flickerPhase = 0;
 const keyPress: Record<string, boolean> = {};
 
@@ -208,7 +208,7 @@ function update(dt: number): void {
 }
 
 function gameLoop(): void {
-    if (isGameOver) return; // <<< FIX: Don't loop if game is over
+    if (isGameOver) return;
     const dt = 1 / 60;
     update(dt);
     draw();
@@ -216,8 +216,8 @@ function gameLoop(): void {
 }
 
 function endGame(winnerAlias: string): void {
-  if (isGameOver) return; // <<< FIX: Prevent this function from running more than once
-  isGameOver = true; // <<< FIX: Set the flag
+  if (isGameOver) return;
+  isGameOver = true;
 
   stopPongGame();
   if (onGameOverCallback) {
@@ -240,7 +240,7 @@ export function startPongGame(p1Alias: string, p2Alias: string, onEndCallback: (
   leftScore = 0;
   rightScore = 0;
   gameIsRunning = false;
-  isGameOver = false; // <<< FIX: Reset the flag for the new game
+  isGameOver = false;
   
   initGameObjects();
   animationFrameId = requestAnimationFrame(gameLoop);

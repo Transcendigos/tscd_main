@@ -61,7 +61,6 @@ export default function(fastify, options, done) {
         }
 
         try {
-            // 1. Fetch friend details from the database
             const friendsFromDB = await new Promise((resolve, reject) => {
                 const sql = `
                     SELECT u.id, u.username, u.picture
@@ -75,11 +74,9 @@ export default function(fastify, options, done) {
                 });
             });
 
-            // 2. Fetch all online users from Redis
             const onlineUserPrefixedIds = await redisPublisher.smembers('online_users');
             const onlineUsersSet = new Set(onlineUserPrefixedIds);
 
-            // 3. Combine the data to include online status
             const friendsWithStatus = friendsFromDB.map(friend => ({
                 id: friend.id,
                 username: friend.username,

@@ -555,11 +555,9 @@ export class SoLongGame {
         const height = this.canvas.height;
         const centerX = width / 2;
 
-        // Semi-transparent black overlay
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         this.ctx.fillRect(0, 0, width, height);
 
-        // Main Title Text
         this.ctx.font = "60px 'Press Start 2P'";
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
@@ -567,13 +565,11 @@ export class SoLongGame {
         const titleText = this.gameState === 'WON' ? 'YOU WIN!' : 'GAME OVER';
         this.ctx.fillText(titleText, centerX, height / 2 - 100);
 
-        // Subtitle Text for Win State
         if (this.gameState === 'WON') {
             this.ctx.font = "40px 'Press Start 2P'";
             this.ctx.fillText(`Moves: ${this.winMoves}`, centerX, height / 2 - 20);
         }
 
-        // Buttons
         const buttonWidth = 280;
         const buttonHeight = 50;
         const playAgainY = height / 2 + 80;
@@ -588,21 +584,18 @@ export class SoLongGame {
         ];
 
         buttonsToDraw.forEach(button => {
-            // Hover Logic
             let isHovered = false;
             if (this.mousePosition) {
                 isHovered = this.mousePosition.x >= button.x && this.mousePosition.x <= button.x + button.width &&
                             this.mousePosition.y >= button.y && this.mousePosition.y <= button.y + button.height;
             }
 
-            // Button Drawing
             this.ctx.strokeStyle = '#d6ecff';
             this.ctx.fillStyle = isHovered ? 'rgba(214, 236, 255, 0.2)' : 'rgba(0, 0, 0, 0.5)';
             this.ctx.lineWidth = 2;
             this.ctx.fillRect(button.x, button.y, button.width, button.height);
             this.ctx.strokeRect(button.x, button.y, button.width, button.height);
 
-            // Button Text
             this.ctx.fillStyle = "#d6ecff";
             this.ctx.font = "16px 'Press Start 2P'";
             this.ctx.textAlign = "center";
