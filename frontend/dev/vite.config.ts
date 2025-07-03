@@ -7,7 +7,6 @@ export default defineConfig({
   plugins: [
     tailwindcssVite(),
   ],
-  // This 'define' block is the key part for production builds
   define: {
     'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(process.env.VITE_GOOGLE_CLIENT_ID)
   },

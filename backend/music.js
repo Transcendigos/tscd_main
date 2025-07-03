@@ -48,7 +48,6 @@ export default fp(async function spotifyRoute(server, opts) {
     const playlist = data.playlists?.items?.[0];
 
     if (!playlist) {
-      // fallback to a known good playlist
       return reply.send({
         name: "Happy Hits!",
         id: "37i9dQZF1DX3rxVfibe1L0",

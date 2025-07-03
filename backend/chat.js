@@ -45,8 +45,6 @@ if (!globalSubscriber) {
 
 server.decorate("broadcastPongGameState", (gameId, statePayload) => {
     if (statePayload.type === 'PONG_GAME_OVER' && statePayload.winnerId) {
-        
-        // This logic is now async to check the game type
         (async () => {
             try {
                 const db = getDB();
@@ -54,7 +52,6 @@ server.decorate("broadcastPongGameState", (gameId, statePayload) => {
                     db.get('SELECT id FROM tournament_matches WHERE game_id = ?', [gameId], (err, row) => err ? rej(err) : res(row))
                 );
                 
-                // Determine the mode based on whether it was found in tournament_matches
                 const gameMode = match ? 'Tournament' : '1v1 Remote';
 
                 await processGameCompletion(gameId, statePayload.winnerId, statePayload.finalScores, gameMode);
@@ -169,7 +166,6 @@ server.decorate("broadcastPongGameState", (gameId, statePayload) => {
         await redisPublisher.publish('chat:status', userOnlineNotification);
 
 
-        // --- FIX: Safer Reconnection Logic ---
         if (activeConnections.has(prefixedAuthenticatedUserId)) {
           const oldSocket = activeConnections.get(prefixedAuthenticatedUserId);
           if (oldSocket && oldSocket !== ws && oldSocket.readyState === 1) {
@@ -181,10 +177,9 @@ server.decorate("broadcastPongGameState", (gameId, statePayload) => {
         if (userSubscribers.has(rawAuthenticatedUserId)) {
             const oldSub = userSubscribers.get(rawAuthenticatedUserId);
             userSubscribers.delete(rawAuthenticatedUserId);
-            await oldSub.quit(); // Use await to ensure it's fully quit
+            await oldSub.quit();
             server.log.info({ userId: rawAuthenticatedUserId }, "Old Redis subscriber quit successfully.");
         }
-        // --- END FIX ---
 
         activeConnections.set(prefixedAuthenticatedUserId, ws);
         server.log.info(
@@ -507,13 +502,11 @@ ws.on("message", async (messageBuffer) => {
           `WebSocket client disconnected.`
         );
         if (ws.authenticatedUserId) {
-          // --- Handle Pong Game Disconnection ---
           if (ws.currentGameId && pongGameConnections.has(ws.currentGameId)) {
             const connections = pongGameConnections.get(ws.currentGameId);
             const gameInstance = pongActiveGames.get(ws.currentGameId);
             connections.delete(ws);
 
-            // If one player remains, they are the winner.
             if (connections.size === 1 && gameInstance) {
               const remainingPlayerWs = connections.values().next().value;
               const winnerId = remainingPlayerWs.authenticatedUserId;
@@ -524,13 +517,11 @@ ws.on("message", async (messageBuffer) => {
                 `Pong player disconnected. Declaring winner.`
               );
 
-              // Construct final scores from the game state before stopping it
               const scores = {
                 [winnerId]: gameInstance.players[winnerId]?.score || 0,
                 [disconnectedPlayerId]: gameInstance.players[disconnectedPlayerId]?.score || 0
               };
               
-              // Notify the winner
               if (remainingPlayerWs.readyState === 1) {
                 remainingPlayerWs.send(JSON.stringify({
                   type: 'PONG_GAME_OVER',
@@ -541,12 +532,10 @@ ws.on("message", async (messageBuffer) => {
                 }));
               }
               
-              // Clean up the game immediately
               pongGameConnections.delete(ws.currentGameId);
               stopGame(ws.currentGameId); //
 
             } else if (connections.size === 0) {
-              // This case handles if the last player disconnects
               pongGameConnections.delete(ws.currentGameId);
               server.log.info(
                 { gameId: ws.currentGameId },
@@ -556,7 +545,6 @@ ws.on("message", async (messageBuffer) => {
             }
           }
 
-          // --- Original disconnection logic for chat status and subscribers ---
           await redisPublisher.srem('online_users', ws.authenticatedUserId);
 
           const userOfflineNotification = JSON.stringify({
@@ -678,7 +666,6 @@ server.get("/api/chat/users", async (req, reply) => {
         });
         const whoHaveBlockedMeSet = new Set(whoHaveBlockedMeRows.map(r => r.blocker_id));
 
-        // *** NEW: Fetch my friends ***
         const friendsRows = await new Promise((resolve, reject) => {
             db.all('SELECT friend_id FROM friends WHERE user_id = ?', [currentUserRawId], (err, rows) => {
                 if (err) return reject(err);
@@ -686,7 +673,6 @@ server.get("/api/chat/users", async (req, reply) => {
             });
         });
         const friendsSet = new Set(friendsRows.map(r => r.friend_id));
-        // *** END NEW ***
 
         // Fetch all users except myself
         const allUsersFromDB = await new Promise((resolve, reject) => {
@@ -709,7 +695,7 @@ server.get("/api/chat/users", async (req, reply) => {
                 picture: user.picture,
                 isOnline: onlineUserPrefixedIds.includes(prefixedId) && !isInteractionBlocked,
                 isBlockedByMe: isBlockedByMe,
-                isFriend: friendsSet.has(user.id) // *** THE NEW FLAG ***
+                isFriend: friendsSet.has(user.id)
             };
         });
 

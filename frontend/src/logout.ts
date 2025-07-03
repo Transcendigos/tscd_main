@@ -5,7 +5,6 @@ export function setupLogoutForm(logoutWindow: DesktopWindow) {
 
   const logoutUsername = document.getElementById("logoutUsername") as HTMLDivElement;
 
-  // ✅ Patch .open() to auto-populate username every time
   const originalOpen = logoutWindow.open.bind(logoutWindow);
 
   logoutWindow.open = async () => {
@@ -24,10 +23,9 @@ export function setupLogoutForm(logoutWindow: DesktopWindow) {
       logoutUsername.textContent = "Unknown user";
     }
 
-    originalOpen(); // Always show window after attempt
+    originalOpen();
   };
   
-  // Handle logout
   const logoutBtn = document.getElementById("logoutBtn");
   logoutBtn?.addEventListener("click", async () => {
     await fetch("/api/logout", {
@@ -36,7 +34,7 @@ export function setupLogoutForm(logoutWindow: DesktopWindow) {
     });
     
     resetAIWindow();
-    logoutWindow.close(); // properly uses DesktopWindow method
+    logoutWindow.close();
 
     window.dispatchEvent(new Event("auth:updated"));
 

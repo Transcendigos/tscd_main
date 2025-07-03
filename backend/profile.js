@@ -259,7 +259,6 @@ export default fp(async function profileRoute(server, options) {
     });
 
 
-    // Upload profile picture (base64 or file path via multipart/form-data)
     server.post('/api/profile/upload-picture', async (req, reply) => {
         try {
             const token = req.cookies.auth_token;
@@ -277,11 +276,9 @@ export default fp(async function profileRoute(server, options) {
             const relativePath = `/uploads/${Date.now()}_${safeName}`;
             const fullPath = path.join('public', relativePath);
 
-            // Ensure directory exists
             const dir = path.dirname(fullPath);
             if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-            // Save file manually
             const fileBuffer = await data.toBuffer();
             fs.writeFileSync(fullPath, fileBuffer);
 
@@ -328,7 +325,6 @@ export default fp(async function profileRoute(server, options) {
         }
 
         try {
-            // Delete from related tables first if needed (e.g., stats, matches, etc.)
             await new Promise((resolve, reject) => {
                 db.run('DELETE FROM users WHERE id = ?', [user.userId], (err) =>
                     err ? reject(err) : resolve()

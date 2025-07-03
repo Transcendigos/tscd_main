@@ -11,7 +11,6 @@ export function authenticate(request, reply, done) {
         if (!payload.userId) {
              return reply.code(401).send({ error: 'Invalid token payload.' });
         }
-        // Attach user info to the request for other handlers to use
         request.user = { id: payload.userId, username: payload.username };
         done();
     } catch (err) {

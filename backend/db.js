@@ -26,7 +26,6 @@ export function initializeDB(logger) {
         if (logger) logger.info({ dbPath }, `Database opened successfully`);
     });
 
-    // Use serialize to ensure tables are created in order
     db.serialize(() => {
         // Create users table
         db.run(`
@@ -102,8 +101,6 @@ export function initializeDB(logger) {
                 if (logger) logger.info("blocked_users table checked/created successfully.");
             }
         });
-
-        // --- NEW TOURNAMENT TABLES ---
 
         // Create tournaments table
         db.run(`

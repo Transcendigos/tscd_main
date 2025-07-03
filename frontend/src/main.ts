@@ -24,7 +24,6 @@ import { setupDashboard, fetchData } from './dashboard.ts';
 
 
 
-// Window and State Declarations
 let signinWindow: DesktopWindow, signupWindow: DesktopWindow, logoutWindow: DesktopWindow,
     profileWindow: DesktopWindow, settingWindow: DesktopWindow, pongWindow: DesktopWindow,
     multiplayerPongWindow: DesktopWindow, chatWindow: DesktopWindow, statsWindow: DesktopWindow,
@@ -112,18 +111,16 @@ function handleMultiplayerPongClick() {
 }
 
 function handleLocalPongClick(player1: string, player2: string, onGameEndCallback: (winner: string) => void) {
-    stopAnyActiveGame(); // This should now also handle stopping the local pong
+    stopAnyActiveGame();
     localPongGameWindow.open();
     
-    // Update the window title for the current match
     const titleEl = document.getElementById('localPongWindowTitle');
     if (titleEl) titleEl.textContent = `${player1} vs ${player2}`;
     
     activePongMode = 'local_2d';
     
-    // Define the full callback that also closes the window
     const gameEndHandler = (winnerAlias: string) => {
-        onGameEndCallback(winnerAlias); // Call the original callback from tournament.ts
+        onGameEndCallback(winnerAlias);
         localPongGameWindow.close();
     };
     
@@ -133,7 +130,6 @@ function handleLocalPongClick(player1: string, player2: string, onGameEndCallbac
 }
 
 
-// --- Auth UI Management ---
 async function updateUIBasedOnAuth() {
   const isSignedIn = await checkSignedIn();
 
@@ -148,7 +144,6 @@ async function updateUIBasedOnAuth() {
     assignOpenTrigger(aiWindow, "aiBtn", () => commandWindow.open());
     assignOpenTrigger(musicWindow, "musicBtn");
 
-    // Re-enable game buttons and attach listeners
     const clickMeBtn = document.getElementById("clickMeBtn");
     if(clickMeBtn) {
         const newBtn = clickMeBtn.cloneNode(true);
@@ -197,10 +192,8 @@ async function updateUIBasedOnAuth() {
   }
 }
 
-// --- App Initialization ---
 window.addEventListener("DOMContentLoaded", async () => {
     
-    // Window Initializations
     try { new DesktopWindow({ windowId: "dragWindow", dragHandleId: "dragHandle", resizeHandleId: "menuResize", boundaryContainerId: "main", visibilityToggleId: "dragWindow", openTriggerId: "menuShortcut", closeButtonId: "closeMenuBtn" }); } catch (e) { console.error("Menu init failed:", e); }
     try { signinWindow = new DesktopWindow({ windowId: "signinWindow", dragHandleId: "signinDragHandle", resizeHandleId: "signinResizeHandle", boundaryContainerId: "main", visibilityToggleId: "signinWindow", closeButtonId: "closesigninBtn" }); setupSigninForm(signinWindow); } catch (e) { console.error("Signin init failed:", e); }
     try { signupWindow = new DesktopWindow({ windowId: "signupWindow", dragHandleId: "signupDragHandle", resizeHandleId: "signupResizeHandle", boundaryContainerId: "main", visibilityToggleId: "signupWindow", closeButtonId: "closeSignupBtn" }); setupSignupForm(signupWindow); } catch (e) { console.error("Signup init failed:", e); }
@@ -244,7 +237,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         boundaryContainerId: "main",
         visibilityToggleId: "localPongGameWindow",
         closeButtonId: "closeLocalPongBtn",
-        onCloseCallback: stopLocalPong // Ensure game stops when window is closed
+        onCloseCallback: stopLocalPong
     });
     const localPongCanvas = document.getElementById('localPongCanvas') as HTMLCanvasElement;
     setLocalPongCanvas(localPongCanvas);
@@ -253,13 +246,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     soloPongCanvas = document.getElementById("pongCanvas") as HTMLCanvasElement;
     multiPongCanvas = document.getElementById('multiplayerPongCanvas') as HTMLCanvasElement;
 
-    // Set initial UI state
     await updateUIBasedOnAuth();
     
-    // Listen for auth changes
     window.addEventListener("auth:updated", updateUIBasedOnAuth);
 
-    // --- Global Event Listeners ---
     window.addEventListener('pongGameStart', (event: Event) => {
         stopAnyActiveGame();
         const customEvent = event as CustomEvent;
@@ -302,7 +292,6 @@ window.addEventListener("DOMContentLoaded", async () => {
         else if (theme === 'green') { changeTheme('#2d4d26', '#4a803d');}
     });
 
-    // Final setups
     initGoogleSignIn();
     settingUserProfile();
     setupSettingForm(settingWindow);
@@ -332,21 +321,4 @@ window.addEventListener("DOMContentLoaded", async () => {
 // } catch (error) {
 //   console.error("Failed to initialize 'PREFIXWindow':", error);
 // }
-
-
-
-// WEBCAM FUNCTION TO BE TESTED LATER
-// const startTestWebcamButton = document.getElementById('startTestWebcamBtn'); // Assuming this ID exists
-//   if (startTestWebcamButton) {
-//       startTestWebcamButton.addEventListener('click', async () => {
-//           console.log("Start Test Webcam button clicked.");
-//           // Make sure the 'testWindow' is open and its video elements are in the DOM
-//           const stream = await startWebcamFeed('testWebcamVideo', 'testWebcamError');
-//           if (stream) {
-//               // You might want to associate this stream with the testWindow instance
-//               // so you can stop it when the testWindow is closed.
-//               // e.g., testWindowInstance.setActiveStream(stream);
-//           }
-//       });
-//     }
 

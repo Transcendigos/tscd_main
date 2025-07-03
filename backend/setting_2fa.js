@@ -22,26 +22,23 @@ export default fp(async function twoFASettingRoutes(server, options) {
       return reply.code(401).send({ error: 'Invalid token' });
     }
 
-    // Step 1: Generate secret
     const secret = speakeasy.generateSecret({
       name: `Transcendance (${user.email})`,
     });
 
-    // Step 2: Create QR code
     let qrCode;
     try {
       const otpAuthUrl = secret.otpauth_url;
       qrCode = await qrcode.toDataURL(otpAuthUrl);
     }
-    catch (err) { // Added err parameter
+    catch (err) {
       console.error("❌ Failed to generate QR code:", err);
       return reply.code(500).send({ error: "QR code generation failed" });
     }
 
-    // Step 3: Send secret and QR to frontend (temporary)
     reply.send({
       qrCodeUrl: qrCode,
-      base32: secret.base32, // used later to confirm user input
+      base32: secret.base32,
     });
 
   });
@@ -70,14 +67,13 @@ export default fp(async function twoFASettingRoutes(server, options) {
       secret,
       encoding: 'base32',
       token: userToken,
-      window: 1, // allow 30s drift
+      window: 1,
     });
 
     if (!verified) {
       return reply.code(400).send({ error: 'Invalid TOTP code' });
     }
 
-    // Save secret to DB
     await new Promise((resolve, reject) => {
       db.run(
         'UPDATE users SET totp_secret = ? WHERE id = ?',

@@ -90,10 +90,9 @@ const start = async () => {
     });
 
     await server.register(multipart, {
-      limits: { fileSize: 5 * 1024 * 1024 }, // optional limit
+      limits: { fileSize: 5 * 1024 * 1024 },
     });
 
-    // Optional: serve static files like profile pictures
     await server.register(fastifyStatic, {
       root: path.join(process.cwd(), 'public'),
       prefix: '/',

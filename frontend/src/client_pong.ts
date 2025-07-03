@@ -90,7 +90,6 @@ function removeKeyListeners() {
     }
 }
 
-// --- Connection & State Management ---
 
 export function handleUnexpectedDisconnection() {
     gameIsRunningClient = false;
@@ -128,8 +127,8 @@ function initializeClientVisualsDefault(): void {
 }
 
 function updatePaddleColors() {
-    const defaultColor = '#d6ecff'; // Default paddle color from styled version
-    const playerHighlightColor = '#39FF14'; // Green highlight for local player
+    const defaultColor = '#d6ecff';
+    const playerHighlightColor = '#39FF14';
 
     if (!leftPaddle || !rightPaddle) initializeClientVisualsDefault();
 
@@ -216,7 +215,6 @@ function drawPaddle_Styled(paddle: ClientPaddle): void {
   if (!paddle || !pongCtx) return;
   let pulse = Math.sin(Date.now() * 0.2) * 1 + 1.5; 
   pongCtx.shadowBlur = pulse;
-  // Use the color from the paddle object, which is set to green for the local player
   pongCtx.shadowColor = paddle.color === '#39FF14' ? paddle.color : "#0fffff";
   pongCtx.fillStyle = paddle.color;
   roundRect(pongCtx, paddle.x, paddle.y, paddle.width, paddle.height, 5);
@@ -227,7 +225,6 @@ function drawPaddle_Styled(paddle: ClientPaddle): void {
 function draw(): void {
   if (!pongCtx || !canvas) return;
   
-  // New styled background
   const bgGradient = pongCtx.createLinearGradient(0, 0, 0, canvas.height);
   bgGradient.addColorStop(0, "#1e293b");
   bgGradient.addColorStop(0.5, "#1b3f72");
@@ -292,7 +289,6 @@ function connectToServerPromise(): Promise<void> {
     newSocket.onopen = () => {
       socket = newSocket;
       console.log("CLIENT_PONG.TS: WebSocket Connection Opened!");
-      // The server will now authenticate via the cookie and send 'assign_side'
     };
 
     newSocket.onmessage = (event: MessageEvent) => {
@@ -304,12 +300,12 @@ function connectToServerPromise(): Promise<void> {
                 playerSide = message.side!;
                 updatePaddleColors();
                 waitingForGameMessage = `You are ${playerSide}. Waiting for opponent...`;
-                resolve(); // Connection is now considered successful and ready
+                resolve();
                 break;
             case 'game_start':
                 gameIsRunningClient = true;
                 waitingForGameMessage = null;
-                updatePaddleColors(); // Ensure colors are correct at game start
+                updatePaddleColors();
                 break;
             case 'game_update':
                 if (gameIsRunningClient) {
