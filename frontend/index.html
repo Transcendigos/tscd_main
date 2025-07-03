@@ -85,7 +85,7 @@
                absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
                transition-all duration-300 ease-in-out
                opacity-0 scale-95 invisible pointer-events-none"
-        style="min-width: 350px; min-height: 350px;">
+        style="min-width: 350px; min-height: 370px; max-width: 500px; max-height: 500px;">
 
         <div id="dragHandle"
           class="scanline-texture bg-slate-900/50 px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing">
@@ -1348,7 +1348,7 @@
         <!-- --------------TOURNAMENT WINDOW -------------- -->
          
 
-<div id="tournamentWindow" class="border-2 border-[#4cb4e7] w-[500px] text-[#4cb4e7] text-sm flex flex-col bg-slate-900/60 drop-shadow-xl/30 backdrop-blur-xs absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none" style="min-width: 550px;">
+<div id="tournamentWindow" class="overflow-auto border-2 border-[#4cb4e7] w-[500px] text-[#4cb4e7] text-sm flex flex-col bg-slate-900/60 drop-shadow-xl/30 backdrop-blur-xs absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none" style="min-width: 550px;">
     <div id="tournamentDragHandle" class="px-1.5 py-1 flex items-center justify-between border-b-2 border-[#4cb4e7] cursor-grab active:cursor-grabbing select-none">
         <span class="font-bold">Pong Tournaments</span>
         <button id="closeTournamentBtn" class="w-5 h-5 border border-[#4cb4e7] flex items-center justify-center font-bold hover:bg-[#f8aab6] hover:text-slate-900 transition-colors">X</button>
