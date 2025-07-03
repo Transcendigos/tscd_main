@@ -1,13 +1,31 @@
 const { ethers } = require("hardhat");
 
 async function main() {
+	// Accept match data as arguments
+	const [,, tournamentId, player1Id, player2Id, player1Score, player2Score, winnerId, playedAt] = process.argv;
 	const contractAddress = process.env.SCOREBOARD_ADDRESS;
 	const ScoreBoard = await ethers.getContractFactory("ScoreBoard");
 	const scoreBoard = ScoreBoard.attach(contractAddress);
 
-	const tx = await scoreBoard.postScore(1, 42); // for manual testing: tournamentId=1, score=42
-	await tx.wait();
-	console.log(`💰 Score posted, view on Snowtrace: https://testnet.snowtrace.io/tx/${tx.hash}`);
+	console.log(`Posting match result:`);
+	console.log({
+		tournamentId,
+		player1Id,
+		player2Id,
+		player1Score,
+		player2Score,
+		winnerId,
+		playedAt
+	});
+
+	// Post both player scores to the blockchain
+	const tx1 = await scoreBoard.postScore(Number(tournamentId), Number(player1Score));
+	await tx1.wait();
+	console.log(`💰 Player 1 score posted to blockchain. TX: https://testnet.snowtrace.io/tx/${tx1.hash}`);
+
+	const tx2 = await scoreBoard.postScore(Number(tournamentId), Number(player2Score));
+	await tx2.wait();
+	console.log(`💰 Player 2 score posted to blockchain. TX: https://testnet.snowtrace.io/tx/${tx2.hash}`);
 }
 
 main().catch((error) => {
