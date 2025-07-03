@@ -212,3 +212,10 @@
     @apply font-bold text-xs p-2 bg-slate-800/40 border-b border-slate-700;
 }
 
+.tech-card {
+    @apply p-2 bg-slate-800/40 border border-slate-700/80;
+}
+
+.dev-link {
+    @apply text-slate-400 hover:text-seLightBlue hover:scale-105 transition-colors;
+}
