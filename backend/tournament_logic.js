@@ -15,7 +15,6 @@ export async function processGameCompletion(gameId, winnerPrefixedId, finalScore
         return;
     }
     
-    // Get player IDs and scores from the keys and values of the finalScores object
     const [p1_prefixedId, p2_prefixedId] = Object.keys(finalScores);
     const p1_score = finalScores[p1_prefixedId];
     const p2_score = finalScores[p2_prefixedId];
@@ -54,7 +53,6 @@ export async function processGameCompletion(gameId, winnerPrefixedId, finalScore
             res(this.lastID);
         });
     }).then(async (lastInsertId) => {
-        // Fetch the inserted match_history row and send to blockchain
         if (lastInsertId) {
             const matchHistoryRow = await new Promise((res, rej) => db.get('SELECT * FROM match_history WHERE id = ?', [lastInsertId], (err, row) => err ? rej(err) : res(row)));
             if (matchHistoryRow) {
@@ -67,10 +65,8 @@ export async function processGameCompletion(gameId, winnerPrefixedId, finalScore
         console.log(`[Stats] Continuing with tournament logic for match ID: ${match.id}`);
         const tournamentId = match.tournament_id;
         await new Promise((res, rej) => db.run('UPDATE tournament_matches SET winner_id = ?, status = ? WHERE id = ?', [winner_id, 'finished', match.id], (err) => err ? rej(err) : res()));
-        // Fetch the updated match row to get all required fields
         const updatedMatch = await new Promise((res, rej) => db.get('SELECT * FROM tournament_matches WHERE id = ?', [match.id], (err, row) => err ? rej(err) : res(row)));
         if (updatedMatch && updatedMatch.status === 'finished') {
-            // Send to blockchain (assume sendMatchToBlockchain exists)
             sendMatchToBlockchain({
                 id: updatedMatch.id,
                 tournament_id: updatedMatch.tournament_id,
