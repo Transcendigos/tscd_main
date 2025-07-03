@@ -215,14 +215,14 @@ async function showUserProfile(user: User) {
             : '<tr><td colspan="4" class="text-center p-4 text-slate-400">No match history.</td></tr>';
 
         const profileWindowHtml = `
-        <div id="userProfileWindow_${user.id}" class="border-2 border-[#8be076] w-[450px] text-sm flex flex-col bg-slate-900/90 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none">
-          <div id="userProfileDragHandle_${user.id}" class="px-2 py-1 flex items-center justify-between border-b-2 border-[#8be076] cursor-grab active:cursor-grabbing select-none">
+        <div id="userProfileWindow_${user.id}" class="border-2 border-seLightBlue w-[450px] text-sm flex flex-col bg-slate-900/90 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none">
+          <div id="userProfileDragHandle_${user.id}" class="px-2 py-1 flex items-center justify-between border-b-2 border-seLightBlue cursor-grab active:cursor-grabbing select-none">
             <span class="font-bold text-white">${fullProfile.username}'s Profile</span>
-            <button id="closeUserProfileBtn_${user.id}" class="w-5 h-5 border border-[#8be076] flex items-center justify-center font-bold hover:bg-[#f8aab6] hover:text-slate-900 transition-colors">X</button>
+            <button id="closeUserProfileBtn_${user.id}" class="w-5 h-5 border border-seLightBlue flex items-center justify-center font-bold hover:bg-[#f8aab6] hover:text-slate-900 transition-colors">X</button>
           </div>
           <div class="flex-grow p-4 flex flex-col space-y-3 bg-slate-800/50 text-slate-300">
             <div class="flex items-center space-x-4">
-                <img src="${fullProfile.picture || '/favicon.jpg'}" onerror="this.onerror=null;this.src='/favicon.jpg';" class="w-20 h-20 rounded-full object-cover border-2 border-[#8be076]" referrerpolicy="no-referrer">
+                <img src="${fullProfile.picture || '/favicon.jpg'}" onerror="this.onerror=null;this.src='/favicon.jpg';" class="w-20 h-20 rounded-full object-cover border-2 border-seLightBlue" referrerpolicy="no-referrer">
                 <div class="space-y-1">
                     <p class="text-2xl font-bold text-white">${fullProfile.username}</p>
                     <p class="text-sm text-slate-400">${fullProfile.email || 'No public email'}</p>

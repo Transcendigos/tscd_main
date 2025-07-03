@@ -385,7 +385,7 @@ export class Pong3D {
         this.ctx.fillText("👾", this.soLongIcon.x + 40, this.soLongIcon.y + 40);
         this.ctx.font = '14px "Inter"';
         this.ctx.fillStyle = '#d6ecff';
-        this.ctx.fillText('ZIZI.ber', this.soLongIcon.x + this.soLongIcon.width / 2, this.soLongIcon.y + 70);
+        this.ctx.fillText('SoLong.ber', this.soLongIcon.x + this.soLongIcon.width / 2, this.soLongIcon.y + 70);
         this.ctx.restore();
         
     }
