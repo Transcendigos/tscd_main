@@ -183,9 +183,8 @@ async function showUserProfile(user: User) {
     const prefixedId = `user_${user.id}`;
 
     try {
-        // Fetch all data in parallel, just like in your populateUserProfile function
         const [profileRes, summaryRes, historyRes] = await Promise.all([
-            fetch(`http://localhost:3000/api/profile/${user.id}`, { credentials: 'include' }),
+            fetch(`/api/profile/${user.id}`, { credentials: 'include' }),
             fetch(`/api/stats/summary/${prefixedId}`),
             fetch(`/api/stats/match-history/${prefixedId}`)
         ]);
@@ -215,14 +214,14 @@ async function showUserProfile(user: User) {
             : '<tr><td colspan="4" class="text-center p-4 text-slate-400">No match history.</td></tr>';
 
         const profileWindowHtml = `
-        <div id="userProfileWindow_${user.id}" class="border-2 border-[#8be076] w-[450px] text-sm flex flex-col bg-slate-900/90 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none">
-          <div id="userProfileDragHandle_${user.id}" class="px-2 py-1 flex items-center justify-between border-b-2 border-[#8be076] cursor-grab active:cursor-grabbing select-none">
+        <div id="userProfileWindow_${user.id}" class="border-2 border-seLightBlue w-[450px] text-sm flex flex-col bg-slate-900/90 backdrop-blur-sm absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out opacity-0 scale-95 invisible pointer-events-none">
+          <div id="userProfileDragHandle_${user.id}" class="px-2 py-1 flex items-center justify-between border-b-2 border-seLightBlue cursor-grab active:cursor-grabbing select-none">
             <span class="font-bold text-white">${fullProfile.username}'s Profile</span>
-            <button id="closeUserProfileBtn_${user.id}" class="w-5 h-5 border border-[#8be076] flex items-center justify-center font-bold hover:bg-[#f8aab6] hover:text-slate-900 transition-colors">X</button>
+            <button id="closeUserProfileBtn_${user.id}" class="w-5 h-5 border border-seLightBlue flex items-center justify-center font-bold hover:bg-[#f8aab6] hover:text-slate-900 transition-colors">X</button>
           </div>
           <div class="flex-grow p-4 flex flex-col space-y-3 bg-slate-800/50 text-slate-300">
             <div class="flex items-center space-x-4">
-                <img src="${fullProfile.picture || '/favicon.jpg'}" onerror="this.onerror=null;this.src='/favicon.jpg';" class="w-20 h-20 rounded-full object-cover border-2 border-[#8be076]" referrerpolicy="no-referrer">
+                <img src="${fullProfile.picture || '/favicon.jpg'}" onerror="this.onerror=null;this.src='/favicon.jpg';" class="w-20 h-20 rounded-full object-cover border-2 border-seLightBlue" referrerpolicy="no-referrer">
                 <div class="space-y-1">
                     <p class="text-2xl font-bold text-white">${fullProfile.username}</p>
                     <p class="text-sm text-slate-400">${fullProfile.email || 'No public email'}</p>
@@ -289,7 +288,6 @@ export function sendPongPlayerReady(gameId: string) {
   }
 }
 
-// MODIFIED LOGIC: Simplified pong invitation function
 async function handleInvitePlayerToPong(opponent: User) {
   if (!opponent || typeof opponent.id === 'undefined') {
     console.error("[Frontend] Invalid opponent data for Pong invite:", opponent);
@@ -309,7 +307,6 @@ async function handleInvitePlayerToPong(opponent: User) {
 
     if (response.ok) {
       console.log(`[Frontend] Invitation sent to ${opponent.username}.`);
-      // No longer need to do anything else here, the backend handles the invite
     } else {
       console.error("[Frontend] Failed to send invitation. API error. Status:", response.status, "Response Data:", responseData);
       alert(`Failed to send invitation: ${responseData.error || 'Unknown error'}`);
@@ -327,7 +324,7 @@ function connectWebSocket() {
     return;
   }
   console.log("Chat: Attempting to establish WebSocket connection...");
-  socket = new WebSocket("ws://localhost:3000/ws/chat");
+  socket = new WebSocket("/ws/chat");
 
   socket.onopen = () => {
     console.log("Chat: WebSocket Connection Opened! Waiting for server to authenticate via cookie.");
@@ -423,7 +420,6 @@ function connectWebSocket() {
         displayPublicMessage(message);
       } else if (message.type === 'message_sent_ack') {
         console.log("Chat: Message acknowledged by server", message);
-      // MODIFIED LOGIC: Handle game invitation without a gameId
       } else if (message.type === 'PONG_GAME_INVITE') {
         const { inviterUsername, inviterId } = message;
         if (inviterUsername && inviterId) {
@@ -472,7 +468,6 @@ function connectWebSocket() {
         const gameStartEvent = new CustomEvent("pongGameStart", { detail: { gameId, initialState, yourPlayerId, opponentId, opponentUsername } });
         window.dispatchEvent(gameStartEvent);
       } else if (message.type === 'PONG_GAME_STATE_UPDATE') {
-        // console.log('[CLIENT CHAT] Received PONG_GAME_STATE_UPDATE:', JSON.parse(JSON.stringify(message)));
         const gameUpdateEvent = new CustomEvent("pongGameStateUpdate", { detail: message });
         window.dispatchEvent(gameUpdateEvent);
       } else if (message.type === 'PONG_GAME_OVER') {
@@ -493,7 +488,6 @@ function connectWebSocket() {
         }
       } else if (message.type === 'TOURNAMENT_LOBBY_UPDATE') {
         console.log("Received TOURNAMENT_LOBBY_UPDATE, refreshing lobby...");
-        // Check if the tournament window is currently visible before refreshing
         const tournamentWindow = document.getElementById('tournamentWindow');
         if (tournamentWindow && !tournamentWindow.classList.contains('invisible')) {
             fetchAndDisplayTournaments();
@@ -503,7 +497,6 @@ function connectWebSocket() {
         const tournamentId = message.tournamentId;
         if (tournamentId) {
             console.log(`[ChatClient] Announcing tournament start for ID: ${tournamentId}`);
-            // Fire a global event that main.ts can listen for
             const event = new CustomEvent('tournament:start', { detail: { tournamentId } });
             window.dispatchEvent(event);
         }
@@ -555,8 +548,7 @@ async function handleFriendToggle(event: Event) {
 
     if (!friendId) return;
 
-    button.disabled = true; // Prevent double-clicks
-
+    button.disabled = true;
     const endpoint = isCurrentlyFriend ? '/api/friends/remove' : '/api/friends/add';
     try {
         const response = await fetch(endpoint, {
@@ -567,7 +559,7 @@ async function handleFriendToggle(event: Event) {
         });
 
         if (response.ok) {
-            await loadUserList(); // On success, refresh the entire user list
+            await loadUserList();
         } else {
             const result = await response.json();
             alert(`Error: ${result.message || 'Could not update friend status.'}`);
@@ -623,12 +615,11 @@ async function loadUserList() {
         if (!usersResponse.ok) throw new Error(`Status: ${usersResponse.status}`);
         const usersFromServer: ApiUser[] = await usersResponse.json();
 
-        chatUserListEl.innerHTML = ""; // Clear the list before redrawing
+        chatUserListEl.innerHTML = "";
 
         const friends = usersFromServer.filter(u => u.isFriend);
         const others = usersFromServer.filter(u => !u.isFriend);
 
-        // Sort both lists (e.g., online first, then alphabetically)
         const sortUsers = (a: ApiUser, b: ApiUser) => {
             if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
             return a.username.localeCompare(b.username);
@@ -651,7 +642,7 @@ async function loadUserList() {
             const friendStar = document.createElement('button');
             friendStar.title = user.isFriend ? `Remove ${user.username} from friends` : `Add ${user.username} to friends`;
             friendStar.className = `friend-toggle-btn text-lg ${user.isFriend ? 'text-yellow-400' : 'text-slate-600 hover:text-yellow-400'}`;
-            friendStar.innerHTML = user.isFriend ? '&#9733;' : '&#9734;'; // Filled vs. Empty Star
+            friendStar.innerHTML = user.isFriend ? '&#9733;' : '&#9734;';
             friendStar.dataset.userId = numericUserId.toString();
             friendStar.dataset.isFriend = user.isFriend.toString();
             li.appendChild(friendStar);
@@ -683,7 +674,7 @@ async function loadUserList() {
             blockButton.className = 'block-toggle-btn text-lg ml-auto p-1';
 
             if (user.isBlockedByMe) {
-                blockButton.innerHTML = '&#128721;'; // The "no entry" sign 🚫
+                blockButton.innerHTML = '&#128721;';
                 blockButton.classList.add('text-red-500');
             } else {
                 blockButton.innerHTML = '&#128721;';
@@ -697,7 +688,6 @@ async function loadUserList() {
             return li;
         };
 
-        // Render Friends List (if any)
         if (friends.length > 0) {
             const header = document.createElement('h3');
             header.className = 'text-sm font-bold text-yellow-300 p-2 bg-slate-800/50 sticky top-0 z-10';
@@ -706,7 +696,6 @@ async function loadUserList() {
             friends.forEach(user => chatUserListEl.appendChild(createListItem(user)));
         }
 
-        // Render Others List (if any)
         if (others.length > 0) {
             const header = document.createElement('h3');
             header.className = 'text-sm font-bold text-slate-300 p-2 bg-slate-800/50 sticky top-0 z-10';
@@ -785,7 +774,6 @@ function createPrivateChatWindowHtml(peerUser: User): string {
 }
 
 async function launchPrivateChatWindow(peerUser: User) {
-  // If a chat window for this user is already open, just focus it.
   if (activePrivateChats.has(peerUser.id)) {
     const existingChat = activePrivateChats.get(peerUser.id);
     if (existingChat) {
@@ -797,7 +785,6 @@ async function launchPrivateChatWindow(peerUser: User) {
     return;
   }
 
-  // Create the window's HTML and add it to the page
   const windowHtml = createPrivateChatWindowHtml(peerUser);
   const mainElement = document.getElementById("main");
   if (!mainElement) {
@@ -806,7 +793,6 @@ async function launchPrivateChatWindow(peerUser: User) {
   }
   mainElement.insertAdjacentHTML("beforeend", windowHtml);
 
-  // Use requestAnimationFrame to ensure the element is in the DOM before we manipulate it
   requestAnimationFrame(async () => {
     const windowId = `privateChatWindow_${peerUser.id}`;
     const newWindowElement = document.getElementById(windowId);
@@ -816,7 +802,6 @@ async function launchPrivateChatWindow(peerUser: User) {
     }
 
     try {
-      // Initialize the DesktopWindow instance for dragging, resizing, and closing
       const newWindowInstance = new DesktopWindow({
         windowId: windowId,
         dragHandleId: `privateChatDragHandle_${peerUser.id}`,
@@ -824,9 +809,8 @@ async function launchPrivateChatWindow(peerUser: User) {
         closeButtonId: `closePrivateChatBtn_${peerUser.id}`,
         boundaryContainerId: "main",
         visibilityToggleId: windowId,
-        initialShow: false, // Don't show it immediately, we'll open it after setup
+        initialShow: false,
         onCloseCallback: () => {
-          // Cleanup when the window is closed
           const chatInfo = activePrivateChats.get(peerUser.id);
           if (chatInfo && chatInfo.windowInstance.element) {
             chatInfo.windowInstance.element.remove();
@@ -835,14 +819,12 @@ async function launchPrivateChatWindow(peerUser: User) {
         },
       });
 
-      // Get all the interactive elements from the new window
       const messagesArea = document.getElementById(`privateMessagesArea_${peerUser.id}`) as HTMLElement;
       const inputField = document.getElementById(`privateMessageInput_${peerUser.id}`) as HTMLInputElement;
       const sendButton = document.getElementById(`privateSendBtn_${peerUser.id}`) as HTMLButtonElement;
       const invitePongButton = document.getElementById(`invitePongBtn_${peerUser.id}`) as HTMLButtonElement;
       const viewProfileButton = document.getElementById(`viewProfileBtn_${peerUser.id}`) as HTMLButtonElement;
 
-      // --- Drawing Canvas Elements & Logic ---
       const toggleDrawBtn = document.getElementById(`toggleDrawBtn_${peerUser.id}`) as HTMLButtonElement;
       const drawingContainer = document.getElementById(`drawingContainer_${peerUser.id}`) as HTMLDivElement;
       const canvas = document.getElementById(`drawingCanvas_${peerUser.id}`) as HTMLCanvasElement;
@@ -858,7 +840,6 @@ async function launchPrivateChatWindow(peerUser: User) {
         return;
       }
 
-      // Drawing state variables
       let currentColor = 'black';
       let currentSize = 1;
       let isErasing = false;
@@ -924,16 +905,13 @@ async function launchPrivateChatWindow(peerUser: User) {
           drawingContainer.classList.add('hidden');
         }
       });
-      // --- End of Drawing Logic ---
 
-      // Final check and setup for main chat functionality
       if (!messagesArea || !inputField || !sendButton || !invitePongButton || !viewProfileButton) {
         throw new Error(`Could not find all interactive chat sub-elements for ${peerUser.username}.`);
       }
 
       activePrivateChats.set(peerUser.id, { peer: peerUser, windowInstance: newWindowInstance, messagesArea, inputField, sendButton });
 
-      // Attach main event listeners
       sendButton.addEventListener("click", () => { sendMessageToPeer(peerUser, inputField.value); inputField.value = ""; inputField.focus(); });
       inputField.addEventListener("keypress", (e) => { if (e.key === "Enter" && !sendButton.disabled) { sendMessageToPeer(peerUser, inputField.value); inputField.value = ""; }});
       invitePongButton.addEventListener('click', () => handleInvitePlayerToPong(peerUser));
@@ -946,7 +924,7 @@ async function launchPrivateChatWindow(peerUser: User) {
 
     } catch (error) {
       console.error(`Error initializing DesktopWindow or chat for ${peerUser.username}:`, error);
-      newWindowElement.remove(); // Clean up the failed window
+      newWindowElement.remove();
     }
   });
 }
@@ -1068,7 +1046,6 @@ function displayPublicMessage(msg: ChatMessage) {
 }
 
 
-// NEW LOGIC: Updated invitation display and handling
 function displayInviteInChat(
     messagesArea: HTMLElement,
     inviterUsername: string,

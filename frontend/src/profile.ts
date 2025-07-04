@@ -31,7 +31,7 @@ export async function settingUserSetting() {
         const currentUsername = document.getElementById('currentUsername');
         const currentEmail = document.getElementById('currentEmail');
 
-        const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
+        const res = await fetch('/api/profile', { credentials: 'include' });
         if (!res.ok) {
             console.error('Failed to fetch profile');
             return;
@@ -43,18 +43,15 @@ export async function settingUserSetting() {
             return;
         }
         
-        // --- CORRECTED LOGIC ---
         const fallbackImage = '/favicon.jpg';
         const newImageSrc = profile.picture || fallbackImage;
 
-        // Set the src only if it's different from the current one to avoid re-fetching
         if (profileImage.src !== newImageSrc) {
             profileImage.src = newImageSrc;
         }
         
         profileImage.alt = `${profile.username}'s profile picture`;
         profileImage.onerror = () => {
-            // If the new source fails, set to fallback, but prevent an infinite loop
             if (!profileImage.src.endsWith(fallbackImage)) {
                 profileImage.src = fallbackImage;
             }
@@ -63,8 +60,6 @@ export async function settingUserSetting() {
         currentUsername.textContent = profile.username;
         currentEmail.textContent = profile.email;
         
-        // (The rest of the function for TOTP and disabling fields remains the same)
-        // Refresh TOTP state and UI
         console.log("Refreshing TOTP state");
         const qrContainer = document.getElementById('qrContainer') as HTMLDivElement;
         const totp2faCheckbox = document.getElementById('totp2faCheckbox') as HTMLInputElement;
@@ -72,7 +67,7 @@ export async function settingUserSetting() {
 
         qrContainer.classList.add('hidden');
 
-        const resMe = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+        const resMe = await fetch("/api/me", { credentials: "include" });
         const data = await resMe.json();
 
         if (data.signedIn && data.user) {
@@ -85,7 +80,6 @@ export async function settingUserSetting() {
         const passwordSetting = document.getElementById("passwordsetting");
 
         if (data.user && data.user.method_sign === "google") {
-            // 🔒 Disable fields for Google users
             totp2faCheckbox.disabled = true;
             totp2faCheckbox.title = "Google sign-in users cannot enable 2FA here.";
             totp2faoption?.classList.add("opacity-50", "cursor-not-allowed", "select-none");
@@ -107,7 +101,6 @@ export async function settingUserSetting() {
             passwordSetting?.removeAttribute("title");
 
         } else {
-            // ✅ Enable fields for local users
             totp2faCheckbox.disabled = false;
             totp2faCheckbox.title = "";
             totp2faoption?.classList.remove("opacity-50", "cursor-not-allowed", "select-none");
@@ -138,7 +131,7 @@ export async function settingUserSetting() {
 
 export async function settingUserProfile() {
     try {
-        const res = await fetch('http://localhost:3000/api/profile', { credentials: 'include' });
+        const res = await fetch('/api/profile', { credentials: 'include' });
         if (!res.ok) {
             console.error('Failed to fetch profile');
             return;
@@ -184,12 +177,11 @@ export async function populateUserProfile() {
     const prefixedId = `user_${myUserId}`;
 
     try {
-        // Fetch all necessary data in parallel for maximum speed
         const [profileRes, summaryRes, historyRes, friendsRes] = await Promise.all([
-            fetch('http://localhost:3000/api/profile', { credentials: 'include' }),
+            fetch('/api/profile', { credentials: 'include' }),
             fetch(`/api/stats/summary/${prefixedId}`),
             fetch(`/api/stats/match-history/${prefixedId}`),
-            fetch(`/api/friends/${prefixedId}`, { credentials: 'include' }) // Fetch friends
+            fetch(`/api/friends/${prefixedId}`, { credentials: 'include' })
         ]);
 
         if (!profileRes.ok || !summaryRes.ok || !historyRes.ok || !friendsRes.ok) {
@@ -200,17 +192,14 @@ export async function populateUserProfile() {
         const summary = await summaryRes.json();
         const history = await historyRes.json();
         const friends = await friendsRes.json();
-        // --- Populate Header ---
         (document.getElementById('profileImage') as HTMLImageElement).src = profile.picture || '/favicon.jpg';
         document.getElementById('profileUsername')!.textContent = profile.username;
         document.getElementById('profileEmail')!.textContent = profile.email;
 
-        // --- Populate Stats Bar ---
         document.getElementById('profileWins')!.textContent = summary.wins;
         document.getElementById('profileLosses')!.textContent = summary.losses;
         document.getElementById('profileWinRatio')!.textContent = summary.winRatio;
 
-        // --- Populate Friends List ---
         const friendsListEl = document.getElementById('profileFriendsList')!;
         friendsListEl.innerHTML = '';
         if (friends.length > 0) {
@@ -234,10 +223,9 @@ export async function populateUserProfile() {
         }
 
 
-        // --- Populate Match History ---
         const historyBody = document.getElementById('profileMatchHistory');
         if (historyBody) {
-            historyBody.innerHTML = ''; // Clear previous history
+            historyBody.innerHTML = '';
             if (history.length === 0) {
                 historyBody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-slate-400">No match history found.</td></tr>`;
             } else {

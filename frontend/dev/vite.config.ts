@@ -1,4 +1,5 @@
-// my-vite-tailwind-ts-project/vite.config.ts
+// frontend/dev/vite.config.ts
+
 import { defineConfig } from 'vite';
 import tailwindcssVite from '@tailwindcss/vite';
 
@@ -6,6 +7,9 @@ export default defineConfig({
   plugins: [
     tailwindcssVite(),
   ],
+  define: {
+    'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(process.env.VITE_GOOGLE_CLIENT_ID)
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,
@@ -13,9 +17,11 @@ export default defineConfig({
       '/api': {
         target: 'http://backend:3000',
         changeOrigin: true,
+      },
+      '/ws': {
+          target: 'ws://backend:3000',
+          ws: true,
       }
     }
   },
 });
-
-console.log("ENV DEBUG:", process.env.VITE_GOOGLE_CLIENT_ID);

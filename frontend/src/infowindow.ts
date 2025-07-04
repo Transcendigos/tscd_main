@@ -1,9 +1,7 @@
 import { DesktopWindow } from "./DesktopWindow.js";
 
 
-//WEATHER FUNCTION
 
-// Air Quality interpretation
 function aqiMeaning(aqi: number): string {
   switch (aqi) {
     case 1: return "Good";
@@ -15,34 +13,27 @@ function aqiMeaning(aqi: number): string {
   }
 }
 
-// Render data into the weather window
 async function renderWeatherData() {
   try {
-    const response = await fetch("http://localhost:3000/api/weather/paris");
+    const response = await fetch("/api/weather/paris");
     const data = await response.json();
 
-    // --- Compartment 1: Main Display ---
     document.getElementById("weatherCity")!.textContent = "PARIS, FR";
     (document.getElementById("weatherIcon") as HTMLImageElement).src = data.current.icon;
     document.getElementById("weatherTemp")!.textContent = `${data.current.temp.toFixed(1)}°C`;
     document.getElementById("weatherDescription")!.textContent = data.current.description;
 
-    // --- Compartment 2: Detailed Stats ---
     document.getElementById("weatherFeels_Like")!.textContent = `${data.current.feels_like.toFixed(1)}°C`;
     document.getElementById("humidity")!.textContent = `${data.current.humidity}%`;
     document.getElementById("wind")!.textContent = `${data.current.wind.toFixed(1)} km/h`;
     document.getElementById("weatherAQI")!.textContent = aqiMeaning(data.air);
 
-    // --- Compartment 3: Forecast Rendering ---
     const weatherForecast = document.getElementById("weatherForecast")!;
-    weatherForecast.innerHTML = ""; // Clear previous forecast
+    weatherForecast.innerHTML = "";
 
     weatherForecast.innerHTML = data.forecast.map(f => {
       const date = new Date(f.time);
-      // Get the short day name (e.g., "TUE")
       const day = date.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
-
-      // This creates the individual card for each forecast day
       return `
         <div class="forecast-day-card">
           <span class="font-bold">${day}</span>
@@ -59,7 +50,6 @@ async function renderWeatherData() {
   }
 }
 
-///MAIN SECTION
 
 export function setupInfoWindow(weatherWindow: DesktopWindow, grafanaWindow: DesktopWindow, commandWindow: DesktopWindow, aboutWindow: DesktopWindow) {
 

@@ -1,6 +1,5 @@
 // frontend/src/tournamentLocal.ts
 
-// --- Interfaces for our Local Tournament State ---
 interface LocalParticipant {
     alias: string;
 }
@@ -21,19 +20,14 @@ interface LocalTournament {
     winner: LocalParticipant | null;
 }
 
-// --- The State Manager ---
 let currentTournament: LocalTournament | null = null;
 
-// --- Helper function to find the next match ---
 export function getNextMatch(): LocalMatch | undefined {
     if (!currentTournament) return undefined;
     return currentTournament.matches.find(m => m.status === 'pending' && m.player1 && m.player2);
 }
 
-/**
- * Records the winner of the current match and advances the tournament.
- * @param winnerAlias - The alias of the winning player.
- */
+
 export function recordMatchWinner(winnerAlias: string): void {
     if (!currentTournament) return;
 
@@ -49,12 +43,9 @@ export function recordMatchWinner(winnerAlias: string): void {
         matchInProgress.status = 'finished';
     } else {
         console.error(`Winner alias "${winnerAlias}" not found in participants.`);
-        // Even if the winner alias is somehow invalid, we finish the match to avoid getting stuck
         matchInProgress.status = 'finished';
-        // You might want to decide on a different fallback here
     }
 
-    // Check if the round is over
     const currentRound = matchInProgress.round;
     const allMatchesInRound = currentTournament.matches.filter(m => m.round === currentRound);
     const isRoundFinished = allMatchesInRound.every(m => m.status === 'finished');
@@ -62,27 +53,21 @@ export function recordMatchWinner(winnerAlias: string): void {
     if (isRoundFinished) {
         const winnersOfRound = allMatchesInRound.map(m => m.winner).filter(w => w !== null);
         if (winnersOfRound.length === 1) {
-            // We have a tournament winner!
             currentTournament.winner = winnersOfRound[0];
             currentTournament.status = 'finished';
         } else if (winnersOfRound.length > 1) {
-            // Proceed to the next round
             createMatchesForRound(currentRound + 1);
         }
     }
 }
 
-/**
- * Creates and initializes a new local tournament.
- * @param aliases - An array of player alias strings.
- */
+
 export function createLocalTournament(aliases: string[]): void {
-    const participantCount = Math.pow(2, Math.ceil(Math.log2(aliases.length))); // Round up to the nearest power of 2
+    const participantCount = Math.pow(2, Math.ceil(Math.log2(aliases.length)));
     const shuffledAliases = [...aliases].sort(() => Math.random() - 0.5);
     
     const participants: LocalParticipant[] = [];
     for(let i=0; i < participantCount; i++) {
-        // If we have an alias, add the participant. Otherwise, add a bye.
         participants.push({ alias: shuffledAliases[i] || 'BYE' });
     }
 
@@ -96,10 +81,6 @@ export function createLocalTournament(aliases: string[]): void {
     createMatchesForRound(1);
 }
 
-/**
- * Generates the matches for a specific round.
- * @param roundNumber - The round to generate matches for.
- */
 function createMatchesForRound(roundNumber: number): void {
     if (!currentTournament) return;
 
@@ -112,7 +93,7 @@ function createMatchesForRound(roundNumber: number): void {
         playersForThisRound = currentTournament.matches
             .filter(m => m.round === prevRound && m.status === 'finished')
             .map(m => m.winner)
-            .sort((a,b) => (a?.alias || '').localeCompare(b?.alias || '')); // Consistent ordering
+            .sort((a,b) => (a?.alias || '').localeCompare(b?.alias || ''));
     }
 
     const numMatches = playersForThisRound.length / 2;
@@ -129,7 +110,6 @@ function createMatchesForRound(roundNumber: number): void {
             status: 'pending',
         };
 
-        // If a player has a bye, they automatically win the match
         if (player1 && (!player2 || player2.alias === 'BYE')) {
             match.winner = player1;
             match.status = 'finished';
@@ -143,10 +123,6 @@ function createMatchesForRound(roundNumber: number): void {
 }
 
 
-/**
- * Renders the local tournament bracket.
- * @param container - The HTML element to render the bracket in.
- */
 export function renderLocalBracket(container: HTMLElement): void {
     if (!currentTournament) {
         container.innerHTML = '<p class="text-red-400">No active local tournament.</p>';

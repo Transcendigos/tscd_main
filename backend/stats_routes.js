@@ -6,15 +6,13 @@ import jwt from "jsonwebtoken";
 export default async function statsRoutes(server, options) {
     const db = getDB();
 
-    // This helper function gets the user's ID from the URL parameter.
     function getTargetUserId(req) {
         if (req.params.userId) {
             return parseInt(req.params.userId.replace('user_', ''), 10);
         }
-        return null; // Return null if no ID is provided
+        return null;
     }
 
-    // Endpoint to get a user's statistics summary
     server.get("/api/stats/summary/:userId?", async (req, reply) => {
         const targetUserId = getTargetUserId(req);
         if (!targetUserId || isNaN(targetUserId)) {
@@ -22,7 +20,6 @@ export default async function statsRoutes(server, options) {
         }
 
         try {
-            // More reliable way to get wins and losses in one go
             const matches = await new Promise((res, rej) => {
                 db.all('SELECT winner_id, player1_id, player2_id FROM match_history WHERE player1_id = ? OR player2_id = ?', [targetUserId, targetUserId], (err, rows) => err ? rej(err) : res(rows));
             });
@@ -58,7 +55,6 @@ export default async function statsRoutes(server, options) {
         }
     });
 
-    // Endpoint to get a user's match history
     server.get("/api/stats/match-history/:userId?", async (req, reply) => {
         const targetUserId = getTargetUserId(req);
         if (!targetUserId || isNaN(targetUserId)) {

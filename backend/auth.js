@@ -2,7 +2,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
-import { getDB } from './db.js'; // Assuming db.js is in the same directory
+import { getDB } from './db.js';
 import fp from 'fastify-plugin';
 import { setAuthCookie } from './utils.js';
 
@@ -217,7 +217,6 @@ export default fp(async function authRoutes(server, options) {
         });
       }
 
-      // No 2FA → issue token
       const tokenPayload = {
         userId: user.id,
         username: user.username,
@@ -249,7 +248,7 @@ export default fp(async function authRoutes(server, options) {
     let payload;
     try {
       payload = jwt.verify(token, server.jwt_secret);
-      if (!payload.userId) { // Simplified check
+      if (!payload.userId) {
         server.log.warn({ payload }, 'JWT payload missing userId for /api/me');
         reply.clearCookie('auth_token', { path: '/' });
         return reply.send({ signedIn: false, error: 'Invalid session data.' });
@@ -274,7 +273,7 @@ export default fp(async function authRoutes(server, options) {
 
     if (!userRow) {
       server.log.warn({ userId: payload.userId }, 'User from valid token not found in DB.');
-      reply.clearCookie('auth_token', { path: '/' }); // Clear the bad cookie
+      reply.clearCookie('auth_token', { path: '/' });
       return reply.send({ signedIn: false, error: 'User not found.' });
     }
 

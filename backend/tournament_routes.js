@@ -4,7 +4,6 @@ import { getDB } from "./db.js";
 import jwt from "jsonwebtoken";
 import { getRedisPublisher } from "./redis.js";
 
-// Helper function to shuffle an array
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -17,7 +16,6 @@ export default async function tournamentRoutes(server, options) {
     const db = getDB();
     const redisPublisher = getRedisPublisher();
 
-    // Endpoint to Create a new tournament
     server.post("/api/tournaments", async (req, reply) => {
         const token = req.cookies.auth_token;
         if (!token) {
@@ -62,7 +60,6 @@ export default async function tournamentRoutes(server, options) {
         }
     });
 
-    // Endpoint to List all waiting and in-progress tournaments
     server.get("/api/tournaments", async (req, reply) => {
         const token = req.cookies.auth_token;
         let currentUserId = null;
@@ -101,7 +98,6 @@ export default async function tournamentRoutes(server, options) {
         }
     });
     
-    // Endpoint for a user to join a tournament
     server.post("/api/tournaments/:id/join", async (req, reply) => {
         const token = req.cookies.auth_token;
         if (!token) { return reply.code(401).send({ error: "Authentication required." }); }
@@ -180,7 +176,6 @@ export default async function tournamentRoutes(server, options) {
         }
     });
 
-    // Endpoint to get the details & bracket for a specific tournament
     server.get("/api/tournaments/:id", async (req, reply) => {
         const tournamentId = parseInt(req.params.id, 10);
         if (isNaN(tournamentId)) {

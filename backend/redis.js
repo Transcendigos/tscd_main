@@ -49,7 +49,6 @@ export function getRedisSubscriber() {
     return subscriber;
 }
 
-// Function to create new subscriber instances for individual WebSocket connections
 export function createNewRedisSubscriber(logger) {
     const newSub = new Redis(process.env.REDIS_URL || 'redis://redis_chat:6379', {
         maxRetriesPerRequest: 3

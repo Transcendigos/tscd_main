@@ -5,7 +5,7 @@ const CITY = "Paris";
 
 let cache = null;
 let lastFetchTime = 0;
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const CACHE_DURATION = 10 * 60 * 1000;
 
 export default fp(async function weatherRoutes(server, options) {
 
@@ -42,7 +42,6 @@ export default fp(async function weatherRoutes(server, options) {
         fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`).then(res => res.json()),
       ]);
 
-      // Select one forecast per day (preferably at 12:00 PM)
       const dailyForecast = [];
       const seenDays = new Set();
       for (const entry of forecast.list) {

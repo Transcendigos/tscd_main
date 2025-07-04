@@ -1,9 +1,9 @@
-# Ignore backend environment variables
+# Ignore environment variables
 /backend/.env
 /backend/blockchain/.env
 
-# Ignore frontend environment variables
 /frontend/dev/.env
+/infra/prod/.env
 
 # Node.js dependencies
 node_modules/

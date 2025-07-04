@@ -11,9 +11,8 @@ const MAX_PADDLE_SPEED_PER_SECOND = 500;
 const MAX_BALL_SPEED = 500;
 
 const activeGames = new Map();
-const playerCurrentGame = new Map(); //->map of players currently in game Map<playerId, gameId>
+const playerCurrentGame = new Map();
 
-// NEW: Add the generateGameId function here
 export function generateGameId() {
   return `game_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 }
@@ -73,7 +72,6 @@ function createNewGameState(gameId, player1Id, player2Id, options = {}) {
     player1Id: player1Id,
     player2Id: player2Id
   };
-  // *** SAFEST LOG: Log initial scores and ball start ***
   console.log(`[pong_server.js - ${initialState.gameId}] CREATED: P1 Score: ${initialState.players[player1Id].score}, P2 Score: ${initialState.players[player2Id].score}, Ball X: ${initialState.ball.x.toFixed(0)}, Ball VX: ${initialState.ball.vx.toFixed(0)}`);
   return initialState;
 }
@@ -106,8 +104,8 @@ function handlePaddleCollision(ballState, paddleY) {
   const maxAngleDeflection = Math.PI / 4;
   let normalizedHitZone = (hitZone - 0.5) * 2;
   normalizedHitZone = Math.max(-0.85, Math.min(0.85, normalizedHitZone));
-  const ballSpeedMagnitude = Math.sqrt(ballState.vx**2 + ballState.vy**2); // Use previous vx for speed calc before modifying vy too much
-  ballState.vy = Math.sin(normalizedHitZone * maxAngleDeflection) * ballSpeedMagnitude * 0.8; // factor to control influence
+  const ballSpeedMagnitude = Math.sqrt(ballState.vx**2 + ballState.vy**2);
+  ballState.vy = Math.sin(normalizedHitZone * maxAngleDeflection) * ballSpeedMagnitude * 0.8;
 }
 
 function updateGameState(gameId) {
@@ -198,14 +196,11 @@ function updateGameState(gameId) {
 
     const p1 = gameState.players[gameState.player1Id];
     const p2 = gameState.players[gameState.player2Id];
-    // console.log(`[pong_server.js - ${gameId}] UPDATE_GameStateEnd: Ball(${gameState.ball.x.toFixed(0)},${gameState.ball.y.toFixed(0)}) P1(R:${p1.isReady},S:${p1.score}) P2(R:${p2.isReady},S:${p2.score}) Status:${gameState.status}`);
 
     return gameState;
 }
 
 function startGame(gameId, player1Id, player2Id, options = {}, broadcasterFromCaller) {
-    console.log(`--- PONG_SERVER.JS - startGame CALLED for gameId: ${gameId} ---`);
-    console.log(`--- PONG_SERVER.JS - [${gameId}] Broadcaster type received: ${typeof broadcasterFromCaller} ---`);
 
     if (typeof broadcasterFromCaller !== 'function') {
         console.error(`--- PONG_SERVER.JS - [${gameId}] FATAL: broadcasterFromCaller is NOT A FUNCTION. Type: ${typeof broadcasterFromCaller} ---`);
@@ -225,8 +220,6 @@ function startGame(gameId, player1Id, player2Id, options = {}, broadcasterFromCa
 
     playerCurrentGame.set(player1Id, gameId);
     playerCurrentGame.set(player2Id, gameId);
-
-    console.log(`[pong_server.js - ${gameId}] LOOP STARTING. P1: ${player1Id}(${newGame.players[player1Id].score}), P2: ${player2Id}(${newGame.players[player2Id].score})`);
 
     const gameBroadcaster = broadcasterFromCaller;
 
@@ -286,7 +279,7 @@ function startGame(gameId, player1Id, player2Id, options = {}, broadcasterFromCa
     } else if (typeof gameBroadcaster !== 'function') {
         console.warn(`--- PONG_SERVER.JS - [${gameId}] Loop: gameBroadcaster is UNDEFINED or NOT A FUNCTION in tick. Type: ${typeof gameBroadcaster} ---`);
     }
-    }, 1000/60); // => 60 fps / TickRate
+    }, 1000/60);
 
     return newGame;
 }

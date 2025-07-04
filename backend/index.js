@@ -1,8 +1,14 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+
+
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import fastifyWebsocket from '@fastify/websocket';
-import dotenv from 'dotenv';
+
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import fastifyStatic from '@fastify/static';
@@ -27,10 +33,11 @@ import pongWsRoutes from './server_pong.js';
 import tournamentRoutes from "./tournament_routes.js";
 import statsRoutes from "./stats_routes.js";
 import friendsRoutes from './friends_routes.js';
+import configRoutes from './configRoutes.js';
 
 console.log("🚀 Backend started at " + new Date().toLocaleTimeString());
 
-dotenv.config();
+
 
 const server = Fastify({
   logger: {
@@ -39,7 +46,8 @@ const server = Fastify({
         { level: 'info', target: 'pino/file', options: { destination: '/logs/backend.log' } }
       ]
     }
-  }
+  },
+  trustProxy: true
 });
 
   server.decorate('jwt_secret', process.env.JWT_SECRET || 'super-secret-key');
@@ -64,6 +72,7 @@ const server = Fastify({
 
 overrideConsoleMethods();
 console.log("Loaded API KEY:", process.env.OPENWEATHER_API_KEY);
+console.log("!!! SERVER ORANGE - GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID, "!!!");
 
 const start = async () => {
   try {
@@ -81,10 +90,9 @@ const start = async () => {
     });
 
     await server.register(multipart, {
-      limits: { fileSize: 5 * 1024 * 1024 }, // optional limit
+      limits: { fileSize: 5 * 1024 * 1024 },
     });
 
-    // Optional: serve static files like profile pictures
     await server.register(fastifyStatic, {
       root: path.join(process.cwd(), 'public'),
       prefix: '/',
@@ -103,6 +111,7 @@ const start = async () => {
     await server.register(cookie);
     await server.register(fastifyWebsocket);
     await server.register(authRoutes);
+    await server.register(configRoutes);
     await server.register(chatRoutes);
     await server.register(twofaRoutes);
     await server.register(twoFASettingRoutes);

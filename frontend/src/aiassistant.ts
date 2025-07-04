@@ -10,10 +10,10 @@ export function resetAIWindow() {
   }
 
   if (messages) {
-    messages.innerHTML = ""; // Clear all previous messages
+    messages.innerHTML = "";
   }
 
-  window.speechSynthesis.cancel(); // Stop any ongoing speech
+  window.speechSynthesis.cancel();
 }
 
 async function detectLanguage(text: string): Promise<string> {
@@ -129,7 +129,7 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
         finalText = "Opening/closing the proper window - See ya soon";
       }
       if (matchedMood) {
-        const musicRes = await fetch(`http://localhost:3000/api/spotify/search?q=${encodeURIComponent(matchedMood)}`);
+        const musicRes = await fetch(`/api/spotify/search?q=${encodeURIComponent(matchedMood)}`);
         const musicData = await musicRes.json();
         if (musicData.embed) {
           const iframe = document.getElementById("spotifyIframe") as HTMLIFrameElement;
@@ -140,7 +140,7 @@ export function setupAIWindow(musicWindow: DesktopWindow, systemMessage: string)
       else if (matchedWebsite) {
       }
       else {
-        const res = await fetch("http://localhost:3000/api/gpt", {
+        const res = await fetch("/api/gpt", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ system: systemMessage, message: translatedInput }),
