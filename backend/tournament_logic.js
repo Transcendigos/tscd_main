@@ -2,6 +2,7 @@
 
 import { getDB } from "./db.js";
 import { getRedisPublisher } from "./redis.js";
+import { sendMatchToBlockchain } from "./blockchain/sendMatchToBlockchain.js";
 
 export async function processGameCompletion(gameId, winnerPrefixedId, finalScores, gameMode) {
     const db = getDB();
@@ -49,14 +50,34 @@ export async function processGameCompletion(gameId, winnerPrefixedId, finalScore
                 return rej(err);
             }
             console.log(`[Stats] Successfully inserted into match_history. New row ID: ${this.lastID}`);
-            res();
+            res(this.lastID);
         });
+    }).then(async (lastInsertId) => {
+        if (lastInsertId) {
+            const matchHistoryRow = await new Promise((res, rej) => db.get('SELECT * FROM match_history WHERE id = ?', [lastInsertId], (err, row) => err ? rej(err) : res(row)));
+            if (matchHistoryRow) {
+                sendMatchToBlockchain(matchHistoryRow).catch(err => console.error("Blockchain postMatchResult failed (fire-and-forget):", err));
+            }
+        }
     });
 
     if (match && match.status !== 'finished') {
         console.log(`[Stats] Continuing with tournament logic for match ID: ${match.id}`);
         const tournamentId = match.tournament_id;
         await new Promise((res, rej) => db.run('UPDATE tournament_matches SET winner_id = ?, status = ? WHERE id = ?', [winner_id, 'finished', match.id], (err) => err ? rej(err) : res()));
+        const updatedMatch = await new Promise((res, rej) => db.get('SELECT * FROM tournament_matches WHERE id = ?', [match.id], (err, row) => err ? rej(err) : res(row)));
+        if (updatedMatch && updatedMatch.status === 'finished') {
+            sendMatchToBlockchain({
+                id: updatedMatch.id,
+                tournament_id: updatedMatch.tournament_id,
+                round: updatedMatch.round,
+                match_in_round: updatedMatch.match_in_round,
+                player1_id: updatedMatch.player1_id,
+                player2_id: updatedMatch.player2_id,
+                winner_id: updatedMatch.winner_id,
+                game_id: updatedMatch.game_id
+            }).catch(err => console.error("Blockchain postMatchResult failed (fire-and-forget):", err));
+        }
         const participants = await new Promise((res, rej) => db.all('SELECT user_id FROM tournament_participants WHERE tournament_id = ?', [tournamentId], (err, rows) => err ? rej(err) : res(rows)));
         const bracketUpdatePayload = JSON.stringify({ type: 'BRACKET_UPDATE', tournamentId });
         participants.forEach(p => { redisPublisher.publish(`user:${p.user_id}:messages`, bracketUpdatePayload); });

@@ -2,21 +2,67 @@
 pragma solidity ^0.8.19;
 
 contract ScoreBoard {
-    event ScorePosted(address indexed user, uint256 tournamentId, uint256 score);
+    event MatchPosted(
+        uint256 tournamentId,
+        uint256 matchId,
+        uint256 winnerId,
+        uint256 player1Id,
+        uint256 player2Id,
+        uint256 player1Score,
+        uint256 player2Score,
+        uint256 timestamp
+    );
 
-    struct Score {
+    struct Match {
         uint256 tournamentId;
-        uint256 score;
+        uint256 matchId;
+        uint256 player1Id;
+        uint256 player2Id;
+        uint256 player1Score;
+        uint256 player2Score;
+        uint256 winnerId;
+        uint256 timestamp;
     }
 
-    mapping(address => Score[]) public userScores;
+    Match[] public matches;
 
-    function postScore(uint256 tournamentId, uint256 score) external {
-        userScores[msg.sender].push(Score(tournamentId, score));
-        emit ScorePosted(msg.sender, tournamentId, score);
+    function postMatchResult(
+        uint256 tournamentId,
+        uint256 matchId,
+        uint256 player1Id,
+        uint256 player2Id,
+        uint256 player1Score,
+        uint256 player2Score,
+        uint256 winnerId
+    ) external {
+        Match memory m = Match({
+            tournamentId: tournamentId,
+            matchId: matchId,
+            player1Id: player1Id,
+            player2Id: player2Id,
+            player1Score: player1Score,
+            player2Score: player2Score,
+            winnerId: winnerId,
+            timestamp: block.timestamp
+        });
+        matches.push(m);
+        emit MatchPosted(
+            tournamentId,
+            matchId,
+            winnerId,
+            player1Id,
+            player2Id,
+            player1Score,
+            player2Score,
+            block.timestamp
+        );
     }
 
-    function getScores(address user) external view returns (Score[] memory) {
-        return userScores[user];
+    function getMatch(uint256 idx) external view returns (Match memory) {
+        return matches[idx];
+    }
+
+    function getMatchCount() external view returns (uint256) {
+        return matches.length;
     }
 }

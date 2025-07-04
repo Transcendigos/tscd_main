@@ -1,20 +1,5 @@
 import { getDB } from './db.js';
 import fp from 'fastify-plugin';
-import { ethers } from "ethers";
-import dotenv from "dotenv";
-import { createRequire } from 'module';
-
-dotenv.config();
-
-const require = createRequire(import.meta.url);
-const ScoreBoardArtifact = require('./blockchain/artifacts/contracts/ScoreBoard.sol/ScoreBoard.json');
-const provider = new ethers.JsonRpcProvider(process.env.FUJI_RPC_URL);
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-const contract = new ethers.Contract(
-	process.env.SCOREBOARD_ADDRESS,
-	ScoreBoardArtifact.abi,
-	wallet
-);
 
 export default fp(async function scoreRoutes(server, options) {
 	const db = getDB();
@@ -54,18 +39,6 @@ export default fp(async function scoreRoutes(server, options) {
 
 				reply.code(201).send(result);
 				resolve(result);
-
-				// Post to blockchain in background
-				(async () => {
-				try {
-					const tx = await contract.postScore(tournament_id, score);
-					await tx.wait();
-					console.log(`💰 Score posted to blockchain. TX: https://testnet.snowtrace.io/tx/${tx.hash}`);
-					server.log.info(`💰 Score posted to blockchain. TX: https://testnet.snowtrace.io/tx/${tx.hash}`);
-				} catch (err) {
-					console.log("❌ Blockchain postScore failed:", err);
-				}
-				})();
 			}
 		}
 	);

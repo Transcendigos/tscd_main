@@ -1,5 +1,7 @@
-# Ignore backend environment variables
+# Ignore environment variables
 /backend/.env
+/backend/blockchain/.env
+
 /frontend/dev/.env
 /infra/prod/.env
 
